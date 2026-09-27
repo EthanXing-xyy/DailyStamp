@@ -142,9 +142,24 @@ const Kit = (() => {
   // ---- cancellations (盖戳). A mark is {type: round|wave|seal, x, y (stamp units, 1200 x 1500), rot, weight 0..1, seed,
   // ghost}; they print only on the paper of the stamp, never beside it
   const INK = '#26262b', RED = '#B0172F';
+  // the seal carved in 刻章 (localStorage ds-seal: {text, mode, img: a small print as a data URL}), for 盖戳 to strike
+  let mine = null;
+  function mySeal(rec) {
+    if (rec === undefined && !mine) { try { rec = JSON.parse(localStorage.getItem('ds-seal') || 'null'); } catch (e) { rec = null; } if (!rec) return null; }
+    if (rec) { const img = new Image(); img.src = rec.img; mine = { ...rec, image: img }; }
+    return mine && mine.image.complete && mine.image.naturalWidth ? mine : null;
+  }
+  mySeal();                                                     // decoded ahead, so the first strike can use it
   function drawMark(g, m, s, spec) {
     const rnd = Print.rng(m.seed || 1), a = (0.55 + 0.45 * m.weight) * (m.ghost ? 0.45 : 1);
     const x = m.x * s, y = m.y * s;
+    if (m.type === 'mine') {                                    // the carved seal, a little uneven each time
+      const me = mySeal(); if (!me) return;
+      const size = 300 * s;
+      g.save(); g.globalAlpha = Math.min(1, a * 1.05); g.globalCompositeOperation = 'multiply';
+      g.translate(x, y); g.rotate(m.rot * 0.25); g.drawImage(me.image, -size / 2, -size / 2, size, size); g.restore();
+      return;
+    }
     if (m.type === 'round') {
       const T = U.canvas(g.canvas.width, g.canvas.height); Stamp.postmark(T.getContext('2d'), x, y, 150 * s, s, spec, m.rot, m.seed);
       g.save(); g.globalAlpha = Math.min(1, a / 0.8); g.globalCompositeOperation = 'multiply'; g.drawImage(T, 0, 0); g.restore();
@@ -245,6 +260,6 @@ const Kit = (() => {
   function button(parent, label, cls = '') { const b = el('button', 'kit-btn ' + cls, label); b.type = 'button'; parent.append(b); return b; }
 
   return { DEBUG, debugRow, TAU, reduce, el, clamp, wait, two, put, visible, localDate, dayNo, addDays, hash, head, status, audio, buzz, crackle, thump, rustle,
-    visit, stampFor, card, page, photoPlates, gum, watermark, save, blobOf, imageOf, button, drawMark, drawMarks,
+    visit, stampFor, card, page, photoPlates, gum, watermark, save, blobOf, imageOf, button, drawMark, drawMarks, mySeal,
     thumbs: {} };   // thumbs[kind](entry, scale, deps): how the album draws works that are not plain stamps
 })();
