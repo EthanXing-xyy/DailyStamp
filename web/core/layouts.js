@@ -1059,5 +1059,5 @@ const Layouts = (() => {
   }
   const draw = (name, L) => BY[name](L);
 
-  return { F, NAMES, pick, draw };
+  return { F, NAMES, pick, draw, label, inLabel };
 })();

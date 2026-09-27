@@ -21,6 +21,10 @@ body.daily-layer .layer.on { display: block; position: fixed; inset: 0; z-index:
 .kit-face { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
   filter: drop-shadow(1px 2px 1.5px rgba(0,0,0,.24)) drop-shadow(8px 18px 24px rgba(0,0,0,.18)); }
 .kit-face.front { transform: rotateY(180deg); }
+/* the face turned away goes out halfway through the turn (Kit.card.turn: WebKit shows it mirrored otherwise) */
+.kit-face { transition: visibility 0s linear .45s; }
+.kit-card.odd .kit-face.back, .kit-card:not(.odd) .kit-face.front { visibility: hidden; }
+.kit-card.instant .kit-face { transition: none; }
 /* buttons on the desk: ink words with a hand-drawn underline swash, never a boxed rectangle */
 .kit-btn { position: relative; border: 0; background: none; color: #1d1d1f; padding: 8px 6px 10px; font-family: "DS Cjk", sans-serif; font-size: 14px;
   letter-spacing: .24em; cursor: pointer; border-radius: 0; }

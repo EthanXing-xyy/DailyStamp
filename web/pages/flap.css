@@ -1,0 +1,40 @@
+/* ---------- 翻牌显示屏: a split-flap departures board in the palette's key ink, a ticket slot under it */
+.fp-board { position: absolute; padding: 14px var(--padx) 18px; border-radius: 8px; background: var(--body, #1B1633); color: #F4EEDF;
+  box-shadow: 0 18px 34px rgba(0,0,0,.26), inset 0 0 0 3px rgba(255,255,255,.06); }
+.fp-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 0 0 10px calc(var(--lamp)); }
+.fp-name { display: grid; gap: 4px; }
+.fp-name b { font-family: "DS Phrase", serif; font-weight: normal; font-size: 17px; letter-spacing: .16em; color: var(--hot); white-space: nowrap; }
+.fp-name i { font-style: normal; font-family: "DS CapsMed", sans-serif; font-size: 8px; letter-spacing: .3em; opacity: .6; white-space: nowrap; }
+.fp-clock { display: flex; gap: 2px; --cw: 15px; --ch: 22px; }
+.fp-clock .fp-c b { font-size: 15px; }
+.fp-cols { display: flex; gap: var(--ggap); margin: 0 0 6px var(--lamp); }
+.fp-h { display: flex; gap: 5px; align-items: baseline; overflow: hidden; white-space: nowrap; }
+.fp-h b { font-family: "DS CjkMed", sans-serif; font-weight: normal; font-size: 10px; letter-spacing: .2em; opacity: .8; }
+.fp-h i { font-style: normal; font-family: "DS CapsMed", sans-serif; font-size: 7px; letter-spacing: .2em; opacity: .5; }
+.fp-h.fp-time { width: calc(5 * var(--cw) + 4 * var(--gap)); } .fp-h.fp-to { width: calc(4 * var(--cw) + 3 * var(--gap)); }
+.fp-h.fp-drug { width: calc(6 * var(--cw) + 5 * var(--gap)); } .fp-h.fp-plat { width: calc(2 * var(--cw) + 1 * var(--gap)); }
+.fp-h.fp-state { width: calc(3 * var(--cw) + 2 * var(--gap)); }
+.fp-rows { display: grid; gap: 7px; }
+.fp-row { display: flex; align-items: center; gap: var(--ggap); padding: 0; border: 0; background: none; color: inherit; cursor: pointer; transition: transform .25s, filter .25s; }
+.fp-row:hover { background: none; filter: brightness(1.12); }
+.fp-row .fp-lamp { width: 7px; height: 7px; margin-right: calc(var(--lamp) - 7px - var(--ggap)); border-radius: 50%; background: rgba(255,255,255,.14); transition: background .4s, box-shadow .4s; flex: none; }
+.fp-row.on .fp-lamp { background: var(--hot); box-shadow: 0 0 8px var(--hot); }
+.fp-g { display: flex; gap: var(--gap); }
+/* a flap: two fixed halves and two leaves that fold over a hinge line */
+.fp-c { position: relative; display: block; flex: none; width: var(--cw); height: var(--ch); perspective: 220px; }
+.fp-c > span { position: absolute; left: 0; right: 0; height: 50%; overflow: hidden; background: #26242c; }
+.fp-c > .u, .fp-c > .fu { top: 0; border-radius: 3px 3px 0 0; background: linear-gradient(#2c2a33, #232128); }
+.fp-c > .d, .fp-c > .fd { bottom: 0; border-radius: 0 0 3px 3px; background: linear-gradient(#1f1d24, #26242c); }
+.fp-c > .fu { transform-origin: 50% 100%; visibility: hidden; z-index: 2; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.fp-c > .fd { transform-origin: 50% 0; visibility: hidden; z-index: 2; transform: rotateX(90deg); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.fp-c::after { content: ""; position: absolute; left: 0; right: 0; top: calc(50% - .5px); height: 1px; background: rgba(0,0,0,.7); z-index: 3; }
+.fp-c b { position: absolute; left: 0; right: 0; top: 0; height: var(--ch); line-height: var(--ch); text-align: center; font-weight: normal;
+  font-family: "DS Black", "DS CjkMed", sans-serif; font-size: calc(var(--ch) * .6); color: var(--ch-ink, #F4EEDF); }
+.fp-c > .d b, .fp-c > .fd b { top: calc(var(--ch) * -.5); }
+.fp-narrow .fp-drug, .fp-narrow .fp-plat { display: none; }
+.fp-narrow .fp-name b { font-size: 14px; letter-spacing: .1em; }
+/* the ticket slot: a dark slit the stamp slides out of */
+.fp-slot { position: absolute; height: 10px; border-radius: 5px; background: #1B1633; opacity: .85; box-shadow: inset 0 2px 3px rgba(0,0,0,.6); }
+.kit-card.fp-ticket { z-index: 6; }
+.fp-veil { position: absolute; inset: 0; z-index: 5; background: rgba(20,18,16,0); pointer-events: none; transition: background .4s; }
+.fp-veil.on { background: rgba(20,18,16,.35); pointer-events: auto; }
