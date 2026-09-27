@@ -210,7 +210,7 @@ const Kit = (() => {
     g.putImageData(o, 0, 0); return c;
   }
   function photoPlates(img, N = 420) {
-    const c = U.canvas(N, N), g = c.getContext('2d'), w = img.naturalWidth, h = img.naturalHeight, s = Math.min(w, h);
+    const c = U.canvas(N, N), g = c.getContext('2d'), w = img.naturalWidth || img.videoWidth || img.width, h = img.naturalHeight || img.videoHeight || img.height, s = Math.min(w, h);
     g.drawImage(img, (w - s) / 2, (h - s) / 2 * 0.6, s, s, 0, 0, N, N);        // square, a little high: faces sit in the top half
     const d = g.getImageData(0, 0, N, N).data, L = new Float32Array(N * N), acc = new Uint8Array(N * N);
     for (let i = 0; i < N * N; i++) {

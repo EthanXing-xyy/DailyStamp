@@ -1,0 +1,22 @@
+/* ---------- 邮票大头贴: a curtained booth, a stamp-shaped viewfinder, a strip that develops */
+.bt-booth { position: absolute; }
+.bt-curtain { position: absolute; inset: 0; border-radius: 18px 18px 6px 6px; box-shadow: 0 18px 30px rgba(0,0,0,.25);
+  background: repeating-linear-gradient(90deg, var(--curtain, #ff5fa2) 0 22px, var(--curtain2, #d94b88) 22px 30px, var(--curtain, #ff5fa2) 30px 44px); }
+.bt-curtain::before { content: "每日邮政 · 大头贴"; position: absolute; left: 50%; top: 2.2%; transform: translateX(-50%); padding: 4px 14px 5px; background: #F4EEDF; color: #1d1d1f;
+  font-family: "DS Phrase", serif; font-size: 13px; letter-spacing: .3em; white-space: nowrap; border-radius: 20px; }
+.bt-finder { position: absolute; overflow: hidden; background: #1B1633; box-shadow: 0 0 0 8px #F4EEDF, 0 0 0 10px rgba(0,0,0,.25);
+  border-radius: 2px; }
+.bt-finder::after { content: "按「开拍」"; position: absolute; inset: 0; display: grid; place-items: center; color: rgba(244,238,223,.5);
+  font-family: "DS CjkMed", sans-serif; font-size: 13px; letter-spacing: .3em; }
+.bt-finder.live::after { display: none; }
+.bt-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.bt-count { position: absolute; inset: 0; display: grid; place-items: center; font-family: "DS Black", sans-serif; font-weight: normal; font-size: 120px; color: #F4EEDF;
+  text-shadow: 6px 6px 0 #1B1633; pointer-events: none; z-index: 2; }
+.bt-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 3; }
+.bt-slot { position: absolute; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity .4s; }
+.bt-slot.on { opacity: 1; pointer-events: auto; }
+.bt-slot::before { content: ""; position: absolute; left: -6%; right: -6%; top: 0; height: 10px; border-radius: 5px; background: #1B1633; z-index: 2; }
+.bt-strip { position: absolute; left: 0; top: 6px; width: 100%; height: auto; filter: drop-shadow(0 10px 16px rgba(0,0,0,.25)); }
+.bt-acts { position: absolute; display: flex; justify-content: center; gap: 4px 26px; flex-wrap: wrap; }
+.bt-note { position: absolute; margin: 0; text-align: center; font-family: "DS CjkMed", sans-serif; font-size: 10px; letter-spacing: .2em; opacity: .5; }
+@media (max-aspect-ratio: 1/1) { .bt-slot { z-index: 10; } .bt-count { font-size: 90px; } }
