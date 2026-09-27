@@ -75,6 +75,9 @@
       Object.assign(cab.style, { width: cw + 'px', left: left + 'px', top: top + 'px' });
       Object.assign(tabs.style, { width: cw + 'px', left: left + 'px', top: top - TAB + 'px', height: TAB + 'px' });
       cab.style.setProperty('--cols', cols);
+      // a phone's six rows of drawers flatten a little (never below .62) rather than run off a short screen
+      const cell = (cw - 24 - (cols - 1) * 7) / cols, room = (H - top - 52 - 24 - (rows - 1) * 7) / rows;
+      cab.style.setProperty('--asp', phone ? clamp(room / cell, 0.62, 0.82).toFixed(3) : 0.82);
       fillCabinet();
       const ch = cab.getBoundingClientRect().height || cw / cols * 0.82 * rows;
       bh = phone ? Math.min(H * 0.44, 360) : Math.min(H * 0.5, 400); bw = bh * 0.78;

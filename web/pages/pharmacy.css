@@ -1,7 +1,7 @@
 /* ---------- 情绪药房: an apothecary cabinet in four inks, a kraft bag with the prescription */
 .rx-cabinet { position: absolute; display: grid; grid-template-columns: repeat(var(--cols, 6), 1fr); gap: 7px; padding: 12px; border-radius: 6px;
   background: var(--body, #1B1633); box-shadow: 0 18px 34px rgba(0,0,0,.26), inset 0 0 0 3px rgba(255,255,255,.06); perspective: 900px; }
-.rx-drawer { position: relative; aspect-ratio: 1 / .82; padding: 0; border: 0; border-radius: 3px; background: var(--face); cursor: pointer;
+.rx-drawer { position: relative; aspect-ratio: 1 / var(--asp, .82); padding: 0; border: 0; border-radius: 3px; background: var(--face); cursor: pointer;
   box-shadow: inset 0 -5px 0 rgba(0,0,0,.14), inset 0 2px 0 rgba(255,255,255,.22), 0 2px 3px rgba(0,0,0,.35);
   display: grid; place-items: center; align-content: center; gap: 8%; transition: transform .35s cubic-bezier(.3,.7,.3,1), box-shadow .35s; }
 .rx-drawer:hover { background: var(--face); transform: translateZ(14px) translateY(-2px); box-shadow: inset 0 -5px 0 rgba(0,0,0,.14), inset 0 2px 0 rgba(255,255,255,.22), 0 10px 14px rgba(0,0,0,.35); }
