@@ -1,12 +1,14 @@
-// The loading screen: the post office at dusk. It stays up until everything is in (fonts, artwork, every one of the
-// home's stamps, every page), so nothing loads, janks or pops in after it. Ink-blue paper; along the bottom the post
-// office, a street lamp and a pillar box, cut out of darker paper (scene/, drawn once by codex: dailystamp/scene.py).
-// The only warm colour is light: the lamp comes up with the loading, and a few of the home's real stamps seep into the
-// shop window as they come off the press. Above, the title, the date, what the press is doing and how far it has got.
-// When all is in, the windows light, a postmark (date and solar term) strikes the title once and the way in
-// (进入邮局 →) fades up where the status was; the app opens only on its tap, the iris closing on the button. One thing
-// moves at a time and nothing bounces: the user found a screen of bobbing, springing parts on a Ben-Day field cheap,
-// and the later rows of twenty-four stamps in neat ranks dull.
+// The loading screen: the door of a small post office. It stays up until everything is in (fonts, artwork, every one
+// of the home's stamps, every page), so nothing loads, janks or pops in after it. On cream paper, the title, the date and
+// what the press is doing up top; at the foot of the screen a bicycle with a basket of letters leans by a red door, an
+// old pillar box stands beside it and a calico cat sits by the wheel (scene/, drawn once by codex: dailystamp/scene.py).
+// While the press works, things can be played with: the cat changes pose (by itself too, now and then), the bell rings,
+// and a letter flies from the basket into the box (今天寄出 N 封, counted per day on this device). The hanging sign shows
+// how far the loading has got. When all is in the sign reads 营业中, warm light shows at the door, a postmark (date and
+// solar term) strikes the title once and the way in (进入邮局 →) fades up where the status was; the app opens only on a
+// tap of the button or the door, which swings open before the iris closes on it. Everything moves softly and once:
+// the user found a screen of bobbing, springing parts cheap, rows of stamps dull, and two drawn post offices (cut paper
+// with a street lamp; a painting replayed stroke by stroke) ugly, before choosing this picture themselves.
 // Every string shown here lives in this file or index.html: `python dailystamp.py fonts` cuts the loader's tiny fonts from them.
 // Digits and signs for the date and count: 0123456789 . / % →
 // The postmark can carry any solar term, so their names are listed here for the font cut:
@@ -23,16 +25,12 @@ const Loader = (() => {
   let shown = 0, active = !!root, say = '', lastKey = '';
 
   const $ = sel => root && root.querySelector(sel);
-  // the shop window holds the first three stamps off the press
-  const SHOW = 3, all = typeof Features !== 'undefined' ? Features.LIST.length : 24;
-  const row = $('.ld-slots');
-  if (row && !row.children.length) for (let i = 0; i < SHOW; i++) row.append(document.createElement('i'));
-  if (row) for (const s of row.children) s.className = 'ld-slot';
-  const count = $('.ld-count'), status = $('.ld-say'), slots = root ? [...root.querySelectorAll('.ld-slot')] : [];
+  const all = typeof Features !== 'undefined' ? Features.LIST.length : 24;
+  const count = $('.ld-count'), status = $('.ld-say');
   let printed = 0;
   // ?ldhold=0.4 keeps the screen at that much done, for looking at it (1 = all in, waiting for the tap)
   const hold = (() => { const v = new URLSearchParams(location.search).get('ldhold'); return v == null ? null : Math.max(0, Math.min(1, +v || 0)); })();
-  const bar = $('.ld-row'), go = $('.ld-go'), mark = $('.ld-mark');
+  const bar = $('.ld-row'), go = $('.ld-go'), mark = $('.ld-mark'), pct = $('.ld-pct');
 
   // today's date on the subtitle, from the start (the app's own date only comes in with ready())
   const pad = n => String(n).padStart(2, '0'), now = new Date(), dateEl = $('.ld-date');
@@ -44,8 +42,8 @@ const Loader = (() => {
     for (const k in STEPS) p += STEPS[k] * done[k];
     p = Math.max(shown, Math.min(1, p / total)); shown = p;
     if (hold != null) p = hold;
-    root.style.setProperty('--p', p.toFixed(3));           // the lamp comes up with it
     if (count) count.textContent = `${Math.round(p * 100)}%`;
+    if (pct) pct.textContent = `${Math.round(p * 100)}%`;
     if (bar) bar.setAttribute('aria-valuenow', String(Math.round(p * 100)));
   }
   function talk(text) {
@@ -68,95 +66,154 @@ const Loader = (() => {
     lastKey = key;
     paint();
   }
-  // a slot's canvas, as big as the biggest the slot gets on this screen (it is small: a stamp in a shop window)
-  function sheet(s, cls, src) {
-    const cv = document.createElement('canvas'), w = Math.round(Math.max(s.clientWidth, 48) * Math.min(3, devicePixelRatio || 1) * 1.25);
-    cv.width = w; cv.height = Math.round(w * src.height / src.width); cv.className = cls;
-    const g = cv.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(src, 0, 0, cv.width, cv.height);
-    return cv;
-  }
-  /** a stamp came off the press: the first few seep onto the blanks in the shop window, the rest are only counted */
+  /** a stamp came off the press: only counted here (the home shows them) */
   function stamp(i, src) {
     if (!src) return;
-    const s = slots[printed++];
-    if (s && !s.querySelector('canvas.ink')) { s.append(sheet(s, 'ink', src)); s.classList.add('in'); }
+    printed++;
     talk(`${SAY.stamps} ${pad(Math.min(printed, all))} / ${pad(all)}`);
   }
-  /** blank sheets in the window before anything is printed */
-  function blanks(src) {
-    for (const s of slots) if (!s.querySelector('canvas.blank')) s.prepend(sheet(s, 'blank', src));
-  }
+  function blanks() {}
 
-  // ---- the scene: the pictures and where their glass is come from scene/index.json; everything is placed in px from
-  // the screen's size, the house standing on the swell of the ground, the lamp to its left, the pillar box to its right
-  const scene = $('.ld-scene'), part = {};
-  const px = (el, x, y, w, h) => { if (el) Object.assign(el.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' }); };
-  // where each stamp stands in the window: across (0..1), up or down (of the pane's height), its turn, its size
-  const STAND = [[0.5, 0.03, -3, 1], [0.19, -0.02, 6, 0.9], [0.81, 0.01, -7, 0.94]];
-  function place() {
-    if (!scene || !part.house) return;
-    const W = innerWidth, H = innerHeight, up = W <= H, { house, lamp, mailbox } = part;
-    // the ground: a wide swell whose top is a little right of the middle
-    const gy = H - H * (up ? 0.115 : 0.105), gw = W * 2.4, gh = H * 0.5, gx = W * 0.56;
-    px($('.ld-ground'), gx - gw / 2, gy, gw, gh);
-    const drop = x => gh / 2 * (1 - Math.sqrt(Math.max(0, 1 - ((x - gx) / (gw / 2)) ** 2)));   // how far the swell has fallen at x
-    const ha = house.w / house.h, hh = Math.min(H * (up ? 0.37 : 0.43), W * (up ? 0.7 : 0.4) / ha), hw = hh * ha;
-    const hx = W * (up ? 0.58 : 0.55) - hw / 2, hy = gy + hh * 0.015 - hh;
-    px($('.ld-house'), hx, hy, hw, hh);
-    const pane = house.panes[0];
-    if (pane && row) {
-      const [a, b, c, d] = pane, pw = c * hw, ph = d * hh;
-      px(row, a * hw, b * hh, pw, ph);
-      const sh = Math.min(ph * 0.72, pw * 0.44);
-      slots.forEach((s, i) => {
-        const k = STAND[i][3], h = sh * k, w = h * 0.8;
-        Object.assign(s.style, { width: w + 'px', left: STAND[i][0] * pw - w / 2 + 'px', top: ph * (0.53 + STAND[i][1]) - h / 2 + 'px',
-          transform: `rotate(${STAND[i][2]}deg)`, zIndex: String(5 - i) });
-      });
-    }
-    const sign = $('.ld-sign');
-    if (sign) {
-      sign.style.display = house.sign ? '' : 'none';
-      if (house.sign) { const [a, b, c, d] = house.sign; px(sign, a * hw, b * hh, c * hw, d * hh); sign.style.fontSize = Math.max(9, d * hh * 0.62) + 'px'; }
-    }
-    if (lamp) {
-      const lh = hh * (up ? 1.2 : 1.22), lw = lh * lamp.w / lamp.h;
-      const cx = up ? Math.max(lw * 0.42, hx - lw * 0.5) : hx - hw * 0.34, lx = cx - lw / 2, ly = gy + drop(cx) + lh * 0.012 - lh;
-      const el = $('.ld-lamp'); px(el, lx, ly, lw, lh); el.style.transform = lamp.flip ? 'scaleX(-1)' : '';
-      const g = lamp.panes[0] || [0.4, 0.1, 0.2, 0.1];
-      let ax = g[0] + g[2] / 2; if (lamp.flip) ax = 1 - ax;
-      const ex = lx + ax * lw, ey = ly + (g[1] + g[3] / 2) * lh, r = lh * (up ? 0.74 : 0.8);
-      px($('.ld-halo'), ex - r, ey - r, r * 2, r * 2);
-      const pwid = lh * 1.1, phei = lh * 0.13;
-      px($('.ld-pool'), ex - pwid / 2, gy + drop(ex) + phei * 0.1 - phei / 2 + phei * 0.4, pwid, phei);
-    }
-    if (mailbox) {
-      const mh = hh * 0.36, mw = mh * mailbox.w / mailbox.h;
-      const cx = up ? Math.min(W - mw * 0.4, hx + hw + mw * 0.3) : hx + hw + hw * 0.2;
-      px($('.ld-box'), cx - mw / 2, gy + drop(cx) + mh * 0.02 - mh, mw, mh);
-    }
+  // ---- the door of the post office (scene/index.json: the picture, where things are in it as fractions [x, y, w, h],
+  // the cat's poses and the letter). It is sized to the room left under the type; everything in it is placed in %.
+  const scene = $('.ld-scene'), main = $('.ld-main'), sent = $('.ld-sent');
+  let pic = null, poses = [], pose = 0, catTimer = 0, busy = false;
+  const kit = f => { if (typeof Kit !== 'undefined') try { Kit.audio(); f(Kit); } catch {} };
+  const put = (el, [x, y, w, h]) => { if (el) Object.assign(el.style, { left: x * 100 + '%', top: y * 100 + '%', width: w * 100 + '%', height: h * 100 + '%' }); };
+  const grow = ([x, y, w, h], k) => [x - w * k / 2, y - h * k / 2, w * (1 + k), h * (1 + k)];
+  function size() {
+    if (!scene || !pic) return;
+    // what's drawn must fit whole; the picture's own margins are empty paper and may run past the screen's edges
+    const W = innerWidth, H = innerHeight, ar = pic.w / pic.h, [cx, cy, cw, ch] = pic.spots.content;
+    const top = main ? main.getBoundingClientRect().bottom + Math.max(16, H * 0.02) : H * 0.4, foot = Math.max(H * 0.03, 12);
+    const room = Math.max(H * 0.25, H - top - foot);
+    const w = Math.min(W * 0.94 / cw, room / ch * ar, 1080 / cw), h = w / ar;
+    // centred on what's drawn, a little below the middle of the room left under the type
+    const x = W / 2 - (cx + cw / 2) * w, y = top + Math.max(0, room - ch * h) * 0.58 - cy * h;
+    Object.assign(scene.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+    signOn(w, h);
+  }
+  // the type on the sign lies on its board, which hangs a little askew: a box the board's size, sheared and turned onto
+  // it (the parallelogram through the middles of the board's four sides; its corners are measured in scene.py). A
+  // plain 2D matrix, which every browser draws the same way.
+  function signOn(w, h) {
+    const el = $('.ld-sign'); if (!el) return;
+    const [p0, p1, p2, p3] = pic.spots.sign.map(([x, y]) => [x * w, y * h]);
+    const ex = [(p1[0] + p2[0] - p0[0] - p3[0]) / 2, (p1[1] + p2[1] - p0[1] - p3[1]) / 2];   // left side to right side
+    const ey = [(p3[0] + p2[0] - p0[0] - p1[0]) / 2, (p3[1] + p2[1] - p0[1] - p1[1]) / 2];   // top to bottom
+    const cx = (p0[0] + p1[0] + p2[0] + p3[0]) / 4, cy = (p0[1] + p1[1] + p2[1] + p3[1]) / 4;
+    const bw = Math.hypot(...ex), bh = Math.hypot(...ey);
+    const m = [ex[0] / bw, ex[1] / bw, ey[0] / bh, ey[1] / bh, cx - (ex[0] + ey[0]) / 2, cy - (ex[1] + ey[1]) / 2];
+    Object.assign(el.style, { width: bw + 'px', height: bh + 'px', fontSize: Math.max(8, bh * 0.36) + 'px', transform: `matrix(${m.join(',')})` });
+  }
+  function showPose(i) {
+    poses.forEach((im, k) => im.classList.toggle('on', k === i)); pose = i;
+  }
+  function idleCat() {                                    // now and then the cat moves by itself
+    clearTimeout(catTimer);
+    catTimer = setTimeout(() => { if (!active || !poses.length) return; showPose((pose + 1) % poses.length); idleCat(); }, 8000 + Math.random() * 4000);
+  }
+  // letters sent today on this device (a per-viewer nicety: if storage is blocked the count just starts again)
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  let letters = 0;
+  try { const v = JSON.parse(localStorage.getItem('ds-sent') || 'null'); if (v && v.d === today) letters = +v.n || 0; } catch {}
+  function tellSent() {
+    if (!sent || !letters) return;
+    const b = document.createElement('b'); b.textContent = String(letters);
+    sent.replaceChildren('今天寄出', b, '封'); sent.classList.add('on');
+  }
+  /** a letter from the basket, over the door and down into the pillar box */
+  async function post() {
+    if (busy || !pic || !pic.letter) return;
+    busy = true;
+    const el = $('.ld-letter'), sp = pic.spots, W = scene.clientWidth, H = scene.clientHeight;
+    const lw = sp.slot[2] * 0.82 * W, lh = lw * pic.letter.h / pic.letter.w;
+    const [bx, by, bw] = sp.basket, [sx, sy, sw] = sp.slot;
+    const x0 = (bx + bw / 2) * W - lw / 2, y0 = by * H - lh * 0.6;
+    const x1 = (sx + sw / 2) * W - lw / 2, y1 = sy * H - lh;         // its bottom edge on the slot
+    const peak = Math.min(y0, y1) - H * 0.12;
+    Object.assign(el.style, { left: 0, top: 0, width: lw + 'px', height: lh + 'px' });
+    kit(k => k.rustle(0.03, 0.15));
+    const fly = el.animate(reduce ? [{ opacity: 0, transform: `translate(${x1}px, ${y1}px)` }, { opacity: 1, transform: `translate(${x1}px, ${y1}px)` }] : [
+      { opacity: 0, transform: `translate(${x0}px, ${y0}px) rotate(-10deg)` },
+      { opacity: 1, transform: `translate(${x0}px, ${y0 - H * 0.04}px) rotate(-8deg)`, offset: 0.15 },
+      { opacity: 1, transform: `translate(${(x0 + x1) / 2}px, ${peak}px) rotate(4deg)`, offset: 0.6 },
+      { opacity: 1, transform: `translate(${x1}px, ${y1}px) rotate(0deg)` }],
+      { duration: reduce ? 300 : 1100, easing: 'cubic-bezier(.45,0,.35,1)', fill: 'forwards' });
+    await fly.finished.catch(() => {});
+    // into the slot: it goes down by its own height while its lower part is cut away, so it vanishes at the slot line
+    const drop = el.animate([
+      { transform: `translate(${x1}px, ${y1}px)`, clipPath: 'inset(0 0 0 0)', opacity: 1 },
+      { transform: `translate(${x1}px, ${y1 + lh}px)`, clipPath: 'inset(0 0 100% 0)', opacity: 1 }],
+      { duration: reduce ? 200 : 380, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' });
+    await drop.finished.catch(() => {});
+    kit(k => k.thump(0.2));
+    el.getAnimations().forEach(an => an.cancel()); el.style.opacity = 0;
+    letters++;
+    try { localStorage.setItem('ds-sent', JSON.stringify({ d: today, n: letters })); } catch {}
+    tellSent();
+    busy = false;
+  }
+  /** the bicycle bell: two thin rings spread from it and fade */
+  function ring() {
+    kit(k => k.bell && k.bell());
+    if (reduce) return;
+    root.querySelectorAll('.ld-ring').forEach((r, i) => r.animate(
+      [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 0.7, transform: 'scale(.9)', offset: 0.3 }, { opacity: 0, transform: 'scale(1.5)' }],
+      { duration: 700, delay: i * 180, easing: 'ease-out' }));
+  }
+  /** the door swings in (resolves when it has) */
+  function openDoor() {
+    if (!scene || !pic) return Promise.resolve();
+    root.classList.add('opening');
+    return new Promise(res => setTimeout(res, reduce ? 400 : 700));
   }
   if (scene) (async () => {
     try {
-      const list = await (await fetch('scene/index.json')).json();
-      for (const e of list) part[e.key] = e;
-      if (!part.house) return;
-      const url = (e, f) => `${f}?v=${e.v}`, waits = [];
-      const set = (sel, e) => {
-        const box = $(sel); if (!box || !e) { if (box) box.style.display = 'none'; return; }
-        const img = box.querySelector('img'); img.src = url(e, e.file); waits.push(img.decode ? img.decode().catch(() => {}) : Promise.resolve());
-        for (const el of box.querySelectorAll('.ld-glass, .ld-lit')) {
-          if (!e.win) { el.style.display = 'none'; continue; }
-          el.style.webkitMaskImage = el.style.maskImage = `url("${url(e, e.win)}")`;
+      const e = await (await fetch('scene/index.json')).json();
+      if (!e.cover || !e.spots || !e.spots.door) return scene.remove();
+      pic = e;
+      const img = $('.ld-cover'), v = `?v=${e.v}`, waits = [];
+      const load = (im, src) => { im.src = src; waits.push(im.decode ? im.decode().catch(() => {}) : Promise.resolve()); };
+      load(img, e.cover + v);
+      if (e.paper) root.style.setProperty('--paper', e.paper);
+      const sp = e.spots;
+      put($('.ld-room'), sp.door); put($('.ld-door'), sp.door);
+      const door = $('.ld-door'), [dx, dy, dw, dh] = sp.door;
+      Object.assign(door.style, { backgroundImage: `url("${e.cover + v}")`, backgroundSize: `${100 / dw}% ${100 / dh}%`,
+        backgroundPosition: `${dx / (1 - dw) * 100}% ${dy / (1 - dh) * 100}%` });
+      put($('.ld-crack'), [dx + dw - 0.004, dy + dh * 0.03, 0.005, dh * 0.94]);
+      put($('.ld-glow'), [dx - dw * 0.7, dy + dh * 0.82, dw * 2.4, dh * 0.34]);
+      // the cat's poses, all at the scale of the first, standing on one spot
+      const cat = $('.ld-cat'), [cx, cy, ch] = sp.cat;
+      if (cat && e.cat && e.cat.length) {
+        const k = ch / e.cat[0].h;                                  // picture heights per sprite pixel
+        const box = [cx - 0.2, cy - ch * 1.2, 0.4, ch * 1.2]; put(cat, box);
+        for (const c of e.cat) {
+          const im = document.createElement('img'); im.alt = '';
+          Object.assign(im.style, { width: c.w * k * e.h / e.w / 0.4 * 100 + '%', height: c.h * k / (ch * 1.2) * 100 + '%' });
+          load(im, c.file + `?v=${e.catv}`); cat.append(im); poses.push(im);
         }
-        if (e.win) waits.push(new Promise(res => { const m = new Image(); m.onload = m.onerror = res; m.src = url(e, e.win); }));
-      };
-      set('.ld-house', part.house); set('.ld-lamp', part.lamp); set('.ld-box', part.mailbox);
-      place();
-      addEventListener('resize', () => { if (active) place(); });
+        showPose(0);
+        const hit = $('.ld-hit-cat'); put(hit, grow([cx - ch * e.h / e.w * 0.55, cy - ch, ch * e.h / e.w * 1.1, ch], 0.4));
+        hit.addEventListener('click', () => { if (!poses.length) return; showPose((pose + 1) % poses.length); idleCat(); });
+        idleCat();
+      } else { const h = $('.ld-hit-cat'); if (h) h.remove(); }
+      if (e.letter) { const l = $('.ld-letter'); l.src = e.letter.file + `?v=${e.catv}`; }
+      const [bx, by] = sp.bell, r = 0.05;
+      const rings = root.querySelectorAll('.ld-ring');
+      rings.forEach((el, i) => put(el, [bx - r * (0.6 + i * 0.4) * e.h / e.w, by - r * (0.6 + i * 0.4), r * (1.2 + i * 0.8) * e.h / e.w, r * (1.2 + i * 0.8)]));
+      put($('.ld-hit-bell'), [bx - 0.05 * e.h / e.w, by - 0.06, 0.1 * e.h / e.w, 0.12]);
+      $('.ld-hit-bell').addEventListener('click', ring);
+      put($('.ld-hit-basket'), grow(sp.basket, 0.2)); put($('.ld-hit-box'), grow(sp.box, 0.15));
+      $('.ld-hit-basket').addEventListener('click', post); $('.ld-hit-box').addEventListener('click', post);
+      put($('.ld-hit-door'), sp.door);
+      $('.ld-hit-door').addEventListener('click', () => { if (go && !go.disabled) go.click(); });
+      size(); addEventListener('resize', () => { if (active) size(); });
+      tellSent();
       await Promise.all(waits);
-      scene.classList.add('on');
-    } catch {}
+      size(); scene.classList.add('on');
+    } catch { if (scene) scene.remove(); pic = null; }
   })();
 
   /** the web fonts the app will use, fetched with their bytes counted (then they're in the cache for the page) */
@@ -200,21 +257,24 @@ const Loader = (() => {
     root.classList.add('ready'); root.setAttribute('aria-busy', 'false');
     go.disabled = false;
     setTimeout(() => { try { go.focus({ preventScroll: true }); } catch {} }, 1600);
-    return new Promise(res => go.addEventListener('click', () => {
+    return new Promise(res => go.addEventListener('click', async () => {
       go.disabled = true; go.classList.add('down');
-      if (typeof Kit !== 'undefined') try { Kit.audio(); Kit.thump(0.7); } catch {}
+      kit(k => k.thump(0.7));
+      clearTimeout(catTimer);
+      await openDoor();                                      // the door swings in, then the iris closes on it
       res();
     }, { once: true }));
   }
 
-  /** the curtain: an iris closes on the print shop (on the button, once it was pressed) and opens on the app underneath */
+  /** the curtain: an iris closes on the print shop (on the open door, or the button) and opens on the app underneath */
   function finish() {
     if (!active) return Promise.resolve();
     step('pages', 1); for (const k in STEPS) done[k] = 1; paint(); talk(SAY.done);
     const pressed = go && go.classList.contains('down');
     return new Promise(res => setTimeout(async () => {
       active = false;
-      const W = innerWidth, H = innerHeight, b = pressed ? go.getBoundingClientRect() : null;
+      const doorEl = pic && $('.ld-door'), W = innerWidth, H = innerHeight;
+      const b = pressed ? (doorEl ? doorEl.getBoundingClientRect() : go.getBoundingClientRect()) : null;
       const x = b ? b.left + b.width / 2 : W / 2, y = b ? b.top + b.height / 2 : H / 2, R = Math.ceil(Math.hypot(Math.max(x, W - x), Math.max(y, H - y)));
       const at = `${x.toFixed(0)}px ${y.toFixed(0)}px`;
       const out = reduce ? root.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' })
@@ -222,11 +282,12 @@ const Loader = (() => {
           { duration: 720, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
       document.body.classList.add('loaded');
       await out.finished.catch(() => {});
+      clearTimeout(catTimer);
       root.remove(); res();
     }, reduce ? 150 : pressed ? 160 : 380));
   }
   /** the debugging views (?gallery, ?sheet=demo, studio params) don't wait for it */
-  function skip() { active = false; if (root) root.remove(); document.body.classList.add('loaded'); }
+  function skip() { active = false; clearTimeout(catTimer); if (root) root.remove(); document.body.classList.add('loaded'); }
 
   // 手机只竖着看（用户 2026-09-27 定的）。转屏卡片先注释掉留着，哪天要横屏了把这段和 index.html 里的 #rotate 解开即可。
   /*

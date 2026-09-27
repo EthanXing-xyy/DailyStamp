@@ -1,192 +1,216 @@
-"""The loading screen's scene: a small post office at dusk, a street lamp and a pillar box, as hand-cut paper shapes.
-codex draws each once in three flat inks on white (black / magenta / cyan = three layers of paper); here the layers are
-coloured in fixed dusk tones and saved as one RGBA picture in scene/, with the glass (white enclosed by the shape) cut
-out of it and kept as a mask of its own (<key>.win.png, white + alpha) for the light behind the windows."""
+"""The loading screen's picture: the door of a small post office, drawn the way a quiet literary-magazine illustration is
+(flat matte colour with dry, grainy edges on cream paper, lots of empty paper, faceless figures): a bicycle leaning by a
+red door with a hanging sign, an old pillar box, a pot plant, and a calico cat that changes pose.
+
+codex draws two pictures once, from the reference pictures the user picked (scene/ref-*.png, local only):
+  cover  the door, the bicycle, the pillar box and the plant, without the cat
+  cat    the same cat in three poses side by side, and a small envelope
+Here the cover is cropped to what's drawn, and the cat sheet is cut out of its paper into one picture per pose and the
+envelope. Where things are in the cover (the door, the sign, the slot, the basket, the handlebar, where the cat sits) is
+measured by hand into SPOTS, and everything goes into scene/index.json for web/loader.js.
+
+  python dailystamp.py scene [cover|cat]   # draw them again (both, or the given ones)
+  python dailystamp.py scene --rebuild     # cut them again from the raw drawings"""
 from __future__ import annotations
 
+import json
 import os
+import sys
+import time
 
 import numpy as np
 from PIL import Image, ImageFilter
+from scipy import ndimage
 
-from .assetset import CodexSet
-from .emblem import _border_connected
+from .assetset import run_codex
 from .library import ROOT
 
 SCENE_DIR = os.path.join(ROOT, "scene")
-MAX_SIDE = 1400
-UP = 2                                                   # the raw drawing is worked on at twice its size, for soft edges
+STYLE_REF = os.path.join(SCENE_DIR, "ref-style.png")
 
-# the three papers, darkest first: black ink, magenta ink, cyan ink
-# where the type goes on a part, as fractions of its picture [x, y, w, h] (read off the drawing; codex draws no letters)
-SIGNS = {"house": [0.135, 0.355, 0.73, 0.095]}
+STYLE = """The way it is drawn (the attached pictures show it: learn their drawing style, never add anything not asked for):
+- a warm cream paper ground with a very faint paper grain, and a lot of empty paper
+- flat matte shapes of colour, like gouache or a risograph print: slightly dry, soft, uneven edges and a fine grain
+  inside the colour; almost no outlines, only a few fine dark strokes where needed
+- a quiet, muted, earthy palette: off-white, sand, camel, warm brown, dark brown-black, brick red, a little faded
+  grey-blue
+- NO ground line, NO horizon, NO sky, NO background scenery: things simply rest on the empty paper
+- calm, poetic, understated, like an illustration in a small literary magazine
+- absolutely no letters, numbers, words or signature anywhere"""
 
-TONES = ((0x0E, 0x15, 0x27), (0x3B, 0x2F, 0x52), (0x3C, 0x4C, 0x78))
+PARTS = {
+    "cover": ("landscape, 1536x1024", ["ref-04.png", "ref-02.png"], """Redraw the FIRST attached picture (the bicycle by the red door) almost exactly as it is: the same
+bicycle with its wicker basket of letters and a brown-paper parcel, the same red door with its window panes, the same
+stone lintel above it, the same hanging sign on its iron bracket, the same patchy light wall around the door, the same
+small plant in a grey-blue pot. Change only this:
+- between the door and the pot plant, stand an old round red pillar post box like the one in the SECOND attached
+  picture (its domed cap, its letter slot facing us, its dark base), a little shorter than the door
+- make the hanging sign board bigger: about as wide as the door, plain cream and completely blank
+- no cat, no people
+Composition: everything sits in the lower 55% of the picture, the group centred left to right with empty paper on both
+sides; the top 45% is empty paper."""),
+    "cat": ("landscape, 1536x1024", ["ref-06.png"], """The small calico cat from the FIRST attached picture (white with orange-brown and dark patches), drawn
+three times side by side in a row, well apart from each other, all at the same scale, all facing the same way, each
+resting on the empty paper with no shadow:
+1. sitting upright, looking up
+2. sitting, licking one raised front paw
+3. lying curled up asleep
+and at the far right, well apart, one small closed white envelope lying flat, seen from the front, with a tiny brick-red
+stamp in its corner.
+Nothing else in the picture."""),
+}
 
-COMMON = """Use your image generation tool, square 1024x1024:
-- a flat paper cut-out collage seen straight from the front: no perspective, no 3D, no shadows, no shading, no gradients, no texture
-- NO outlines at all: shapes are solid pieces of paper that meet edge to edge
-- every edge is cut by hand with scissors: slightly uneven and lively, never ruler-perfect, corners a little off square
-- few, big, simple shapes; nothing fiddly, no bricks, no roof tiles, no tiny details
-- exactly three flat colours on a pure white (#FFFFFF) ground: pure black (#000000), pure magenta (#FF00A8), pure cyan (#00D8FF)
-- the subject keeps a clear white margin on every side (it must not touch the edges of the canvas)
-- absolutely no letters, numbers or words
-"""
-
-# (key, subject and which paper is what, least number of panes of glass)
-PARTS = [
-    ("house", """Subject: the front of a small village post office, one storey with a gabled attic, a little wider than tall.
-- walls: black
-- the pitched roof with a small chimney, a plain awning over the shop window, and a long blank sign board above the door and window: magenta
-- the door (right of centre) with a step under it, and the thin frames round the windows: cyan
-- glass is pure white, left empty: ONE very large shop window on the left taking nearly half the width of the front, a single
-  pane with no bars across it; one small round window in the gable; one small pane in the upper part of the door
-- the ground is not drawn; the house ends in a straight-ish bottom edge""", 2),
-    ("lamp", """Subject: one old street lamp on a plain WHITE background, tall and slender, standing upright in the middle of the canvas and filling its height.
-- the post, its slightly wider foot and the short curved arm at the top: solid black paper
-- the lantern hanging from the arm is big (about a fifth of the lamp's height): a simple four-sided lantern whose cap, base and
-  side bars are THICK strips of cyan paper, as thick as the post
-- between the bars the lantern's glass is pure white, left empty, exactly like the white background (one big pane, or two)
-- magenta is used only for one small collar ring on the post
-- the background is pure white everywhere, never black; nothing else in the picture, no ground""", 1),
-    ("mailbox", """Subject: one round pillar post box (a free-standing letter box), squat and friendly, centred.
-- the body: black
-- the domed cap on top and the base ring: magenta
-- the plate round the letter slot and a small door plate: cyan; the slot itself is black
-- no white holes inside it, nothing else in the picture, no ground""", 0),
-]
-
-PROMPT_TMPL = """You are cutting a picture out of coloured paper with scissors, like Henri Matisse's late paper cut-outs.
+PROMPT = """Use your image generation tool to draw one picture, {size}.
 {subject}
-""" + COMMON + """Save the PNG as "{out}" (overwrite if it exists), then reply with exactly one line: DONE
+{style}
+Save the PNG as "{out}" (overwrite if it exists), then reply with exactly one line: DONE
 """
 
-
-def _soft(m: np.ndarray) -> np.ndarray:
-    img = Image.fromarray((m * 255).astype(np.uint8), "L").filter(ImageFilter.GaussianBlur(1.6))
-    return np.asarray(img, dtype=np.float32) / 255
-
-
-def layers(src: Image.Image):
-    """(black, magenta, cyan, glass) as boolean masks at UP times the raw size."""
-    rgba = src.convert("RGBA")
-    im = Image.alpha_composite(Image.new("RGBA", rgba.size, (255, 255, 255, 255)), rgba).convert("RGB")
-    im = im.resize((im.width * UP, im.height * UP), Image.LANCZOS).filter(ImageFilter.MedianFilter(5))
-    hsv = np.asarray(im.convert("HSV"), dtype=np.float32)
-    hue, sat, val = hsv[..., 0] * 360 / 255, hsv[..., 1] / 255, hsv[..., 2] / 255
-    colored = (sat > 0.3) & (val > 0.35)
-    dark = ~colored & (val < 0.6)
-    white = ~colored & ~dark
-    mag = colored & ((hue >= 250) | (hue < 40))
-    cyn = colored & ~mag
-    if dark.mean() > 0.5:                                   # drawn on black
-        dark = dark & ~_border_connected(dark)
-    outside = _border_connected(white)
-    glass = white & ~outside
-    # specks of white inside the paper are not windows
-    g = Image.fromarray((glass * 255).astype(np.uint8), "L").filter(ImageFilter.MinFilter(9)).filter(ImageFilter.MaxFilter(9))
-    big = np.asarray(g) > 127
-    dark = dark | (glass & ~big)
-    return dark, mag, cyn, big
+# where things are in the raw cover (px of the 1536x1024 drawing), measured by hand; index.json gets them as fractions
+# of the cropped picture. Boxes are [x, y, w, h]; the sign is its board's four corners (top left, top right, bottom
+# right, bottom left: it hangs a little askew, and the type on it follows); the slot is [x, y, w] (the line a letter
+# vanishes at), the bell a point, the cat [x of its middle, y of its feet, height of the sitting pose]: it sits left of
+# the bicycle, a little larger than life so it can be tapped on a phone.
+SPOTS_RAW = {
+    "door": [691, 404, 224, 486],
+    "sign": [[1021, 421], [1257, 403], [1258, 506], [1022, 516]],
+    "slot": [1003, 623, 52],
+    "box": [966, 537, 137, 380],
+    "basket": [515, 560, 150, 152],
+    "bell": [482, 590],
+    "cat": [128, 926, 178],
+}
 
 
-def _panes(glass: np.ndarray) -> list[tuple[int, int, int, int]]:
-    """Bounding boxes (x0, y0, x1, y1) of the separate panes, biggest first (labelled on a small copy)."""
-    from collections import deque
-    k = 4
-    g = glass[::k, ::k].copy()
-    h, w = g.shape
+def raw_path(key: str) -> str:
+    return os.path.join(SCENE_DIR, f"{key}.raw.png")
+
+
+def draw(key: str) -> bool:
+    size, refs, subject = PARTS[key]
+    out = raw_path(key)
+    if os.path.exists(out):
+        os.remove(out)
+    t0 = time.time()
+    run_codex(PROMPT.format(size=size, subject=subject, style=STYLE, out=out), os.path.join(SCENE_DIR, "_work", key), 900,
+              [os.path.join(SCENE_DIR, r) for r in refs] + [STYLE_REF])
+    ok = os.path.exists(out)
+    print(f"  {key}: {'ok' if ok else 'failed'}  ({time.time() - t0:.0f}s)", flush=True)
+    return ok
+
+
+# ---- cutting
+
+def paper_of(a: np.ndarray) -> np.ndarray:
+    """The paper's colour: the median of the picture's edges."""
+    edge = np.concatenate([a[:8].reshape(-1, 3), a[-8:].reshape(-1, 3), a[:, :8].reshape(-1, 3), a[:, -8:].reshape(-1, 3)])
+    return np.median(edge, axis=0)
+
+
+def ink_of(a: np.ndarray, paper: np.ndarray) -> np.ndarray:
+    """How far each pixel is from the paper (0 = paper, 1 = surely drawn), a soft step over the paper's grain."""
+    d = np.sqrt(((a.astype(np.float32) - paper) ** 2).sum(-1))
+    d = ndimage.gaussian_filter(d, 1.2)
+    return np.clip((d - 9) / 14, 0, 1)
+
+
+def cover(raw: Image.Image):
+    """The cover cropped to what's drawn (and the spot where the cat will sit), its paper colour and the crop box."""
+    a = np.asarray(raw.convert("RGB"))
+    paper = paper_of(a)
+    ink = ink_of(a, paper) > 0.5
+    ink = ndimage.binary_opening(ink, iterations=2)
+    ys, xs = np.nonzero(ink)
+    h, w = ink.shape
+    cx, cy, ch = SPOTS_RAW["cat"]
+    x0, x1 = min(xs.min(), cx - ch * 0.6), max(xs.max(), cx + ch * 0.6)
+    y0, y1 = min(ys.min(), cy - ch), max(ys.max(), cy)
+    m = int(min(w, h) * 0.16)                              # room for the page to fade the paper's grain away
+    box = (int(x0 - m), int(y0 - m), int(x1 + m + 1), int(y1 + m + 1))
+    # where that runs past the drawing (the cat sits near its left edge), the paper goes on in its plain colour
+    canvas = Image.new("RGB", (box[2] - box[0], box[3] - box[1]), tuple(int(v) for v in paper))
+    canvas.paste(raw.convert("RGB"), (-box[0], -box[1]))
+    pic = canvas
+    content = (x0, y0, x1, y1)                             # what's drawn, which a narrow screen must keep whole
+    return pic, paper_of(np.asarray(pic)), box, content    # the page takes the paper as it is round the crop
+
+
+def spots(box, content) -> dict:
+    """SPOTS_RAW (and the drawn part, as a box) as fractions of the cropped cover."""
+    x0, y0, x1, y1 = box
+    W, H = x1 - x0, y1 - y0
+    fx, fy = (lambda v: round((v - x0) / W, 4)), (lambda v: round((v - y0) / H, 4))
+    a, b, c, d = content
+    out = {"content": [fx(a), fy(b), round((c - a) / W, 4), round((d - b) / H, 4)]}
+    for k, v in SPOTS_RAW.items():
+        if k == "sign":
+            out[k] = [[fx(x), fy(y)] for x, y in v]
+        elif k == "slot":
+            out[k] = [fx(v[0]), fy(v[1]), round(v[2] / W, 4)]
+        elif k == "bell":
+            out[k] = [fx(v[0]), fy(v[1])]
+        elif k == "cat":
+            out[k] = [fx(v[0]), fy(v[1]), round(v[2] / H, 4)]
+        else:
+            out[k] = [fx(v[0]), fy(v[1]), round(v[2] / W, 4), round(v[3] / H, 4)]
+    return out
+
+
+def sprites(raw: Image.Image, paper: np.ndarray):
+    """The cat sheet cut into its pieces, left to right, each an RGBA picture on nothing. The cat's white fur is close to
+    the paper, so the outline is found with a low threshold and then closed and filled: every piece is solid inside."""
+    a = np.asarray(raw.convert("RGB"))
+    d = np.sqrt(((a.astype(np.float32) - paper) ** 2).sum(-1))
+    d = ndimage.gaussian_filter(d, 1.5)
+    solid = ndimage.binary_closing(d > 7, iterations=5)
+    solid = ndimage.binary_fill_holes(solid)
+    solid = ndimage.binary_opening(solid, iterations=3)
+    lab, n = ndimage.label(solid)
+    sizes = ndimage.sum(solid, lab, range(1, n + 1))
+    keep = [i + 1 for i in np.argsort(sizes)[::-1][:4]]
     out = []
-    for y0 in range(h):
-        for x0 in range(w):
-            if not g[y0, x0]:
+    for k in keep:
+        sl = ndimage.find_objects((lab == k).astype(int))[0]
+        pad = 6
+        y0, x0 = max(0, sl[0].start - pad), max(0, sl[1].start - pad)
+        y1, x1 = min(a.shape[0], sl[0].stop + pad), min(a.shape[1], sl[1].stop + pad)
+        mask = ndimage.binary_erosion(lab[y0:y1, x0:x1] == k, iterations=1)
+        alpha = np.clip(ndimage.gaussian_filter(mask.astype(np.float32), 1.0) * 1.15, 0, 1)
+        rgba = np.dstack([a[y0:y1, x0:x1], (alpha * 255).round().astype(np.uint8)])
+        out.append((x0, Image.fromarray(rgba, "RGBA")))
+    return [im for _, im in sorted(out, key=lambda t: t[0])]
+
+
+def rebuild() -> None:
+    entry = {}
+    if os.path.exists(raw_path("cover")):
+        pic, paper, box, content = cover(Image.open(raw_path("cover")))
+        pic.save(os.path.join(SCENE_DIR, "cover.webp"), quality=90, method=6)
+        entry = {"cover": "scene/cover.webp", "w": pic.width, "h": pic.height, "paper": "#%02X%02X%02X" % tuple(int(v) for v in paper),
+                 "spots": spots(box, content), "v": int(os.path.getmtime(raw_path("cover")))}
+        print(f"cover {pic.size}, paper {entry['paper']}")
+    if os.path.exists(raw_path("cat")):
+        raw = Image.open(raw_path("cat"))
+        pieces = sprites(raw, paper_of(np.asarray(raw.convert("RGB"))))
+        names = [f"cat-{i + 1}" for i in range(len(pieces) - 1)] + ["letter"]
+        files = []
+        for name, im in zip(names, pieces):
+            im.save(os.path.join(SCENE_DIR, f"{name}.webp"), quality=92, method=6)
+            files.append({"key": name, "file": f"scene/{name}.webp", "w": im.width, "h": im.height})
+        entry["cat"] = [f for f in files if f["key"].startswith("cat")]
+        entry["letter"] = next((f for f in files if f["key"] == "letter"), None)
+        entry["catv"] = int(os.path.getmtime(raw_path("cat")))
+        print("pieces", [(f["key"], f["w"], f["h"]) for f in files])
+    with open(os.path.join(SCENE_DIR, "index.json"), "w", encoding="utf-8") as fh:
+        json.dump(entry, fh, ensure_ascii=False, indent=2)
+
+
+def main(args) -> None:
+    os.makedirs(SCENE_DIR, exist_ok=True)
+    if not args.rebuild:
+        for k in args.keys or list(PARTS):
+            if k not in PARTS:
+                print(f"  no part {k}", file=sys.stderr)
                 continue
-            q = deque([(y0, x0)]); g[y0, x0] = False
-            xs, ys, n = [x0, x0], [y0, y0], 0
-            while q:
-                y, x = q.popleft(); n += 1
-                xs = [min(xs[0], x), max(xs[1], x)]; ys = [min(ys[0], y), max(ys[1], y)]
-                for ny, nx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
-                    if 0 <= ny < h and 0 <= nx < w and g[ny, nx]:
-                        g[ny, nx] = False; q.append((ny, nx))
-            if n > 12:
-                out.append((n, (xs[0] * k, ys[0] * k, (xs[1] + 1) * k, (ys[1] + 1) * k)))
-    return [b for _, b in sorted(out, reverse=True)]
-
-
-def build(src: Image.Image):
-    """(picture RGBA, glass mask RGBA, panes as fractions of the picture [x, y, w, h], ink share)."""
-    dark, mag, cyn, glass = layers(src)
-    paper = dark | mag | cyn
-    ink = float(paper.mean())
-    ys, xs = np.nonzero(paper | glass)
-    if not len(xs):
-        return None, None, [], 0.0
-    pad = 6
-    x0, x1 = max(0, xs.min() - pad), min(paper.shape[1], xs.max() + pad + 1)
-    y0, y1 = max(0, ys.min() - pad), min(paper.shape[0], ys.max() + pad + 1)
-    cut = lambda m: m[y0:y1, x0:x1]
-    sd, sm, sc, sg = (_soft(cut(m)) for m in (dark, mag, cyn, glass))
-    alpha = np.clip(sd + sm + sc, 0, 1)
-    wsum = np.maximum(sd + sm + sc, 1e-4)
-    rgb = sum(s[..., None] * np.array(t, dtype=np.float32) for s, t in zip((sd, sm, sc), TONES)) / wsum[..., None]
-    pic = np.dstack([rgb, alpha * 255]).round().astype(np.uint8)
-    win = np.zeros(pic.shape, dtype=np.uint8)
-    win[..., :3] = 255
-    # the light runs a little under the frames, so no dark seam shows between glass and paper
-    wide = np.asarray(Image.fromarray((cut(glass) * 255).astype(np.uint8), "L").filter(ImageFilter.MaxFilter(7)), dtype=np.float32) / 255
-    win[..., 3] = (np.maximum(sg, _soft(wide > 0.5)) * 255).round().astype(np.uint8)
-    H, W = alpha.shape
-    panes = [[round((a - x0) / W, 4), round((b - y0) / H, 4), round((c - a) / W, 4), round((d - b) / H, 4)] for a, b, c, d in _panes(glass)]
-    pic, win = Image.fromarray(pic, "RGBA"), Image.fromarray(win, "RGBA")
-    k = MAX_SIDE / max(pic.size)
-    if k < 1:
-        size = (round(pic.width * k), round(pic.height * k))
-        pic, win = pic.resize(size, Image.LANCZOS), win.resize(size, Image.LANCZOS)
-    return pic, win, panes, ink
-
-
-def _mask_for(key: str):
-    need = next(p[2] for p in PARTS if p[0] == key)
-
-    def mask(raw: Image.Image):
-        pic, win, panes, ink = build(raw)
-        if pic is None or ink < 0.04 or ink > 0.75:
-            return None, f"ink covers {ink:.0%}"
-        if len(panes) < need:
-            return None, f"{len(panes)} pane(s) of glass, {need} wanted"
-        return pic, ""
-    return mask
-
-
-def _entry(it, p, file):
-    raw = os.path.join(SCENE_DIR, it[0] + ".raw.png")
-    pic, win, panes, _ = build(Image.open(raw))
-    e = {"key": it[0], "file": file, "w": pic.width, "h": pic.height, "panes": panes}
-    if it[0] in SIGNS:
-        e["sign"] = SIGNS[it[0]]
-    if panes:
-        win.save(os.path.join(SCENE_DIR, it[0] + ".win.png"), optimize=True)
-        e["win"] = f"scene/{it[0]}.win.png"
-    return e
-
-
-class SceneSet(CodexSet):
-    """Each part has its own glass count to pass, so the mask builder is picked per key."""
-
-    def generate(self, key: str) -> bool:
-        self.mask = _mask_for(key)
-        return super().generate(key)
-
-    def rebuild(self) -> None:
-        for k in self.keys:
-            raw = self.path_for(k, raw=True)
-            if os.path.exists(raw):
-                pic = build(Image.open(raw))[0]
-                if pic is not None:
-                    pic.save(self.path_for(k), optimize=True)
-        self.write_index()
-
-
-SET = SceneSet(SCENE_DIR, PARTS, what="scene part", mask=_mask_for("mailbox"), entry=_entry,
-               prompt=lambda it, out: PROMPT_TMPL.format(subject=it[1], out=out))
+            draw(k)
+    rebuild()

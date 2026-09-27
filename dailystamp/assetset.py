@@ -16,12 +16,16 @@ from typing import Callable
 from PIL import Image
 
 
-def run_codex(prompt: str, work: str, timeout: int) -> None:
-    """One non-interactive codex session with image generation, in its own work folder."""
+def run_codex(prompt: str, work: str, timeout: int, images: list[str] = ()) -> None:
+    """One non-interactive codex session with image generation, in its own work folder (images: pictures attached
+    to the prompt, for reference)."""
     os.makedirs(work, exist_ok=True)
     cmd = ["codex", "exec", "--skip-git-repo-check", "-s", "danger-full-access",
            "--enable", "image_generation", "-c", 'model_reasoning_effort="low"',
-           "-C", work, "-o", os.path.join(work, "last.txt"), prompt]
+           "-C", work, "-o", os.path.join(work, "last.txt")]
+    for im in images:
+        cmd += ["-i", im]
+    cmd += ["--", prompt]                              # -i takes several files: the prompt must not look like one
     try:
         subprocess.run(cmd, cwd=work, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                        stderr=subprocess.DEVNULL, timeout=timeout, check=False)
