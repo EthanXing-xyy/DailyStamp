@@ -123,7 +123,11 @@ const U = (() => {
       }
       g.getContext('2d').putImageData(id, 0, 0);
       grainCache.set(key, g);
-    }
+      // stamps share a handful of sizes; one-off big ones (an export, a page's sheet) must not stay for good:
+      // about 24 MB of grain at most, the oldest go first
+      let px = 0; for (const c of grainCache.values()) px += c.width * c.height;
+      for (const [k, c] of grainCache) { if (px <= 6e6 || grainCache.size <= 1) break; if (k === key) continue; px -= c.width * c.height; grainCache.delete(k); }
+    } else { grainCache.delete(key); grainCache.set(key, g); }
     ctx.save(); ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = alpha; ctx.drawImage(g, 0, 0); ctx.restore();
   }
 

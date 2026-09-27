@@ -355,8 +355,8 @@ const Home = (() => {
       const order = slots.slice().sort((p, q) => Math.abs(wrap(p.index - pos)) - Math.abs(wrap(q.index - pos)));
       for (const sl of order) {
         if (!sl.printed) {
-          const fr = render(sl.st, sc);
-          put(sl.cv, fr); sl.printed = fr;
+          // the slot's own canvas is the printed stamp (a second copy of every stamp was ~1 MB each a phone can't spare)
+          put(sl.cv, render(sl.st, sc)); sl.printed = sl.cv;
           tones(sl);                                        // the desk colour it gives, worked out now rather than mid-turn
         }
         if (onEach) onEach(sl.index, sl.printed);

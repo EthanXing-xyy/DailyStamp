@@ -48,7 +48,16 @@
       let out = null;
       const sc = clamp(h * Math.min(2, devicePixelRatio || 1) / Stamp.BH, 0.12, 0.5);
       if (Kit.thumbs[e.kind]) out = await Kit.thumbs[e.kind](e, sc, deps);
-      else if (e.image) { const img = await Kit.imageOf(e.image); if (img) { out = U.canvas(img.naturalWidth, img.naturalHeight); out.getContext('2d').drawImage(img, 0, 0); } }
+      else if (e.image) {
+        // pictures (a month's sheet, a zine) can be thousands of pixels: kept only as big as they are shown
+        const img = await Kit.imageOf(e.image);
+        if (img) {
+          const k = Math.min(1, h * Math.min(2, devicePixelRatio || 1) * 1.1 / Math.min(img.naturalHeight, img.naturalWidth * 1.25));
+          out = U.canvas(Math.max(1, Math.round(img.naturalWidth * k)), Math.max(1, Math.round(img.naturalHeight * k)));
+          const og = out.getContext('2d'); og.imageSmoothingQuality = 'high'; og.drawImage(img, 0, 0, out.width, out.height);
+          URL.revokeObjectURL(img.src);
+        }
+      }
       else if (e.st) {
         await deps.loadLeaflet(e.st.phrase);
         const fr = deps.makeFront(e.st, sc, { stages: true });
