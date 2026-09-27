@@ -1,0 +1,27 @@
+/* ---------- 刻章: a soapstone seal face, the characters to carve, cinnabar paste, rice paper */
+.se-stone { position: absolute; touch-action: none; cursor: crosshair; border-radius: 6%;
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--stone, #ddd) 70%, #000 30%), 0 16px 28px rgba(0,0,0,.28); overflow: hidden; }
+.se-stone.live { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cpath d='M4 28 L22 10 L27 5 L28 9 L10 27 Z' fill='%231d1d1f'/%3E%3Cpath d='M22 10 L27 5 L28 9 Z' fill='%23bbb'/%3E%3C/svg%3E") 4 28, crosshair; }
+.se-face, .se-chips { position: absolute; inset: 0; width: 100%; height: 100%; }
+.se-chips { pointer-events: none; }
+.se-form { position: absolute; display: grid; gap: 10px; justify-items: center; }
+#layer-seal .se-input { width: 100%; max-width: 240px; border: 0; border-bottom: 1.5px solid rgba(29,29,31,.5); background: transparent; border-radius: 0; outline: none;
+  text-align: center; font-family: "DS Phrase", serif; font-size: 30px; letter-spacing: .3em; padding: 4px 0 6px .3em; color: #1d1d1f; }
+#layer-seal .se-input::placeholder { color: rgba(29,29,31,.3); font-size: 20px; }
+.se-modes { display: flex; gap: 22px; }
+.se-modes .kit-btn::after { opacity: 0; }
+.se-modes .kit-btn.on::after { opacity: .6; }
+.se-sugg { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 10px; }
+.se-chip { border: 0; background: none; padding: 2px 4px; cursor: pointer; font-family: "DS CjkMed", sans-serif; font-size: 12px; letter-spacing: .2em;
+  color: rgba(29,29,31,.6); text-decoration: underline dotted rgba(29,29,31,.35); text-underline-offset: 4px; }
+.se-chip:hover { background: none; color: #1d1d1f; }
+.se-paper { position: absolute; cursor: pointer; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.18)) drop-shadow(0 14px 24px rgba(0,0,0,.14));
+  clip-path: polygon(0 1%, 12% 0, 30% .8%, 48% 0, 66% .6%, 84% 0, 100% .8%, 99.4% 30%, 100% 62%, 99.3% 100%, 70% 99.2%, 40% 100%, 12% 99.3%, 0 100%, .6% 66%, 0 33%); }
+.se-pad { position: absolute; border: 0; padding: 0; border-radius: 50%; cursor: pointer; background: #F4EEDF; display: grid; place-items: center;
+  box-shadow: 0 0 0 4px #1B1633, 0 10px 18px rgba(0,0,0,.25); transition: transform .2s, opacity .3s; opacity: .55; }
+.se-pad i { position: absolute; inset: 14%; border-radius: 50%; background: radial-gradient(circle at 38% 34%, #e0503f, #b02418 60%, #7e1710); }
+.se-pad span { position: relative; font-family: "DS Cjk", sans-serif; font-size: 12px; letter-spacing: .2em; color: #F4EEDF; }
+.se-pad.ready { opacity: 1; }
+.se-pad:hover { background: #F4EEDF; transform: scale(1.05); }
+.se-acts { position: absolute; display: flex; justify-content: center; gap: 28px; }
+@media (max-aspect-ratio: 1/1) { #layer-seal .se-input { font-size: 24px; } .se-form { gap: 6px; } .se-sugg { gap: 2px 8px; } }

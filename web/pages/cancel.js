@@ -57,8 +57,9 @@
     }
 
     // ---- stamping
-    const TYPES = [['round', 0.5], ['wave', 0.3], ['seal', 0.2]];
-    const pickType = () => { let r = Math.random(), a = 0; for (const [t, w] of TYPES) { a += w; if (r < a) return t; } return 'round'; };
+    // with a seal of your own carved in 刻章, it comes up too
+    const TYPES = () => Kit.mySeal() ? [['round', 0.4], ['wave', 0.2], ['seal', 0.15], ['mine', 0.25]] : [['round', 0.5], ['wave', 0.3], ['seal', 0.2]];
+    const pickType = () => { let r = Math.random(), a = 0; for (const [t, w] of TYPES()) { a += w; if (r < a) return t; } return 'round'; };
     let last = null;
     function strike(px, py, weight) {
       if (!top) return;
