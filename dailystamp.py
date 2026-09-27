@@ -8,7 +8,7 @@ the local codex CLI; the app itself never calls a model.
   python dailystamp.py words [词…] [--redo]       # draw the planned library words that have no emblem yet, then leaflets
   python dailystamp.py emblem "摆烂" --idea "…"   # one emblem into the library
   python dailystamp.py leaflets [词…]             # write missing leaflets (stamp backs)
-  python dailystamp.py terms | posters | backdrops [keys…]   # the fixed codex art sets
+  python dailystamp.py terms | posters | backdrops | scene [keys…]   # the fixed codex art sets
   python dailystamp.py masks [--force]            # pre-cut the emblems' ink masks for the web app
   python dailystamp.py fonts                      # subset the web fonts after any text changes
 """
@@ -81,6 +81,9 @@ COMMANDS = {
                 lambda a: mod("posters").SET.generate_missing(a.keys or None)),
     "backdrops": ("cut the home screen's big Matisse paper shapes (missing ones, or the given keys)", [
         (["--rebuild"], {"action": "store_true", "help": "only rebuild the masks from the raw drawings"}), KEYS], cmd_backdrops),
+    "scene": ("cut the loading screen's post office, street lamp and pillar box (missing ones, or the given keys)", [
+        (["--rebuild"], {"action": "store_true", "help": "only colour them again from the raw drawings"}), KEYS],
+        lambda a: mod("scene").SET.rebuild() if a.rebuild else mod("scene").SET.generate_missing(a.keys or None)),
     "masks": ("pre-cut the emblems' and term icons' ink masks and outlines for the web app (stale or missing ones)", [
         (["--force"], {"action": "store_true", "help": "cut them all again"})], lambda a: mod("cutmasks").build(a.force)),
     "fonts": ("subset the Chinese web fonts to WOFF2 (web/fonts/sub/), after the text or leaflets change", [],
