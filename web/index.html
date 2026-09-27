@@ -33,50 +33,65 @@
 <link rel="stylesheet" href="pages/flap.css">
 <link rel="stylesheet" href="pages/scratch.css">
 <style>
-/* the loading screen (web/loader.js): inline, so it is the very first thing painted. The post office at dusk: ink-blue
-   paper, the house, a street lamp and a pillar box cut out of darker paper (scene/, laid out by loader.js). The only warm
-   colour is light: the lamp comes up with the loading, the windows light when all is in, and a few of the home's real
-   stamps stand in the shop window. One thing moves at a time, and nothing bounces. */
-#loader { position: fixed; inset: 0; z-index: 1000; overflow: hidden; color: #F3EEE3; --ink: #141C31; --paper: #F3EEE3; --warm: #FFC978; --p: 0;
-  background: linear-gradient(#162035, #222D4B 58%, #313A5E);
-  display: grid; justify-items: center; align-items: start; padding-top: 9vh; user-select: none; -webkit-user-select: none; cursor: progress;
-  --row: min(46vw, 500px); --title: min(12vh, 9.5vw); }
-/* the paper's grain: a fine fractal noise, drawn by the browser at the screen's own resolution */
-#loader::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .16; mix-blend-mode: soft-light;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .9 0 0 0 0 .9 0 0 0 0 1 1.4 0 0 0 -.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 220px 220px; }
-/* ---- the scene, along the bottom; every part is placed in px by loader.js and the whole fades in once its pictures are in */
-.ld-scene { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .9s ease; }
+/* the loading screen (web/loader.js): inline, so it is the very first thing painted. Cream paper, the title up top and,
+   standing at the foot of the screen, the door of a small post office: a bicycle with a basket of letters, the red door
+   with its hanging sign, an old pillar box, a pot plant and a calico cat (scene/, drawn once by codex:
+   dailystamp/scene.py). Things can be played with while the press works: the cat changes pose, the bell rings, a letter
+   goes into the box. The sign shows how far the loading has got; when all is in it reads 营业中, warm light shows at
+   the door, and the door opens onto the app. Everything moves softly and once: nothing bounces, nothing blinks. */
+#loader { position: fixed; inset: 0; z-index: 1000; overflow: hidden; --ink: #2E2520; --paper: #EDE4D4; --door: #A5452F; --warm: #E9A95C;
+  color: var(--ink); background: var(--paper);
+  display: grid; justify-items: center; align-items: start; padding-top: 8vh; user-select: none; -webkit-user-select: none; cursor: progress;
+  --row: min(46vw, 500px); --title: min(10vh, 8.5vw); }
+@keyframes ld-fade { from { opacity: 0; } }
+/* ---- the door of the post office, sized by loader.js to the room left under the type; everything in it is placed in %
+   of the picture, so it only scales */
+.ld-scene { position: absolute; left: 0; top: 0; opacity: 0; transition: opacity .8s ease; }
 .ld-scene.on { opacity: 1; }
 .ld-scene > * { position: absolute; }
-.ld-scene img, .ld-scene div > i { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-/* the ground swells up from beyond both edges: never a level line */
-.ld-ground { border-radius: 50%; background: #111930; }
-.ld-glass { background: #1A2340; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; }
-.ld-lit { background: linear-gradient(#FFDFA3, #FFB964); -webkit-mask-size: 100% 100%; mask-size: 100% 100%; opacity: 0; transition: opacity 1s ease; }
-.ld-lamp .ld-lit { opacity: calc(.12 + .88 * var(--p)); transition: opacity .6s linear; }
-.ld-halo { border-radius: 50%; mix-blend-mode: screen; opacity: calc(.06 + .94 * var(--p)); transition: opacity .6s linear;
-  background: radial-gradient(closest-side, rgba(255,205,125,.62), rgba(255,190,105,.26) 34%, rgba(255,180,95,.08) 66%, rgba(255,180,95,0)); }
-.ld-pool { border-radius: 50%; mix-blend-mode: screen; opacity: calc(.7 * var(--p)); transition: opacity .6s linear;
-  background: radial-gradient(closest-side, rgba(255,200,120,.3), rgba(255,190,105,0)); }
-.ld-sign { position: absolute; display: grid; place-items: center; font-family: "DS LoadPhrase", serif; font-weight: normal; letter-spacing: .5em; padding-left: .5em;
-  color: #F3EEE3; opacity: .8; white-space: nowrap; }
-/* the shop window: a few stamps stood in it askew, dim until the light comes on */
-.ld-slots { position: absolute; z-index: 0; filter: brightness(.62) saturate(.8); transition: filter 1s ease; }
-.ld-slot { position: absolute; aspect-ratio: 4 / 5; }
-.ld-slot canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.ld-slot canvas.blank { filter: drop-shadow(0 1px 2px rgba(0,0,0,.45)); animation: ld-fade .6s ease both; }
-/* a stamp seeps onto its blank sheet: no drop, no turn */
-.ld-slot canvas.ink { animation: ld-ink .7s cubic-bezier(.2,.7,.2,1) both; }
-@keyframes ld-ink { from { opacity: 0; filter: blur(3px) saturate(.4); } }
-@keyframes ld-fade { from { opacity: 0; } }
-/* ---- the type, above the scene */
+/* the picture's paper has a grain the page hasn't: it fades out slowly towards the picture's (empty) edges */
+.ld-cover { inset: 0; width: 100%; height: 100%; display: block; pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, rgba(0,0,0,.35) 4%, rgba(0,0,0,.8) 8%, #000 12%, #000 88%, rgba(0,0,0,.8) 92%, rgba(0,0,0,.35) 96%, transparent), linear-gradient(transparent, rgba(0,0,0,.35) 6%, rgba(0,0,0,.8) 12%, #000 18%, #000 82%, rgba(0,0,0,.8) 88%, rgba(0,0,0,.35) 94%, transparent);
+  -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent, rgba(0,0,0,.35) 4%, rgba(0,0,0,.8) 8%, #000 12%, #000 88%, rgba(0,0,0,.8) 92%, rgba(0,0,0,.35) 96%, transparent), linear-gradient(transparent, rgba(0,0,0,.35) 6%, rgba(0,0,0,.8) 12%, #000 18%, #000 82%, rgba(0,0,0,.8) 88%, rgba(0,0,0,.35) 94%, transparent);
+  mask-composite: intersect; }
+/* behind the door: the lit room it opens onto */
+.ld-room { background: radial-gradient(120% 90% at 50% 100%, #F6CB86, #D9934E 70%, #B9743A); }
+/* the door itself, cut from the picture, turning inward on its left edge */
+.ld-door { background-repeat: no-repeat; transform-origin: 0 50%; transition: transform .75s cubic-bezier(.45,0,.2,1), filter .75s ease; }
+#loader.opening .ld-door { transform: perspective(700px) rotateY(72deg); filter: brightness(.72); }
+/* open for business: a warm line along the door's edge and a little light on the paper at its foot */
+.ld-crack { background: linear-gradient(transparent, var(--warm) 12%, var(--warm) 88%, transparent); opacity: 0; transition: opacity 1.2s ease; }
+.ld-glow { border-radius: 50%; background: radial-gradient(closest-side, rgba(233,169,92,.42), rgba(233,169,92,0)); opacity: 0; transition: opacity 1.4s ease; pointer-events: none; }
+#loader.ready .ld-crack { opacity: .85; }
+#loader.ready .ld-glow { opacity: 1; }
+/* the hanging sign: how far along, then 营业中, laid onto the board by loader.js */
+.ld-sign { left: 0; top: 0; transform-origin: 0 0; display: grid; place-items: center; color: #3A2C24; mix-blend-mode: multiply; pointer-events: none; }
+.ld-sign > * { grid-area: 1 / 1; white-space: nowrap; transition: opacity .6s ease; }
+.ld-pct { font-family: "DS LoadCaps", sans-serif; letter-spacing: .06em; padding-left: .06em; font-variant-numeric: tabular-nums; opacity: .8; }
+.ld-open { font-family: "DS LoadPhrase", serif; letter-spacing: .18em; padding-left: .18em; opacity: 0; }
+#loader.ready .ld-pct { opacity: 0; }
+#loader.ready .ld-open { opacity: .85; }
+/* the cat: its poses stacked, one showing */
+.ld-cat { pointer-events: none; }
+.ld-cat img { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity .6s ease; }
+.ld-cat img.on { opacity: 1; }
+/* a letter on its way to the box, and the bell's ring */
+.ld-letter { pointer-events: none; opacity: 0; will-change: transform; }
+.ld-ring { border: 1.5px solid var(--ink); border-color: transparent var(--ink) transparent transparent; border-radius: 50%; opacity: 0; pointer-events: none; }
+/* what can be tapped: a little more than the thing itself, and nothing drawn */
+/* (the studio's global button:hover would paint them dark: a tap leaves a phone "hovering") */
+.ld-hit, .ld-hit:hover, .ld-hit:active { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.ld-hit:focus-visible { outline: 0; }
+.ld-hit-door { cursor: default; }
+#loader.ready .ld-hit-door { cursor: pointer; }
+/* ---- the type, above the door */
 /* one track exactly as wide as the row, so a long line can't widen it and push the column off centre */
 .ld-main { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; width: var(--row); }
 /* letter-spaced lines carry the same amount as padding-left, so the type itself sits on the centre line */
 .ld-title { position: relative; margin: 0; font-family: "DS LoadPhrase", serif; font-weight: normal; line-height: 1;
   font-size: var(--title); letter-spacing: .16em; padding-left: .16em; white-space: nowrap; }
 .ld-sub { margin: calc(var(--title) * .26) 0 0; font-family: "DS LoadCaps", sans-serif; font-size: max(10px, min(1.6vh, 12px));
-  letter-spacing: .28em; padding-left: .28em; white-space: nowrap; opacity: .62; }
+  letter-spacing: .28em; padding-left: .28em; white-space: nowrap; opacity: .72; }
 /* under the date: what the press is doing on the left, how far on the right; the way in takes the same spot */
 .ld-foot { display: grid; width: 100%; margin-top: min(3.6vh, 28px); }
 .ld-foot > * { grid-area: 1 / 1; }
@@ -85,34 +100,33 @@
 .ld-say { margin: 0; font-family: "DS LoadPhrase", serif; font-size: max(13px, min(1.9vh, 15px)); letter-spacing: .2em; }
 .ld-say span { font-family: "DS LoadCaps", sans-serif; font-size: .86em; letter-spacing: .1em; margin-left: .7em; opacity: .62; }
 .ld-count { font-family: "DS LoadCaps", sans-serif; font-size: max(11px, min(1.7vh, 13px)); letter-spacing: .12em; margin-right: -.12em;
-  font-variant-numeric: tabular-nums; opacity: .62; }
-/* all in: the windows light, a postmark strikes the title once, then the way in fades up where the status line was */
+  font-variant-numeric: tabular-nums; opacity: .72; }
+/* all in and the last stroke down: a postmark strikes the title once, then the way in fades up where the status line was */
 .ld-mark { position: absolute; left: calc(50% + var(--title) * 1.72); top: calc(var(--title) * -.5); width: max(80px, calc(var(--title) * 1.02));
   aspect-ratio: 1; display: grid; place-content: center; justify-items: center; gap: 3px; border: 1.5px solid currentColor; border-radius: 50%;
-  transform: rotate(-12deg); opacity: 0; pointer-events: none; color: var(--warm); }
+  transform: rotate(-12deg); opacity: 0; pointer-events: none; color: var(--door); }
 .ld-mark::before { content: ""; position: absolute; inset: 4px; border: 1px solid currentColor; border-radius: 50%; }
 .ld-mark span { font-family: "DS LoadPhrase", serif; font-size: max(10px, calc(var(--title) * .12)); letter-spacing: .24em; padding-left: .24em; }
 .ld-mark b { font-family: "DS LoadCaps", sans-serif; font-weight: normal; font-size: max(16px, calc(var(--title) * .22)); line-height: 1;
   letter-spacing: .06em; padding: 3px 0 2px .06em; border-top: 1px solid; border-bottom: 1px solid; }
 .ld-go { justify-self: center; align-self: start; display: grid; justify-items: center; gap: 6px; padding: 15px 36px 13px; min-width: min(100%, 232px);
-  background: var(--paper); color: var(--ink); border: 0; border-radius: 4px; font: inherit; cursor: pointer; visibility: hidden; opacity: 0;
-  touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -10px rgba(255,200,120,.35);
+  background: var(--door); color: #F7F0E4; border: 0; border-radius: 4px; font: inherit; cursor: pointer; visibility: hidden; opacity: 0;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-shadow: 0 1px 2px rgba(60,30,20,.25), 0 12px 26px -14px rgba(120,50,30,.55);
   transition: transform .2s cubic-bezier(.2,.7,.2,1), box-shadow .2s; }
 .ld-go span { display: flex; align-items: center; gap: .5em; font-family: "DS LoadPhrase", serif; font-size: max(20px, min(2.9vh, 24px)); line-height: 1.1; }
 .ld-go b { font-weight: normal; letter-spacing: .24em; padding-left: .24em; }
 .ld-go i { font-style: normal; transition: transform .25s cubic-bezier(.2,.7,.2,1); }
-.ld-go small { font-family: "DS LoadCaps", sans-serif; font-size: 10px; letter-spacing: .32em; padding-left: .32em; opacity: .55; }
+.ld-go small { font-family: "DS LoadCaps", sans-serif; font-size: 10px; letter-spacing: .32em; padding-left: .32em; opacity: .7; }
 .ld-go:focus-visible { outline: 0; }
+#loader .ld-go:hover { background: var(--door); }
 #loader.ready { cursor: default; }
 #loader.ready .ld-row { opacity: 0; }
-#loader.ready .ld-house .ld-lit { opacity: 1; }
-#loader.ready .ld-slots { filter: none; }
-#loader.ready .ld-mark { opacity: .9; animation: ld-mark .2s .7s cubic-bezier(.2,.7,.2,1) both; }
+#loader.ready .ld-mark { opacity: .9; animation: ld-mark .2s .3s cubic-bezier(.2,.7,.2,1) both; }
 @keyframes ld-mark { from { opacity: 0; transform: rotate(-12deg) scale(1.07); } }
-#loader.ready .ld-go { visibility: visible; opacity: 1; animation: ld-go-in .5s 1.1s cubic-bezier(.2,.7,.2,1) both; }
+#loader.ready .ld-go { visibility: visible; opacity: 1; animation: ld-go-in .5s .7s cubic-bezier(.2,.7,.2,1) both; }
 @keyframes ld-go-in { from { opacity: 0; transform: translateY(6px); } }
 @media (hover: hover) { #loader.ready .ld-go:hover i { transform: translateX(4px); } }
-#loader.ready .ld-go:active, #loader.ready .ld-go.down { transform: translateY(1px); box-shadow: 0 1px 1px rgba(0,0,0,.3); transition-duration: .06s; }
+#loader.ready .ld-go:active, #loader.ready .ld-go.down { transform: translateY(1px); box-shadow: 0 1px 1px rgba(60,30,20,.3); transition-duration: .06s; }
 /* phone is portrait-only for now: the turn-sideways card is parked (see loader.js)
 #rotate { position: fixed; inset: 0; z-index: 1001; display: none; place-items: center; color: var(--ld-ink, #1B1633);
   background: radial-gradient(circle, var(--ld-dot, #E23C84) 26%, transparent 28%) 0 0 / 16px 16px, var(--ld-bg, #FF5FA2); }
@@ -129,13 +143,19 @@
 .rt-portrait { margin-top: 6px; background: none; border: 0; padding: 8px; color: inherit; font-family: "DS LoadPhrase", serif; font-size: 13px;
   letter-spacing: .12em; text-decoration: underline; text-underline-offset: 4px; opacity: .7; cursor: pointer; }
 */
+/* letters sent today, under the status line */
+.ld-sent { margin: 10px 0 0; font-family: "DS LoadPhrase", serif; font-size: max(12px, min(1.7vh, 14px)); letter-spacing: .16em; padding-left: .16em;
+  opacity: 0; transition: opacity .5s ease; }
+.ld-sent.on { opacity: .62; }
+.ld-sent b { font-family: "DS LoadCaps", sans-serif; font-weight: normal; margin: 0 .2em; }
 @media (prefers-reduced-motion: reduce) {
-  .ld-slot canvas.ink { animation: ld-fade .4s ease both; }
   #loader.ready .ld-mark, #loader.ready .ld-go { animation: ld-fade .4s ease both; }
+  .ld-door { transition: opacity .4s ease; }
+  #loader.opening .ld-door { transform: none; filter: none; opacity: 0; }
 }
 /* upright screens (a phone): a column as wide as the screen allows */
 @media (max-aspect-ratio: 1/1) {
-  #loader { --row: min(calc(100vw - 72px), 400px); --title: min(14vw, 10vh); padding-top: 10vh; }
+  #loader { --row: min(calc(100vw - 72px), 400px); --title: min(14vw, 10vh); padding-top: 9vh; }
   .ld-mark { left: auto; right: calc(var(--title) * -.08); top: calc(var(--title) * -.9); }
   .ld-go { min-width: 70%; }
 }
@@ -143,13 +163,17 @@
 </head>
 <body class="daily-opening">
 <div id="loader" aria-busy="true">
-  <div class="ld-scene" aria-hidden="true">
-    <i class="ld-ground"></i>
-    <i class="ld-pool"></i>
-    <div class="ld-lamp"><img alt=""><i class="ld-lit"></i></div>
-    <div class="ld-house"><i class="ld-glass"></i><i class="ld-lit"></i><div class="ld-slots"></div><img alt=""><b class="ld-sign">邮局</b></div>
-    <div class="ld-box"><img alt=""></div>
-    <i class="ld-halo"></i>
+  <div class="ld-scene">
+    <img class="ld-cover" alt="">
+    <i class="ld-room"></i><i class="ld-door"></i><i class="ld-crack"></i><i class="ld-glow"></i>
+    <b class="ld-sign" aria-hidden="true"><span class="ld-pct">0%</span><span class="ld-open">营业中</span></b>
+    <div class="ld-cat"></div>
+    <img class="ld-letter" alt=""><i class="ld-ring"></i><i class="ld-ring"></i>
+    <button class="ld-hit ld-hit-cat" type="button" tabindex="-1" aria-label="逗猫"></button>
+    <button class="ld-hit ld-hit-bell" type="button" tabindex="-1" aria-label="按车铃"></button>
+    <button class="ld-hit ld-hit-basket" type="button" tabindex="-1" aria-label="寄一封信"></button>
+    <button class="ld-hit ld-hit-box" type="button" tabindex="-1" aria-label="寄一封信"></button>
+    <button class="ld-hit ld-hit-door" type="button" tabindex="-1" aria-label="推门进入"></button>
   </div>
   <div class="ld-main">
     <h1 class="ld-title">每日一枚</h1>
@@ -159,6 +183,7 @@
       <div class="ld-row" role="progressbar" aria-label="正在印制每日一枚" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><p class="ld-say" aria-live="polite">上墨</p><span class="ld-count">0%</span></div>
       <button class="ld-go" type="button" disabled><span><b>进入邮局</b><i aria-hidden="true">→</i></span><small>TAP TO ENTER</small></button>
     </div>
+    <p class="ld-sent" aria-live="polite"></p>
   </div>
 </div>
 <!-- 转屏卡片：手机暂时只竖着看，先注释掉留着

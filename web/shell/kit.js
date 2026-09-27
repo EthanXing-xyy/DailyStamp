@@ -80,6 +80,21 @@ const Kit = (() => {
   }
   /** paper sliding / a squeegee: a soft hiss */
   function rustle(vol = 0.03, dur = 0.12) { burst({ f: 3200 + Math.random() * 1600, q: 0.5, dur, vol, attack: dur * 0.3 }); }
+  /** a bicycle bell: two strikes of a small bell (a few inharmonic partials, each dying away) */
+  function bell() {
+    buzz(6);
+    if (!actx) return;
+    const a = actx;
+    for (const [at, vol] of [[0, 0.09], [0.16, 0.07]]) {
+      const t = a.currentTime + at;
+      for (const [f, v, d] of [[2380, 1, 0.9], [3410, 0.55, 0.6], [5230, 0.3, 0.35], [7050, 0.15, 0.2]]) {
+        const o = a.createOscillator(), g = a.createGain();
+        o.type = 'sine'; o.frequency.value = f * (1 + (Math.random() - 0.5) * 0.004);
+        g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol * v, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+        o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + 0.02);
+      }
+    }
+  }
 
   // this visit's deal (Home.DEAL): stamps come out new on every reload, and stay put while the page is open
   const visit = Home.DEAL;
@@ -330,7 +345,7 @@ const Kit = (() => {
   /** a round button with a label; never a boxed rectangle */
   function button(parent, label, cls = '') { const b = el('button', 'kit-btn ' + cls, label); b.type = 'button'; parent.append(b); return b; }
 
-  return { DEBUG, debugRow, TAU, reduce, el, clamp, wait, two, put, visible, localDate, dayNo, addDays, hash, head, status, audio, buzz, crackle, thump, rustle,
+  return { DEBUG, debugRow, TAU, reduce, el, clamp, wait, two, put, visible, localDate, dayNo, addDays, hash, head, status, audio, buzz, crackle, thump, rustle, bell,
     visit, visitStamps, stampFor, card, issue, page, photoPlates, gum, watermark, save, blobOf, imageOf, button, drawMark, drawMarks, mySeal,
     thumbs: {} };   // thumbs[kind](entry, scale, deps): how the album draws works that are not plain stamps
 })();
