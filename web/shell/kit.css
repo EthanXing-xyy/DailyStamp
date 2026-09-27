@@ -37,3 +37,4 @@ body.daily-layer .layer.on { display: block; position: fixed; inset: 0; z-index:
 .kit-debug .kit-btn small { font-family: "DS CapsMed", "DS CjkMed", sans-serif; font-size: 9px; letter-spacing: .12em; opacity: .6; margin-right: .5em; }
 .kit-debug .kit-btn:hover { opacity: 1; }
 @media (max-aspect-ratio: 1/1) { .kit-debug { right: 12px; bottom: 40px; } }
+.kit-debug[hidden] { display: none; }

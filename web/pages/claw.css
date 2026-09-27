@@ -1,0 +1,29 @@
+/* ---------- 抓娃娃机: a flat pop cabinet, a stick, a big button, five coins, a prize door */
+.cw-box { position: absolute; filter: drop-shadow(0 18px 30px rgba(0,0,0,.26)); }
+.cw-machine { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cw-stick { position: absolute; touch-action: none; cursor: ew-resize; --tilt: 0deg; }
+.cw-stick::before { content: ""; position: absolute; left: 10%; right: 10%; bottom: 0; height: 26%; border-radius: 50%; background: #1B1633; }
+.cw-stick i { position: absolute; left: 50%; bottom: 12%; width: 14%; height: 70%; margin-left: -7%; border-radius: 3px; background: #d8d4cc; transform-origin: 50% 100%;
+  transform: rotate(var(--tilt)); transition: transform .12s; box-shadow: inset -2px 0 0 rgba(0,0,0,.2); }
+.cw-stick i::after { content: ""; position: absolute; left: 50%; top: -34%; width: 260%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #ff8a8a, #e0242c 55%, #9b1017); box-shadow: 0 2px 3px rgba(0,0,0,.35); }
+.cw-grab { position: absolute; border: 0; border-radius: 50%; cursor: pointer; color: #F4EEDF; font-family: "DS Phrase", serif; letter-spacing: .1em; padding: 0;
+  background: radial-gradient(circle at 38% 32%, #ffd66b, #f2a900 55%, #b67a00); box-shadow: 0 0 0 3px #1B1633, 0 5px 0 #1B1633, 0 9px 14px rgba(0,0,0,.3);
+  transition: transform .08s, box-shadow .08s; -webkit-tap-highlight-color: transparent; }
+.cw-grab:hover { background: radial-gradient(circle at 38% 32%, #ffe08a, #f7b21a 55%, #c08500); }
+.cw-grab:active { transform: translateY(4px); box-shadow: 0 0 0 3px #1B1633, 0 1px 0 #1B1633, 0 3px 6px rgba(0,0,0,.3); }
+.cw-grab:disabled { filter: grayscale(.7) brightness(.9); cursor: default; }
+.cw-coins { position: absolute; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+.cw-coins i { width: 17%; aspect-ratio: 1; border-radius: 50%; background: rgba(0,0,0,.25); box-shadow: inset 0 0 0 1px rgba(0,0,0,.3); }
+.cw-coins i.on { background: radial-gradient(circle at 36% 32%, #fff2a8, #f2c230 55%, #b98a10); box-shadow: 0 1px 1px rgba(0,0,0,.35); }
+.cw-prize { position: absolute; border: 0; padding: 0; border-radius: 3px 3px 8px 8px; background: #1B1633; cursor: default; overflow: hidden;
+  box-shadow: inset 0 3px 6px rgba(0,0,0,.6); --cap: #ff5fa2; }
+.cw-prize::after { content: ""; position: absolute; left: 50%; bottom: 8%; width: 58%; aspect-ratio: 1; transform: translate(-50%, 140%); border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,.7) 0 50%, var(--cap) 50% 100%); box-shadow: 0 0 0 2px #1B1633; transition: transform .5s cubic-bezier(.3,.7,.3,1); }
+.cw-prize.on { cursor: pointer; }
+.cw-prize.on::after { transform: translate(-50%, 0) rotate(-12deg); animation: cw-wiggle 1.4s ease-in-out .6s 3; }
+.cw-prize.open::after { transform: translate(-50%, -30%) rotate(200deg) scale(1.2); opacity: 0; transition: transform .4s ease-in, opacity .4s; }
+@keyframes cw-wiggle { 50% { transform: translate(-50%, 0) rotate(8deg); } }
+.cw-veil { position: absolute; inset: 0; z-index: 20; background: rgba(20,18,16,0); pointer-events: none; transition: background .4s; }
+.cw-veil.on { background: rgba(20,18,16,.4); pointer-events: auto; }
+.kit-card.cw-card { z-index: 22; }
