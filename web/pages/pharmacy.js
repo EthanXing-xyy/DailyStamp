@@ -12,7 +12,7 @@
     const pal = deps.palettes[Math.floor(day() * deps.palettes.length)];
     cab.style.setProperty('--body', pal.ink);
 
-    // ---- drawers: the library's words, in four cabinets (打工 / 心情 / 社交 / 网梗, dailycan/words.py) behind tabs on
+    // ---- drawers: the library's words, in four cabinets (打工 / 心情 / 社交 / 网梗, dailystamp/words.py) behind tabs on
     // the cabinet's top; each in the palette's four inks (none takes more than a quarter)
     const GROUPS = [['work', '打工', 'WORK'], ['mood', '心情', 'MOOD'], ['social', '社交', 'SOCIAL'], ['meme', '网梗', 'MEMES']];
     const groupOf = w => (GROUPS.some(([k]) => k === w.group) ? w.group : 'mood');

@@ -1,6 +1,13 @@
 // What the whole app shares: the stamp on the studio's desk (state), how it was opened (URL params), and where it is
 // (view: 'home', 'today', 'studio' or a page key). Other app/ files read and set these; nothing else holds them.
 const App = (() => {
+  // what this browser kept under the old names (dc-*, from when this was 每日一罐) moves to ds-* once
+  for (const store of ['localStorage', 'sessionStorage']) {
+    try {
+      const S = window[store];
+      for (const k of Object.keys(S)) if (k.startsWith('dc-')) { const n = 'ds-' + k.slice(3); if (S.getItem(n) === null) S.setItem(n, S.getItem(k)); S.removeItem(k); }
+    } catch (e) { /* storage off: nothing to move */ }
+  }
   const localDate = () => {
     const d = new Date(), pad = n => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;

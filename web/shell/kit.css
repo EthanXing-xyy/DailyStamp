@@ -10,10 +10,10 @@ body.daily-layer .layer.on { display: block; position: fixed; inset: 0; z-index:
   background: radial-gradient(120% 90% at 30% 15%, rgba(255,255,255,.10), rgba(0,0,0,.14)); }
 .layer .to-home { position: absolute; left: 20px; top: 16px; z-index: 30; color: #49443c; }
 .kit-head { position: absolute; left: 0; right: 0; top: 20px; text-align: center; pointer-events: none; z-index: 2; }
-.kit-kicker { margin: 0; font-family: "DC CapsMed", "DC CjkMed", sans-serif; font-size: 10px; letter-spacing: .34em; opacity: .78; }
-.kit-head h2 { display: block; margin: 8px 0 0; font-family: "DC Phrase", serif; font-weight: normal; font-size: clamp(26px, 4.4vh, 40px);
+.kit-kicker { margin: 0; font-family: "DS CapsMed", "DS CjkMed", sans-serif; font-size: 10px; letter-spacing: .34em; opacity: .78; }
+.kit-head h2 { display: block; margin: 8px 0 0; font-family: "DS Phrase", serif; font-weight: normal; font-size: clamp(26px, 4.4vh, 40px);
   line-height: 1.1; letter-spacing: .12em; text-transform: none; color: #1d1d1f; }
-.kit-status { position: absolute; margin: 0; text-align: center; font-family: "DC CapsMed", "DC CjkMed", sans-serif; font-size: 11px;
+.kit-status { position: absolute; margin: 0; text-align: center; font-family: "DS CapsMed", "DS CjkMed", sans-serif; font-size: 11px;
   letter-spacing: .24em; opacity: .72; pointer-events: none; transition: color .3s; }
 .kit-status.flash { color: #b0172f; opacity: .9; }
 .kit-card { position: absolute; perspective: 1800px; will-change: transform; cursor: pointer; z-index: 3; }
@@ -22,7 +22,7 @@ body.daily-layer .layer.on { display: block; position: fixed; inset: 0; z-index:
   filter: drop-shadow(1px 2px 1.5px rgba(0,0,0,.24)) drop-shadow(8px 18px 24px rgba(0,0,0,.18)); }
 .kit-face.front { transform: rotateY(180deg); }
 /* buttons on the desk: ink words with a hand-drawn underline swash, never a boxed rectangle */
-.kit-btn { position: relative; border: 0; background: none; color: #1d1d1f; padding: 8px 6px 10px; font-family: "DC Cjk", sans-serif; font-size: 14px;
+.kit-btn { position: relative; border: 0; background: none; color: #1d1d1f; padding: 8px 6px 10px; font-family: "DS Cjk", sans-serif; font-size: 14px;
   letter-spacing: .24em; cursor: pointer; border-radius: 0; }
 .kit-btn::after { content: ""; position: absolute; left: 4px; right: 4px; bottom: 3px; height: 7px; border-radius: 60% 40% 55% 45%;
   background: var(--swash, #ff5fa2); opacity: .55; transform: rotate(-2deg); transition: opacity .2s, transform .2s; z-index: -1; }
@@ -34,6 +34,6 @@ body.daily-layer .layer.on { display: block; position: fixed; inset: 0; z-index:
 .kit-debug { position: absolute; right: 18px; bottom: 14px; z-index: 30; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px 16px;
   max-width: calc(100% - 36px); }
 .kit-debug .kit-btn { --swash: #9f9684; font-size: 12px; letter-spacing: .16em; opacity: .78; }
-.kit-debug .kit-btn small { font-family: "DC CapsMed", "DC CjkMed", sans-serif; font-size: 9px; letter-spacing: .12em; opacity: .6; margin-right: .5em; }
+.kit-debug .kit-btn small { font-family: "DS CapsMed", "DS CjkMed", sans-serif; font-size: 9px; letter-spacing: .12em; opacity: .6; margin-right: .5em; }
 .kit-debug .kit-btn:hover { opacity: 1; }
 @media (max-aspect-ratio: 1/1) { .kit-debug { right: 12px; bottom: 40px; } }

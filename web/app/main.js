@@ -22,7 +22,7 @@
   if (view === 'home') document.body.classList.add('daily-home');
   if (view === 'studio') document.body.classList.remove('daily-opening');
   // the landing title fades in once its own face is in, instead of swapping glyphs from a fallback font
-  document.fonts.load('40px "DC Phrase"', '每日一枚').catch(() => {}).then(() => document.body.classList.add('daily-head'));
+  document.fonts.load('40px "DS Phrase"', '每日一枚').catch(() => {}).then(() => document.body.classList.add('daily-head'));
 
   // tapping the stamp in the middle of the home carousel flies it onto its page; back flies it home
   App.homeView = useOpening ? Home.mount($('home'), { onOpen: sl => Router.open(sl) }) : null;

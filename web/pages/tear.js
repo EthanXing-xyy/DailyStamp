@@ -3,7 +3,7 @@
 // leaves fibres on both edges, crackles and buzzes), then flies clear and turns over to print. The hole it leaves shows a
 // piece of the poster; 32 days clear the pane and the whole poster, then a new pane lies on a new poster.
 const Tear = (() => {
-  const COLS = 8, ROWS = 4, N = COLS * ROWS, KEY = 'dc-tear', TAU = Math.PI * 2;
+  const COLS = 8, ROWS = 4, N = COLS * ROWS, KEY = 'ds-tear', TAU = Math.PI * 2;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const params = new URLSearchParams(location.search);
   const FREE = params.has('tearfree');                    // test: no one-a-day limit

@@ -31,9 +31,9 @@
 /* one track exactly as wide as the row, so a long line can't widen it and push the column off centre */
 .ld-main { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; width: var(--row); }
 /* letter-spaced lines carry the same amount as padding-left, so the type itself sits on the centre line */
-.ld-title { position: relative; margin: 0; font-family: "DC LoadPhrase", serif; font-weight: normal; line-height: 1;
+.ld-title { position: relative; margin: 0; font-family: "DS LoadPhrase", serif; font-weight: normal; line-height: 1;
   font-size: var(--title); letter-spacing: .16em; padding-left: .16em; white-space: nowrap; }
-.ld-sub { margin: calc(var(--title) * .26) 0 0; font-family: "DC LoadCaps", sans-serif; font-size: max(10px, min(1.6vh, 12px));
+.ld-sub { margin: calc(var(--title) * .26) 0 0; font-family: "DS LoadCaps", sans-serif; font-size: max(10px, min(1.6vh, 12px));
   letter-spacing: .28em; padding-left: .28em; white-space: nowrap; opacity: .62; }
 .ld-slots { display: flex; justify-content: center; gap: var(--sg); margin-top: min(7vh, 56px); }
 .ld-slot { position: relative; width: var(--sw); aspect-ratio: 4 / 5; }
@@ -47,26 +47,26 @@
 .ld-foot > * { grid-area: 1 / 1; }
 .ld-row { align-self: start; display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
   transition: opacity .3s ease; }
-.ld-say { margin: 0; font-family: "DC LoadPhrase", serif; font-size: max(13px, min(1.9vh, 15px)); letter-spacing: .2em; }
-.ld-say span { font-family: "DC LoadCaps", sans-serif; font-size: .86em; letter-spacing: .1em; margin-left: .7em; opacity: .62; }
-.ld-count { font-family: "DC LoadCaps", sans-serif; font-size: max(11px, min(1.7vh, 13px)); letter-spacing: .12em; margin-right: -.12em;
+.ld-say { margin: 0; font-family: "DS LoadPhrase", serif; font-size: max(13px, min(1.9vh, 15px)); letter-spacing: .2em; }
+.ld-say span { font-family: "DS LoadCaps", sans-serif; font-size: .86em; letter-spacing: .1em; margin-left: .7em; opacity: .62; }
+.ld-count { font-family: "DS LoadCaps", sans-serif; font-size: max(11px, min(1.7vh, 13px)); letter-spacing: .12em; margin-right: -.12em;
   font-variant-numeric: tabular-nums; opacity: .62; }
 /* printed: a postmark strikes the title once, then the way in fades up where the status line was */
 .ld-mark { position: absolute; left: calc(50% + var(--title) * 1.72); top: calc(var(--title) * -.5); width: max(80px, calc(var(--title) * 1.02));
   aspect-ratio: 1; display: grid; place-content: center; justify-items: center; gap: 3px; border: 1.5px solid var(--ink); border-radius: 50%;
   transform: rotate(-12deg); opacity: 0; pointer-events: none; mix-blend-mode: multiply; }
 .ld-mark::before { content: ""; position: absolute; inset: 4px; border: 1px solid var(--ink); border-radius: 50%; }
-.ld-mark span { font-family: "DC LoadPhrase", serif; font-size: max(10px, calc(var(--title) * .12)); letter-spacing: .24em; padding-left: .24em; }
-.ld-mark b { font-family: "DC LoadCaps", sans-serif; font-weight: normal; font-size: max(16px, calc(var(--title) * .22)); line-height: 1;
+.ld-mark span { font-family: "DS LoadPhrase", serif; font-size: max(10px, calc(var(--title) * .12)); letter-spacing: .24em; padding-left: .24em; }
+.ld-mark b { font-family: "DS LoadCaps", sans-serif; font-weight: normal; font-size: max(16px, calc(var(--title) * .22)); line-height: 1;
   letter-spacing: .06em; padding: 3px 0 2px .06em; border-top: 1px solid; border-bottom: 1px solid; }
 .ld-go { justify-self: center; align-self: start; display: grid; justify-items: center; gap: 6px; padding: 15px 36px 13px; min-width: min(100%, 232px);
   background: var(--ink); color: #F3EEE3; border: 0; border-radius: 4px; font: inherit; cursor: pointer; visibility: hidden; opacity: 0;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-shadow: 0 1px 2px rgba(27,22,51,.18), 0 8px 24px -10px rgba(27,22,51,.45);
   transition: transform .2s cubic-bezier(.2,.7,.2,1), box-shadow .2s; }
-.ld-go span { display: flex; align-items: center; gap: .5em; font-family: "DC LoadPhrase", serif; font-size: max(20px, min(2.9vh, 24px)); line-height: 1.1; }
+.ld-go span { display: flex; align-items: center; gap: .5em; font-family: "DS LoadPhrase", serif; font-size: max(20px, min(2.9vh, 24px)); line-height: 1.1; }
 .ld-go b { font-weight: normal; letter-spacing: .24em; padding-left: .24em; }
 .ld-go i { font-style: normal; transition: transform .25s cubic-bezier(.2,.7,.2,1); }
-.ld-go small { font-family: "DC LoadCaps", sans-serif; font-size: 10px; letter-spacing: .32em; padding-left: .32em; opacity: .55; }
+.ld-go small { font-family: "DS LoadCaps", sans-serif; font-size: 10px; letter-spacing: .32em; padding-left: .32em; opacity: .55; }
 .ld-go:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 5px; }
 #loader.ready { cursor: default; }
 #loader.ready .ld-row { opacity: 0; }
@@ -87,10 +87,10 @@
   margin-bottom: 14px; animation: rt-turn 2.6s cubic-bezier(.6,0,.3,1) infinite; }
 .rt-phone i { position: absolute; left: 50%; bottom: 6px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--ld-ink); }
 @keyframes rt-turn { 0%, 25% { transform: rotate(0); } 55%, 90% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
-.rt-head { margin: 0; font-family: "DC LoadPhrase", serif; font-size: 28px; letter-spacing: .1em; }
-.rt-en { margin: 0; font-family: "DC LoadCaps", sans-serif; font-size: 11px; letter-spacing: .36em; }
-.rt-say { margin: 8px 0 0; font-family: "DC LoadPhrase", serif; font-size: 14px; letter-spacing: .08em; opacity: .8; text-wrap: balance; }
-.rt-portrait { margin-top: 6px; background: none; border: 0; padding: 8px; color: inherit; font-family: "DC LoadPhrase", serif; font-size: 13px;
+.rt-head { margin: 0; font-family: "DS LoadPhrase", serif; font-size: 28px; letter-spacing: .1em; }
+.rt-en { margin: 0; font-family: "DS LoadCaps", sans-serif; font-size: 11px; letter-spacing: .36em; }
+.rt-say { margin: 8px 0 0; font-family: "DS LoadPhrase", serif; font-size: 14px; letter-spacing: .08em; opacity: .8; text-wrap: balance; }
+.rt-portrait { margin-top: 6px; background: none; border: 0; padding: 8px; color: inherit; font-family: "DS LoadPhrase", serif; font-size: 13px;
   letter-spacing: .12em; text-decoration: underline; text-underline-offset: 4px; opacity: .7; cursor: pointer; }
 */
 @media (prefers-reduced-motion: reduce) {
@@ -177,7 +177,7 @@
   <section class="actions">
     <button id="dl-front">下载正面 PNG</button>
     <button id="dl-back">下载背面 PNG</button>
-    <button id="save">存入 cans/</button>
+    <button id="save">存入 exports/</button>
     <button id="to-sheet" class="primary">贴进整版</button>
   </section>
 </aside>

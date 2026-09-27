@@ -5,7 +5,7 @@
 .post-face canvas { display: block; }
 .post-front { transform: rotateY(180deg); }
 .post-msg, .post-to { position: absolute; border: 0; outline: none; resize: none; background: transparent; color: #1f2a55; padding: 0;
-  font-family: "DC Brand", "STXingkai", serif; line-height: 1.38; overflow: hidden; }
+  font-family: "DS Brand", "STXingkai", serif; line-height: 1.38; overflow: hidden; }
 .post-msg { left: 5%; top: 17%; width: 46%; height: 72%; font-size: calc(64px * var(--k, .5)); line-height: calc(88px * var(--k, .5)); }
 .post-to { left: 60%; top: 54%; width: 34%; height: 30%; font-size: calc(58px * var(--k, .5)); line-height: calc(84px * var(--k, .5)); }
 .post-msg::placeholder, .post-to::placeholder { color: rgba(31,42,85,.32); }

@@ -75,7 +75,7 @@ const Print = (() => {
     return f;
   }
 
-  /** the masks and outlines `python dailycan.py masks` cut ahead of time (<prefix>.r/.g/.b/.s<grow>.png): with them on
+  /** the masks and outlines `python dailystamp.py masks` cut ahead of time (<prefix>.r/.g/.b/.s<grow>.png): with them on
    *  obj.cut, channelMasks and silhouette are lookups instead of seconds of pixel work. Resolves false if any is missing. */
   async function loadCut(obj, prefix, grows, v) {
     const names = ['r', 'g', 'b', ...grows.map(g => 's' + g)];

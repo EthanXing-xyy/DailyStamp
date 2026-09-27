@@ -5,7 +5,7 @@
 // postmark (date and solar term) strikes the title once and the way in (进入邮局 →) fades up where the status was; the
 // app opens only on its tap, the iris closing on the button. One thing moves at a time and nothing bounces: the user
 // found a screen of bobbing, springing parts on a Ben-Day field cheap.
-// Every string shown here lives in this file or index.html: `python dailycan.py fonts` cuts the loader's tiny fonts from them.
+// Every string shown here lives in this file or index.html: `python dailystamp.py fonts` cuts the loader's tiny fonts from them.
 // Digits and signs for the date and count: 0123456789 . / % →
 // The postmark can carry any solar term, so their names are listed here for the font cut:
 // 立春雨水惊蛰春分清明谷雨立夏小满芒种夏至小暑大暑立秋处暑白露秋分寒露霜降立冬小雪大雪冬至小寒大寒
@@ -153,7 +153,7 @@ const Loader = (() => {
   const rot = document.getElementById('rotate');
   const upright = matchMedia('(pointer: coarse) and (orientation: portrait) and (max-width: 600px)');
   let portraitOk = false;
-  try { portraitOk = sessionStorage.getItem('dc-portrait') === '1'; } catch {}
+  try { portraitOk = sessionStorage.getItem('ds-portrait') === '1'; } catch {}
   function rotateCard() {
     if (!rot) return;
     const want = upright.matches && !portraitOk;
@@ -171,7 +171,7 @@ const Loader = (() => {
     });
     rot.querySelector('.rt-portrait').addEventListener('click', e => {
       e.stopPropagation();
-      portraitOk = true; try { sessionStorage.setItem('dc-portrait', '1'); } catch {}
+      portraitOk = true; try { sessionStorage.setItem('ds-portrait', '1'); } catch {}
       rotateCard();
     });
     upright.addEventListener('change', rotateCard);

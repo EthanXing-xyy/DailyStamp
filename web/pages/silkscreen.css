@@ -21,7 +21,7 @@
 .sk-pick:hover { background: none; opacity: 1; transform: scale(1.08); }
 .sk-pick.on { opacity: 1; transform: scale(1.12); filter: drop-shadow(0 3px 5px rgba(0,0,0,.3)); }
 .sk-pick canvas, .sk-pick img { width: 100%; height: 100%; display: block; }
-.sk-note { margin: 0; font-family: "DC CjkMed", sans-serif; font-size: 10px; letter-spacing: .2em; opacity: .5; }
+.sk-note { margin: 0; font-family: "DS CjkMed", sans-serif; font-size: 10px; letter-spacing: .2em; opacity: .5; }
 @media (max-aspect-ratio: 1/1) { .sk-src { flex-wrap: nowrap; overflow-x: auto; max-height: none; padding: 4px 6px; margin: -4px -6px; } .sk-pick { flex: none; } }
 @media (max-height: 560px) and (min-aspect-ratio: 1/1) { .sk-side { gap: 8px; } .sk-pick { width: 38px; height: 38px; } .sk-src { max-height: 34vh; } }
 @media (max-height: 380px) and (min-aspect-ratio: 1/1) { .sk-note { display: none; } }

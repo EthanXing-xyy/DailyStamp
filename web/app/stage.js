@@ -320,7 +320,7 @@ const Stage = (() => {
   });
 
   // ---------- the sheet (localStorage)
-  const KEY = 'dc-sheet';
+  const KEY = 'ds-sheet';
   const loadSheet = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { return []; } };
   const saveSheet = items => { try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) { $('stage-note').textContent = '整版存不下了（localStorage 已满）'; } };
   function drawSheet() {

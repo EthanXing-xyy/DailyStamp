@@ -1,6 +1,6 @@
 // The 24 solar terms (节气): which one a date falls in, and their icons (channel masks drawn once by codex, in terms/).
 const Terms = (() => {
-  // from 立春 (sun at 315°); keys match dailycan/terms.py
+  // from 立春 (sun at 315°); keys match dailystamp/terms.py
   const LIST = [['01-lichun', '立春'], ['02-yushui', '雨水'], ['03-jingzhe', '惊蛰'], ['04-chunfen', '春分'], ['05-qingming', '清明'], ['06-guyu', '谷雨'],
     ['07-lixia', '立夏'], ['08-xiaoman', '小满'], ['09-mangzhong', '芒种'], ['10-xiazhi', '夏至'], ['11-xiaoshu', '小暑'], ['12-dashu', '大暑'],
     ['13-liqiu', '立秋'], ['14-chushu', '处暑'], ['15-bailu', '白露'], ['16-qiufen', '秋分'], ['17-hanlu', '寒露'], ['18-shuangjiang', '霜降'],

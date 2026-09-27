@@ -21,7 +21,7 @@
     async function load() {
       // stamps torn before the album existed come in from 撕一张's own record
       try {
-        const t = JSON.parse(localStorage.getItem('dc-tear') || 'null');
+        const t = JSON.parse(localStorage.getItem('ds-tear') || 'null');
         if (t && t.torn) for (const x of t.torn) if (x.st) await deps.album.add({ id: `tear:${t.pane}:${x.cell}`, kind: 'tear', date: x.date, st: x.st }, { keep: true });
       } catch (e) { /* nothing to bring in */ }
       const all = (await deps.album.all()).sort((a, b) => (a.date + a.added).localeCompare(b.date + b.added) || a.added - b.added);
