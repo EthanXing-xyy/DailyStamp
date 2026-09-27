@@ -21,6 +21,10 @@ const Assets = (() => {
       if (e.img && c && c.from === e.created) {
         await Print.loadCut(e, '/emblems/cut/' + encodeURIComponent(e.id), c.grows, e.created);
         if (c.thumb) e.thumb = `/emblems/cut/${encodeURIComponent(e.id)}.t.png?v=${encodeURIComponent(e.created)}`;   // the silk-screen picker's
+        if (c.mini) {                                      // the studio's emblem buttons (Print.miniMasks)
+          const m = new Image(); m.src = `/emblems/cut/${encodeURIComponent(e.id)}.m.png?v=${encodeURIComponent(e.created)}`;
+          try { await new Promise((ok, no) => { m.onload = ok; m.onerror = no; }); e.mini = m; } catch {}
+        }
       }
     }));
   }

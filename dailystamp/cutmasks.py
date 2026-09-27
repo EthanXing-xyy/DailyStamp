@@ -6,6 +6,9 @@ image, a flood fill, a blur), seconds of work on a phone. They are cut here once
   emblems/cut/<id>.s0.028.png .s0.05.png the die-cut outline at those grows (web/print.js silhouette)
   emblems/cut/<id>.t.png                 a small ready-coloured picture for the silk-screen picker (p-silk.js), so the
                                          page never decodes four 1024 px plates per word just to show a 46 px button
+  emblems/cut/<id>.m.png                 the studio's emblem buttons, recoloured with every palette: MINI px masks side
+                                         by side, R/G/B = ink/accent/band on the left, the 0.028 outline on the right.
+                                         Decoding 64 words' 1024 px plates for them ran iPhone Safari out of memory.
   terms/cut/<key>.*.png                  the same for the solar-term icons (grows 0.02, 0.028 and 0.05)
 
 cut/index.json records what each was cut from (the emblem's `created`, the icon's mtime), so the page ignores a stale cut
@@ -27,6 +30,7 @@ TERM_GROWS = (0.02, 0.028, 0.05)
 THUMB = 144                                                 # px; the picker button is 46 CSS px
 # the picker's inks, as p-silk.js used to tint them: paper outline, band, accent, key
 THUMB_INKS = ((244, 238, 223), (35, 213, 232), (255, 46, 136), (17, 17, 17))
+MINI = 128                                                  # px; the studio's emblem button draws its emblem at 97
 
 
 def channels(path: str) -> list[np.ndarray]:
@@ -87,6 +91,15 @@ def thumb(src: str, path: str) -> None:
     Image.fromarray(rgba, "RGBA").resize((THUMB, THUMB), Image.LANCZOS).save(path, optimize=True)
 
 
+def mini(src: str, path: str) -> None:
+    """the three channels and the 0.028 outline at MINI px, packed in one opaque RGB picture twice as wide"""
+    r, g, b = channels(src)
+    small = lambda m: np.asarray(Image.fromarray(m).resize((MINI, MINI), Image.LANCZOS))
+    left = np.stack([small(m.astype(np.uint8) * 255) for m in (r, g, b)], -1)
+    right = np.repeat(small(outline([r, g, b], 0.028))[..., None], 3, -1)
+    Image.fromarray(np.concatenate([left, right], 1), "RGB").save(path, optimize=True)
+
+
 def _index(folder: str) -> dict:
     p = os.path.join(folder, "cut", "index.json")
     try:
@@ -102,7 +115,7 @@ def _write_index(folder: str, idx: dict) -> None:
 
 
 def _emblem_rec(entry: dict) -> dict:
-    return {"from": entry.get("created", ""), "grows": list(EMBLEM_GROWS), "thumb": True}
+    return {"from": entry.get("created", ""), "grows": list(EMBLEM_GROWS), "thumb": True, "mini": True}
 
 
 def cut_emblem(entry: dict, idx: dict | None = None) -> None:
@@ -112,6 +125,7 @@ def cut_emblem(entry: dict, idx: dict | None = None) -> None:
     src, prefix = os.path.join(ROOT, entry["file"]), os.path.join(EMBLEMS, "cut", entry["id"])
     cut(src, prefix, EMBLEM_GROWS)
     thumb(src, prefix + ".t.png")
+    mini(src, prefix + ".m.png")
     idx[entry["id"]] = _emblem_rec(entry)
     if own:
         _write_index(EMBLEMS, idx)
@@ -133,6 +147,11 @@ def build(force: bool = False) -> None:
     idx = _index(EMBLEMS)
     todo = [e for e in list_emblems() if e.get("status") == "ready" and (force or idx.get(e["id"], {}) != _emblem_rec(e))]
     for e in todo:
+        bare = lambda rec: {k: v for k, v in rec.items() if k != "mini"}
+        if not force and bare(idx.get(e["id"], {})) == bare(_emblem_rec(e)):     # cut before there were minis: just add one
+            mini(os.path.join(ROOT, e["file"]), os.path.join(EMBLEMS, "cut", e["id"] + ".m.png"))
+            idx[e["id"]] = _emblem_rec(e)
+            continue
         cut_emblem(e, idx)
     idx = {k: v for k, v in idx.items() if any(e["id"] == k for e in list_emblems())}
     os.makedirs(os.path.join(EMBLEMS, "cut"), exist_ok=True)

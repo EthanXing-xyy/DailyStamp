@@ -90,6 +90,26 @@ const Print = (() => {
     } catch { return false; }
   }
 
+  /** the emblem's ink, accent and band masks and its 0.028 outline at `size` px, from its 128 px mini (emblems/cut/<id>.m.png:
+   *  the channels as R/G/B on the left, the outline on the right), or null without one. For buttons: the studio drew
+   *  its 64 emblem buttons from the 1024 px plates, a gigabyte of decoded images that made iPhone Safari reload the tab. */
+  function miniMasks(emblem, size) {
+    const m = emblem.mini; if (!m || !m.naturalWidth) return null;
+    const S = m.naturalHeight, src = U.canvas(S * 2, S), sg = src.getContext('2d', { willReadFrequently: true });
+    sg.drawImage(m, 0, 0);
+    const d = sg.getImageData(0, 0, S * 2, S).data;
+    return [0, 1, 2, 3].map(k => {
+      const c = U.canvas(S, S), g = c.getContext('2d'), id = g.createImageData(S, S), o = id.data;
+      for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+        const i = (y * S + x) * 4, j = (y * S * 2 + x + (k === 3 ? S : 0)) * 4;
+        o[i + 3] = d[j + (k === 3 ? 0 : k)];
+      }
+      g.putImageData(id, 0, 0);
+      if (!size || size === S) return c;
+      const r = U.canvas(size, size); r.getContext('2d').drawImage(c, 0, 0, size, size); return r;
+    });
+  }
+
   /** Ben-Day dot field inside a circle. `gradient` (0..1) grows the dots toward the upper-left like a lit sphere. */
   function dotDisc(ctx, cx, cy, R, color, cell, gradient = 0.7, angle = Math.PI / 4) {
     ctx.save();
@@ -124,5 +144,5 @@ const Print = (() => {
   // deterministic PRNG
   function rng(seed) { let s = (seed * 2654435761) >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
 
-  return { channelMasks, loadCut, tinted, silhouette, dotDisc, fallbackEmblem, rng };
+  return { channelMasks, miniMasks, loadCut, tinted, silhouette, dotDisc, fallbackEmblem, rng };
 })();

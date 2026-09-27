@@ -271,12 +271,14 @@ const Stage = (() => {
     const cv = U.canvas(size, size), g = cv.getContext('2d');
     g.fillStyle = Stamp.PAPER; g.fillRect(0, 0, size, size);
     if (e) {
-      const [mInk, mAcc, mBand] = Print.channelMasks(e);
       const c = Colors.roles(pal, state.shift), o = size * 0.12, s = Math.round(size * 0.76);
+      // from the emblem's 128 px mini: the 1024 px plates of all 64 words decoded at once are what iOS kills the tab over
+      const mini = Print.miniMasks(e);
+      const [mInk, mAcc, mBand, mSil] = mini || [...Print.channelMasks(e), Print.silhouette(e, 0.028)];
       // each plate is tinted at thumbnail size, not at the emblem's 1024 px
       const tint = (m, col) => { const t = U.canvas(s, s), tg = t.getContext('2d'); tg.drawImage(m, 0, 0, s, s); tg.globalCompositeOperation = 'source-in'; tg.fillStyle = col; tg.fillRect(0, 0, s, s); return t; };
       g.fillStyle = c[0]; g.beginPath(); g.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2); g.fill();
-      g.drawImage(tint(Print.silhouette(e, 0.028), Stamp.PAPER), o, o);
+      g.drawImage(tint(mSil, Stamp.PAPER), o, o);
       for (const [m, col] of [[mBand, c[1]], [mAcc, c[2]], [mInk, pal.ink]]) g.drawImage(tint(m, col), o, o);
     }
     return cv;
