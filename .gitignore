@@ -1,7 +1,6 @@
 __pycache__/
 *.pyc
 *.log
-cans/
 exports/
 web/fonts/*.ttf
 web/fonts/*.TTF

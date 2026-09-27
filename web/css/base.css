@@ -1,13 +1,13 @@
-/* the Chinese faces (DC Brand, DC Phrase, DC Cjk, DC CjkMed: full TTF + a WOFF2 subset each) are declared in
-   fonts/sub/fonts.css, made by `python dailycan.py fonts` */
-@font-face { font-family: "DC Black";   src: local("Arial Black"), url("../fonts/ariblk.ttf"); }
-@font-face { font-family: "DC Caps";    src: url("../fonts/DINNextLTPro-Bold.ttf"); }
-@font-face { font-family: "DC CapsMed"; src: url("../fonts/DINNextLTPro-Medium.ttf"); }
+/* the Chinese faces (DS Brand, DS Phrase, DS Cjk, DS CjkMed: full TTF + a WOFF2 subset each) are declared in
+   fonts/sub/fonts.css, made by `python dailystamp.py fonts` */
+@font-face { font-family: "DS Black";   src: local("Arial Black"), url("../fonts/ariblk.ttf"); }
+@font-face { font-family: "DS Caps";    src: url("../fonts/DINNextLTPro-Bold.ttf"); }
+@font-face { font-family: "DS CapsMed"; src: url("../fonts/DINNextLTPro-Medium.ttf"); }
 
 :root {
   --bg: #161616; --panel: #1e1e1e; --line: #2c2c2c; --fg: #f3eee3; --mute: #8a857a; --acc: #c8102e;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg);
-  font-family: "DC CapsMed", "DC CjkMed", "Bahnschrift", "Microsoft YaHei", system-ui, sans-serif; font-size: 14px; }
+  font-family: "DS CapsMed", "DS CjkMed", "Bahnschrift", "Microsoft YaHei", system-ui, sans-serif; font-size: 14px; }
 body { display: grid; grid-template-columns: 340px 1fr; grid-template-rows: 1fr auto; height: 100vh; }

@@ -10,9 +10,9 @@
 .rx-label { display: grid; justify-items: center; padding: 6% 12% 7%; background: #F4EEDF; color: #1d1d1f; transform: rotate(var(--tilt));
   clip-path: polygon(0 8%, 6% 0, 18% 6%, 31% 1%, 46% 7%, 60% 0, 74% 5%, 88% 0, 100% 9%, 97% 50%, 100% 91%, 86% 100%, 70% 94%, 55% 100%, 40% 95%, 24% 100%, 10% 94%, 0 100%, 3% 50%);
   box-shadow: 0 1px 2px rgba(0,0,0,.2); max-width: 88%; }
-.rx-label b { font-family: "DC Phrase", serif; font-weight: normal; font-size: clamp(12px, 1.6vw, 20px); letter-spacing: .08em; white-space: nowrap; }
+.rx-label b { font-family: "DS Phrase", serif; font-weight: normal; font-size: clamp(12px, 1.6vw, 20px); letter-spacing: .08em; white-space: nowrap; }
 .rx-drawer.long .rx-label b { font-size: clamp(11px, 1.3vw, 17px); letter-spacing: .04em; }
-.rx-label i { font-style: normal; font-family: "DC CapsMed", sans-serif; font-size: 7px; letter-spacing: .14em; opacity: .6; white-space: nowrap; max-width: 100%; overflow: hidden; }
+.rx-label i { font-style: normal; font-family: "DS CapsMed", sans-serif; font-size: 7px; letter-spacing: .14em; opacity: .6; white-space: nowrap; max-width: 100%; overflow: hidden; }
 .rx-knob { width: 13%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff3c4, #d4a441 45%, #7a5716 100%);
   box-shadow: 0 2px 3px rgba(0,0,0,.4); }
 .rx-bag { position: absolute; z-index: 4; filter: drop-shadow(0 14px 20px rgba(0,0,0,.28)); transform-origin: 50% 100%; }
@@ -21,8 +21,8 @@
 .rx-counter { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 8px; text-align: center; pointer-events: none;
   opacity: 0; transition: opacity .8s ease; }
 .rx-counter.on { opacity: .5; }
-.rx-counter span { font-family: "DC Cjk", sans-serif; font-size: 14px; letter-spacing: .34em; }
-.rx-counter em { font-style: normal; font-family: "DC CjkMed", sans-serif; font-size: 12px; letter-spacing: .3em; }
+.rx-counter span { font-family: "DS Cjk", sans-serif; font-size: 14px; letter-spacing: .34em; }
+.rx-counter em { font-style: normal; font-family: "DS CjkMed", sans-serif; font-size: 12px; letter-spacing: .3em; }
 .rx-veil { position: absolute; inset: 0; z-index: 2; background: rgba(20,18,16,0); pointer-events: none; transition: background .4s; }
 .rx-veil.on { background: rgba(20,18,16,.35); pointer-events: auto; }
 /* the cabinets: four index tabs on the cabinet's top; the one on show stands full height and joins the body */

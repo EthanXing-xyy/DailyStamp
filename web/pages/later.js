@@ -4,7 +4,7 @@
 // and a blur of mirrored writing shows through. On the day it glows; tear it open and read.
 // Letters live in this browser only (localStorage dc-later).
 (() => {
-  const KEY = 'dc-later', EW = 900, EH = 600;
+  const KEY = 'ds-later', EW = 900, EH = 600;
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { return []; } };
   const save = l => { try { localStorage.setItem(KEY, JSON.stringify(l)); } catch (e) { /* too full: this visit only */ } };
   const fmt = d => `${d.slice(0, 4)}.${+d.slice(5, 7)}.${+d.slice(8, 10)}`;

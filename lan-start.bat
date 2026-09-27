@@ -5,7 +5,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$c = Get-NetTCPConnection -LocalPort 8765 -State Listen -ErrorAction SilentlyContinue;" ^
   "if ($c) { Write-Host '每日一枚已经在运行。' } else {" ^
   "  $env:PYTHONIOENCODING = 'utf-8';" ^
-  "  Start-Process python -ArgumentList '-u','dailycan.py','serve','--lan','--no-browser' -WindowStyle Hidden -RedirectStandardOutput serve.log -RedirectStandardError serve.err.log;" ^
+  "  Start-Process python -ArgumentList '-u','dailystamp.py','serve','--lan','--no-browser' -WindowStyle Hidden -RedirectStandardOutput serve.log -RedirectStandardError serve.err.log;" ^
   "  Start-Sleep -Seconds 2; Write-Host '每日一枚已在后台启动。' }" ^
   "Write-Host '';" ^
   "Write-Host ('本机打开:  http://127.0.0.1:8765/');" ^

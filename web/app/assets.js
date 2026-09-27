@@ -26,7 +26,7 @@ const Assets = (() => {
   }
   // the Chinese faces come as subsets (fonts/sub/fonts.css): asking for a text loads just the faces that hold it
   async function loadFonts(text = '每日一枚 DAILY 09') {
-    const fams = ['DC Brand', 'DC Phrase', 'DC Black', 'DC Caps', 'DC CapsMed', 'DC Cjk', 'DC CjkMed'];
+    const fams = ['DS Brand', 'DS Phrase', 'DS Black', 'DS Caps', 'DS CapsMed', 'DS Cjk', 'DS CjkMed'];
     await Promise.all(fams.map(f => document.fonts.load(`40px "${f}"`, text || ' ').catch(() => {})));
   }
   async function loadLeaflet(phrase) {

@@ -45,8 +45,8 @@ const U = (() => {
   };
 
   const FAM = {
-    brand_cjk: 'DC Brand', brand_latin: 'DC Brand', phrase_cjk: 'DC Phrase', phrase_latin: 'DC Black',
-    caps: 'DC Caps', caps_med: 'DC CapsMed', cjk_small: 'DC Cjk', cjk_small_med: 'DC CjkMed',
+    brand_cjk: 'DS Brand', brand_latin: 'DS Brand', phrase_cjk: 'DS Phrase', phrase_latin: 'DS Black',
+    caps: 'DS Caps', caps_med: 'DS CapsMed', cjk_small: 'DS Cjk', cjk_small_med: 'DS CjkMed',
   };
   const font = (role, size) => `${size}px "${FAM[role]}"`;
 

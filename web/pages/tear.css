@@ -9,5 +9,5 @@
 .tear-piece-shadow { position: absolute; inset: 9%; background: rgba(40,30,20,.55); opacity: 0; will-change: transform, opacity, filter; }
 .tear-gloss { position: absolute; inset: 0; opacity: 0; pointer-events: none; mask-size: 100% 100%; -webkit-mask-size: 100% 100%;
   background: linear-gradient(118deg, rgba(255,255,255,0) 38%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 62%) 50% 50% / 300% 300%; }
-.tear-spot { position: absolute; margin: 0; transform: translate(-50%, -50%); text-align: center; font-family: "DC CjkMed", sans-serif;
+.tear-spot { position: absolute; margin: 0; transform: translate(-50%, -50%); text-align: center; font-family: "DS CjkMed", sans-serif;
   font-size: 12px; line-height: 2.2; letter-spacing: .32em; opacity: .4; pointer-events: none; transition: opacity .8s ease; }

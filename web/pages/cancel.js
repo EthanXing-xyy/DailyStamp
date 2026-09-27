@@ -4,7 +4,7 @@
 (() => {
   function mount(root, deps) {
     const { el, clamp, TAU } = Kit;
-    const date = deps.date, KEY = 'dc-cancel';
+    const date = deps.date, KEY = 'ds-cancel';
     const P = Kit.page(root, 'cancel', () => layout());
     const status = P.status;
     const desk = el('div', 'cx-desk'), stackEl = el('div', 'cx-stack'), pile = el('div', 'cx-pile'), ring = el('div', 'cx-ring');

@@ -1,84 +1,67 @@
-# 每日一罐 · Daily Can
+# 每日一枚 · Daily Stamp
 
-一天一罐，把当天的一个情绪词"浓缩"进一只罐头。致敬 Warhol《32 个金宝汤罐》（1962）：
-同一套标签语法，反复出现，变化只发生在色彩、词语和徽章上。攒够 32 罐拼成一面墙。
+一天一枚波普邮票。齿孔和白纸边是原研哉式的克制，印面是满版的波普；背面是一本正经的「情绪药品说明书」。
+首页是一圈邮票转盘，每一枚通往一个功能（撕一张、节气历、集邮册、寄一张、情绪药房、盖戳、丝网印刷机、拼贴机、时光信……），
+功能清单只有一份：`web/app/features.js`。
 
-## 网页工作台：每日一枚（推荐）
+## 运行
 
 ```
-python dailycan.py serve          # 打开 http://127.0.0.1:8765
-python dailycan.py serve --lan    # 同一 WiFi 下的手机、平板也能打开，启动时打印局域网地址
+python dailystamp.py serve          # 打开 http://127.0.0.1:8765
+python dailystamp.py serve --lan    # 同一 WiFi 下的手机、平板也能打开，启动时打印局域网地址
 ```
 
 局域网常驻：双击 `lan-start.bat` 在后台启动（日志写进 `serve.log`），双击 `lan-stop.bat` 关闭。
-防火墙已加入站规则“DailyCan LAN 8765”，只放行 TCP 8765，且只允许本地子网访问。
+防火墙入站规则名沿用 “DailyCan LAN 8765”，只放行 TCP 8765，且只允许本地子网访问。
 
-一天一枚邮票。齿孔和白纸边是原研哉式的克制，印面是满版的波普。
+URL 参数：`?gallery=1` 一次看 6 枚生成结果（`&layout=tpl` 轮换模板）；`?sheet=demo` 整版样张；
+`?phrase=咖啡因&palette=Whaam!&seed=42&side=back` 直接打开工作室；`?homeseed=7` 固定首页发牌（截图用）。
 
-- **正面**：四边齿孔真的打穿，一圈白纸边，里面整块满版印刷。默认版式是**生成**：每次随机排版，每一枚都不一样，点"再生成"换一版，随机种子跟着邮票存进整版。随机只负责做选择，下面这些设计规则负责约束：
-  - 25 单位网格加安全边距，位置对齐网格。
-  - 徽章和情绪词一主一次，不同时做大，放在上下、左右或对角两侧保持平衡。
-  - 底色、结构色、点缀色按 60-30-10 分配；情绪词的颜色和它底下实际印出来的颜色拉开色相。
-  - 面值、发行方、英文、小字逐个找空位，互不重叠，也不压情绪词和徽章主体。邮戳同样避让。
-  - 底纹会自动裁掉文字下方的区域。
-- 另外保留 9 个固定模板，每个是一个波普语汇：放射、四联（Warhol 玛丽莲四格）、漫画（Lichtenstein）、方中方（Albers）、巨字（Robert Indiana）、孟菲斯、圆点（草间弥生）、斜切（田中一光）、网点（徽章放大成 Ben-Day 网点）。
-- **分层印刷**：图案层（色版 + 黑线稿版）→ 邮戳 → 文字层（色版 + 黑版）。所有图案都在底层，任何东西都不会盖住文字。
-- **撞色**：16 套四色撞色板，每套注明出处：玛丽莲、克莱因蓝 × 爱马仕橙、Whaam!、巴拉甘、霍克尼泳池、孟菲斯、王家卫红配绿、蒂芙尼 × 樱桃、马蒂斯剪纸、多巴胺、荧光、紫 × 金、田中一光、永井博、金宝汤、芭比粉 × 凯利绿。"换色序"轮换四个颜色谁做底、谁做图。字色按对比度和色相差自动挑。
-- **印刷感**：彩色版和黑色线稿版分两版印，默认套色错位，丝网油墨的深浅斑驳，纸纤维颗粒，可选邮戳。面值 = 情绪浓度，"80分"既是邮资也是分数。
-- **背面**：一本正经的"情绪药品说明书"：成分条形图、性状、适应症、用法用量、不良反应、禁忌、有效期至当日 23:59、批号、条形码。页眉下印正面四色色标，成分条用同一套撞色。左键拖动邮票可在平面内旋转，按住鼠标滚轮拖动可在空间中翻转，轻点或双击邮票都能翻面；触屏可拖动翻转。不带参数打开时先进开场页：桌上先放一张空白齿孔纸，素材到齐后按彩色版、线稿版、邮戳、文字的顺序逐版印上。
-- **整版**：代替原来的"墙"。8 × 4 共 32 枚，对应 Warhol《32 个金宝汤罐》，相邻邮票共用齿孔，边纸印版铭、套色十字线、色标和全张面值。没贴的格子保持空白。
-
-只有两样东西要 codex 生成，而且每个词只生成一次：
-- **徽章**（`emblems/`）：三通道蒙版，任何配色都是浏览器里重新上色，1–3 分钟。
-- **说明书**（`leaflets/`）：纯文本 JSON，十几秒。没写好之前背面先用样稿。
-- **节气图标**（`terms/`）：面值角印的是发行日所属的节气（按日期算太阳黄经），24 个图标 codex 只画一次，也是三通道蒙版。没画好的节气先只印名字。
-
-"让 codex 画徽章 + 写说明书"两样一起提交。按钮：下载正面 / 背面 PNG（3000×3600，平放在桌面上的俯拍效果），存入 `cans/日期-词/`（front.png、back.png、meta.json），贴进整版（存在浏览器里，攒够导出整版 PNG）。
-
-URL 参数可直接定位（`?gallery=1` 一次看 6 枚生成结果）：`/?layout=gen&seed=42&palette=Whaam!&shift=1&phrase=咖啡因&en=caffeine&no=12&side=back`。
-
-## 命令行
+## 命令行（只在开发时用，app 运行时从不调用模型）
 
 ```
-python dailycan.py emblem "躺平" --en "lying down"            # 只给库里添一个徽章
-python dailycan.py import-cans                                # 把旧 cans/ 里的徽章收进库
-python dailycan.py leaflets --jobs 4                          # 给徽章库里每个词补写背面说明书
-python dailycan.py terms                                      # 画齐 24 个节气图标（加 key 可重画，如 16-qiufen）
-python dailycan.py masks                                      # 预切徽章 / 节气图标的色版与轮廓（新徽章会自动切；--force 全部重切）
-python dailycan.py fonts                                      # 改了文案或说明书后重做网页字体子集（23 MB → 约 2.7 MB）
-python dailycan.py add "摆烂" --en "bai lan · lying flat"      # 今天这罐，codex 画徽章
-python dailycan.py add "周一" --en "monday" --no-ai             # 不调 codex，用程序徽章
-python dailycan.py add "Monday" --palette "Ruscha Sunset"      # 指定配色
-python dailycan.py rebuild                                     # 重建 site/ 与 wall.png
-python dailycan.py rerender                                    # 改了代码后全部重画（复用已生成的徽章）
-python dailycan.py palettes                                    # 列出 12 套配色
-python dailycan.py demo --ai --jobs 4                          # 8 罐样例，4 个 codex 并行
+python dailystamp.py words [词…] [--redo]        # 画 dailystamp/words.py 里还没有徽章的词，再补说明书
+python dailystamp.py emblem "躺平" --idea "…"     # 往库里添一个徽章
+python dailystamp.py leaflets [词…]              # 补写背面说明书
+python dailystamp.py terms | posters | backdrops  # 节气图标 / 撕一张海报 / 首页剪纸底纹（加 key 可重画）
+python dailystamp.py masks [--force]             # 预切徽章与节气图标的色版和轮廓
+python dailystamp.py fonts                       # 改了文案或说明书后重做网页字体子集
 ```
 
-## 产出（命令行旧版：罐头）
+codex 生图一次只跑一个：并行时会互相拿错图。
 
-命令行的 `add` / `demo` / `rerender` 仍是最初的罐头版本，网页版已改成邮票。每罐一个目录 `cans/YYYY-MM-DD-词/`：
+## 目录
 
-| 文件 | 说明 |
-|---|---|
-| `can.png` | 1800×2400 成品，罐身、金属盖、投影、平涂背景墙 |
-| `label.png` | 3800×1500 展开标签，比例按真实周长算，可打印后贴到真罐头上 |
-| `emblem.png` | 徽章，已压成三色（ink / accent / band），透明底 |
-| `emblem_raw.png` | codex 原图，缓存用，删掉就会重新生成 |
-| `meta.json` | 编号、日期、词、配色、徽章概念 |
+```
+dailystamp.py            命令行入口（表驱动的子命令）
+dailystamp/              开发期工具与本地服务器
+  server.py              静态文件 + /api/emblems、/api/leaflet，工作室导出写进 exports/
+  library.py words.py    徽章库；词表、分柜和每个词固定的图案
+  emblem.py leaflet.py   codex 画徽章、写说明书
+  assetset.py            codex 一次画好的固定素材集（terms.py posters.py backdrops.py 各自只写条目、提示词和遮罩）
+  cutmasks.py webfonts.py  预切色版；网页字体子集
+web/
+  index.html loader.js   页面与加载屏（加载屏的字另切一份小字体）
+  core/                  邮票引擎：配色、底纹、版式、邮票、整版、节气。只画图，不碰 app 状态
+  shell/                 首页转盘、页面框架（Pages）、公共件（Kit：页头、状态行、翻面卡、声音、调试按钮…）、集邮册存储
+  pages/<key>.js/.css    每个功能一对文件
+  app/                   features（功能清单）context（共享状态）assets press（印刷）stage（今日一枚与工作室）
+                         router（首页与各页之间飞邮票）preload（加载屏下预载一切）review（?gallery）main（启动）
+  css/                   基础、工作室、首页样式
+emblems/ leaflets/ terms/ posters/ backdrops/   codex 生成的素材（三通道蒙版 + 预切色版）
+exports/                 工作室「存入」的成品
+```
 
-徽章库 `emblems/`：每个词一组 `<id>.png`（三通道蒙版）、`<id>.raw.png`（codex 原图）、`<id>.json`（词、概念、时间），`index.json` 是汇总。
+### 加一个功能
 
-`site/index.html` 是静态画廊，Shelf / Wall 两种排布，深浅主题，点开看展开标签。`site/wall.png` 是 4 列的 Warhol 网格拼图。
-
-## 审美系统
-
-- **标签语法**：上带行楷品牌 + DIN 小字副题；中缝奖章；下场粗黑宋情绪词 + 英文小字 + 细线 + 净含量小字。
-- **配色**：12 套，每套锚定一件波普作品（Campbell、Shot Marilyns、Whaam!、Electric Chair、Memphis、Mao、Cow Wallpaper、Brillo、Banana、Flowers……）。按编号轮换，也可指定。
-- **印刷感**：三层分色（底色/副色/墨色）套色错位、墨边微渗、纸张颗粒、标签边缘 Ben-Day 网点渐变、侧边微缩文字。
-- **徽章**：codex 按情绪词自己想一个物件（例：摆烂 → 漏气的充气火烈鸟），画成黑描边 + 品红 + 青的丝网风，再按当天配色映射为 ink / accent / band 三色。没有 codex 时退回到编号 + 放射线的程序徽章。
+1. `web/app/features.js` 加一行 `{ key, cn, en }`：首页转盘、页码、加载屏空位都会跟着变。
+2. 新建 `web/pages/<key>.js`：`Pages.define(key, (root, deps) => …)`，开头用 `Kit.page(root, key, layout)` 拿到页头、状态行和屏幕尺寸，
+   返回 `P.api({ ready, anchor, source, receive?, enter?, leave? })`。`deps` 里有词库、配色、`makeFront` / `printIn`、集邮册。
+3. 新建 `web/pages/<key>.css`，在 `index.html` 里挂上两个文件。
+4. 有次数限制的功能，用 `Kit.debugRow(root).add('…', fn)` 给一个调试恢复按钮（`Kit.DEBUG` 统一开关）。
+5. 改了中文文案后跑一次 `python dailystamp.py fonts`。
 
 ## 依赖
 
-Python 3.10+，Pillow，numpy。徽章生成需要本机 `codex` CLI 已登录且启用 `image_generation`。
-网页版把用到的字体复制在 `web/fonts/`，命令行版从 `C:\Windows\Fonts` 读取（华文行楷、方正粗黑宋、DIN Next、HarmonyOS Sans、Arial Black），缺哪个会自动退到下一候选；也可以把字体放进 `fonts/` 目录优先使用。
+Python 3.10+，Pillow，numpy，scipy，fontTools。徽章生成需要本机 `codex` CLI 已登录且启用 `image_generation`。
+网页用到的字体复制在 `web/fonts/`（原始 TTF 不进 git）。

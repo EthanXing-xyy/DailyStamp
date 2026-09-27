@@ -1,9 +1,9 @@
 /* the studio and today's stamp: the panel, the 3D stamp on its desk, the landing page, the 32-stamp sheet */
 #panel { grid-row: 1 / span 2; background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; padding: 22px 20px 40px; }
-h1 { margin: 0 0 18px; font-family: "DC Phrase", "Microsoft YaHei", serif; font-size: 40px; line-height: .95; letter-spacing: -.02em; }
-h1 small { display: block; font-family: "DC Caps", sans-serif; font-size: 10px; letter-spacing: .34em; color: var(--acc); margin-top: 8px; }
-h2 { font-family: "DC Caps", "DC Cjk", sans-serif; font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--mute); margin: 0 0 10px; display: flex; align-items: center; gap: 10px; }
-h2 .hint { font-family: "DC CjkMed", sans-serif; font-size: 11px; letter-spacing: .02em; text-transform: none; color: #5f5b53; }
+h1 { margin: 0 0 18px; font-family: "DS Phrase", "Microsoft YaHei", serif; font-size: 40px; line-height: .95; letter-spacing: -.02em; }
+h1 small { display: block; font-family: "DS Caps", sans-serif; font-size: 10px; letter-spacing: .34em; color: var(--acc); margin-top: 8px; }
+h2 { font-family: "DS Caps", "DS Cjk", sans-serif; font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--mute); margin: 0 0 10px; display: flex; align-items: center; gap: 10px; }
+h2 .hint { font-family: "DS CjkMed", sans-serif; font-size: 11px; letter-spacing: .02em; text-transform: none; color: #5f5b53; }
 section { padding: 14px 0; border-bottom: 1px solid var(--line); }
 section:last-of-type { border-bottom: 0; }
 
@@ -22,7 +22,7 @@ input:focus { outline: 1px solid var(--acc); border-color: var(--acc); }
 .sw b { position: absolute; right: 3px; bottom: 3px; width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,.3); }
 .sw[aria-pressed=true] { border-color: var(--fg); }
 .layouts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-.layouts button { padding: 7px 0; letter-spacing: .04em; font-family: "DC Cjk", sans-serif; font-size: 12px; border-color: var(--line); color: var(--mute); }
+.layouts button { padding: 7px 0; letter-spacing: .04em; font-family: "DS Cjk", sans-serif; font-size: 12px; border-color: var(--line); color: var(--mute); }
 .layouts button:first-child { grid-column: 1 / -1; color: var(--fg); font-size: 13px; }
 button.mini.primary-mini { border-color: var(--acc); color: var(--fg); }
 .layouts button[aria-pressed=true] { border-color: var(--fg); color: var(--fg); background: #2a2a2a; }
@@ -87,15 +87,15 @@ body.daily-opening #opening-head, body.daily-opening #opening-footer {
 }
 #opening-head { gap: 3px; opacity: 0; transition: opacity .6s ease; }
 body.daily-head #opening-head { opacity: 1; }
-#opening-head span { font-family: "DC Caps", sans-serif; font-size: 10px; letter-spacing: .32em; }
-#opening-head h2 { margin: 3px 0; font-family: "DC Phrase", serif; font-size: clamp(28px, 4vh, 42px);
+#opening-head span { font-family: "DS Caps", sans-serif; font-size: 10px; letter-spacing: .32em; }
+#opening-head h2 { margin: 3px 0; font-family: "DS Phrase", serif; font-size: clamp(28px, 4vh, 42px);
   line-height: 1.1; letter-spacing: 0; color: inherit; }
-#opening-date { font-family: "DC CapsMed", "DC CjkMed", sans-serif; font-size: 11px; letter-spacing: .22em; }
+#opening-date { font-family: "DS CapsMed", "DS CjkMed", sans-serif; font-size: 11px; letter-spacing: .22em; }
 #opening-footer { grid-template-rows: minmax(34px, auto) 38px; align-items: center; min-height: 84px; width: min(90vw, 520px); }
 #opening-prompt, #opening-message { grid-area: 1 / 1; margin: 0; transition: opacity .4s ease, transform .4s ease; }
 #opening-prompt { font-size: 12px; letter-spacing: .14em; opacity: 0; }
 body.daily-printed #opening-prompt { opacity: 1; }
-#opening-message { max-width: 100%; font-family: "DC CjkMed", sans-serif; font-size: clamp(15px, 2.4vh, 19px);
+#opening-message { max-width: 100%; font-family: "DS CjkMed", sans-serif; font-size: clamp(15px, 2.4vh, 19px);
   line-height: 1.5; letter-spacing: .08em; opacity: 0; transform: translateY(6px); }
 #opening-enter { grid-row: 2; visibility: hidden; opacity: 0; border-color: currentColor; color: inherit;
   transition: opacity .4s ease; }
@@ -108,10 +108,10 @@ body.daily-revealed #opening-enter { visibility: visible; opacity: 1; }
 }
 .range { display: flex; align-items: center; gap: 10px; }
 .range input { flex: 1; accent-color: var(--acc); }
-.range b { font-family: "DC Caps", "DC Cjk", sans-serif; font-size: 15px; min-width: 52px; text-align: right; }
+.range b { font-family: "DS Caps", "DS Cjk", sans-serif; font-size: 15px; min-width: 52px; text-align: right; }
 
 #wall { border-top: 1px solid var(--line); background: var(--panel); padding: 10px 20px 12px; }
-.wall-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-family: "DC Caps", sans-serif; font-size: 11px; letter-spacing: .24em; color: var(--mute); text-transform: uppercase; }
+.wall-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-family: "DS Caps", sans-serif; font-size: 11px; letter-spacing: .24em; color: var(--mute); text-transform: uppercase; }
 #wall-items { display: flex; gap: 6px; overflow-x: auto; min-height: 96px; }
 #wall-items img { height: 100px; aspect-ratio: 4 / 5; object-fit: contain; cursor: pointer; }
 #wall-items img:hover { filter: brightness(1.15); }
