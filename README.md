@@ -9,7 +9,10 @@
 ```
 python dailystamp.py serve          # 打开 http://127.0.0.1:8765
 python dailystamp.py serve --lan    # 同一 WiFi 下的手机、平板也能打开，启动时打印局域网地址
+python dailystamp.py serve --keep   # 保留浏览器里的使用记录
 ```
+
+调试阶段每次启动服务器都是一次清零：每个浏览器在服务器重启后第一次打开时，会清空之前的集邮册、撕一张、时光信、盖戳、月度小版张、刻章、抓娃娃机的币和整版（`web/boot.js`）。不想清就加 `--keep`。
 
 局域网常驻：双击 `lan-start.bat` 在后台启动（日志写进 `serve.log`），双击 `lan-stop.bat` 关闭。
 防火墙入站规则名沿用 “DailyCan LAN 8765”，只放行 TCP 8765，且只允许本地子网访问。

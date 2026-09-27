@@ -30,7 +30,7 @@ mod = lambda name: importlib.import_module(f"{PKG}.{name}")
 
 
 def cmd_serve(a):
-    mod("server").serve(a.port, open_browser=not a.no_browser, host="0.0.0.0" if a.lan else a.host)
+    mod("server").serve(a.port, open_browser=not a.no_browser, host="0.0.0.0" if a.lan else a.host, keep=a.keep)
 
 
 def cmd_emblem(a):
@@ -64,7 +64,8 @@ COMMANDS = {
         (["--port"], {"type": int, "default": 8765}),
         (["--host"], {"default": "127.0.0.1", "help": "bind address; 0.0.0.0 opens it to other devices on the LAN"}),
         (["--lan"], {"action": "store_true", "help": "shorthand for --host 0.0.0.0"}),
-        (["--no-browser"], {"action": "store_true"})], cmd_serve),
+        (["--no-browser"], {"action": "store_true"}),
+        (["--keep"], {"action": "store_true", "help": "keep what browsers stored (by default each start clears it: web/boot.js)"})], cmd_serve),
     "words": ("draw the planned library words that have no emblem yet (words.py), then their leaflets", [
         (["--redo"], {"action": "store_true", "help": "draw the given words again"}),
         (["phrases"], {"nargs": "*", "help": "only these words"})],
