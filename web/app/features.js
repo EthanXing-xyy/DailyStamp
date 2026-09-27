@@ -20,6 +20,12 @@ const Features = (() => {
     { key: 'xerox', cn: '复印机', en: 'COPY MACHINE' },
     { key: 'collage', cn: '拼贴机', en: 'COLLAGE' },
     { key: 'musicbox', cn: '八音盒', en: 'MUSIC BOX' },
+    { key: 'receipt', cn: '小票打印机', en: 'RECEIPT PRINTER' },
+    { key: 'badge', cn: '徽章机', en: 'BUTTON BADGE' },
+    { key: 'papercut', cn: '剪纸窗花', en: 'PAPER CUT' },
+    { key: 'kaleido', cn: '万花筒', en: 'KALEIDOSCOPE' },
+    { key: 'flap', cn: '翻牌显示屏', en: 'SPLIT-FLAP' },
+    { key: 'scratch', cn: '刮刮乐', en: 'SCRATCH CARD' },
   ];
   const byKey = key => LIST.find(f => f.key === key) || null;
   /** its number on the carousel, from 1 */

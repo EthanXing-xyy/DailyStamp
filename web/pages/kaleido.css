@@ -1,0 +1,17 @@
+/* ---------- 万花筒: the eyepiece end of a tube in the palette's first ink, a paper label round it */
+.kd-tube { position: absolute; border-radius: 50%; background: var(--body, #12B5B0);
+  box-shadow: 0 18px 34px rgba(0,0,0,.26), inset 0 0 0 5px rgba(255,255,255,.18), inset 0 -10px 18px rgba(0,0,0,.18); }
+.kd-eye { position: absolute; left: 18px; top: 18px; width: calc(100% - 36px); height: calc(100% - 36px); border-radius: 50%; touch-action: none; cursor: grab;
+  box-shadow: 0 0 0 6px var(--rim, #1B1633), inset 0 0 20px rgba(0,0,0,.5); background: #111; }
+.kd-glint { position: absolute; left: 18px; top: 18px; width: calc(100% - 36px); height: calc(100% - 36px); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(60% 40% at 30% 22%, rgba(255,255,255,.22), rgba(255,255,255,0) 70%); }
+.kd-label { position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%) rotate(-2deg); display: grid; justify-items: center; gap: 2px; padding: 4px 14px 5px; z-index: 2;
+  background: #F4EEDF; color: #1d1d1f; box-shadow: 0 2px 3px rgba(0,0,0,.2);
+  clip-path: polygon(0 10%, 10% 0, 30% 6%, 52% 0, 74% 6%, 92% 0, 100% 12%, 97% 55%, 100% 92%, 80% 100%, 56% 94%, 34% 100%, 12% 95%, 0 92%, 3% 50%); }
+.kd-label b { font-family: "DS Phrase", serif; font-weight: normal; font-size: 12px; letter-spacing: .24em; white-space: nowrap; }
+.kd-label i { font-style: normal; font-family: "DS CapsMed", sans-serif; font-size: 6px; letter-spacing: .26em; opacity: .6; white-space: nowrap; }
+.kd-acts { position: absolute; display: flex; justify-content: center; gap: 4px 22px; flex-wrap: wrap; z-index: 7; }
+.kd-acts .kit-btn[hidden] { display: none; }
+.kd-veil { position: absolute; inset: 0; z-index: 5; background: rgba(20,18,16,0); pointer-events: none; transition: background .4s; }
+.kd-veil.on { background: rgba(20,18,16,.35); pointer-events: auto; }
+.kit-card.kd-card { z-index: 6; }

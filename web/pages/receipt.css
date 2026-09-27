@@ -1,0 +1,19 @@
+/* ---------- 小票打印机: a flat pop till printer; the slip rises out of its mouth */
+.rc-feed { position: absolute; overflow: hidden; touch-action: none; cursor: grab; }
+.rc-paper { position: absolute; left: 0; top: 0; will-change: transform; }
+.rc-slip { display: block; filter: drop-shadow(0 6px 10px rgba(0,0,0,.14)); }
+.rc-printer { position: absolute; z-index: 3; border-radius: 16px 16px 10px 10px; background: var(--body, #12B5B0);
+  box-shadow: 0 16px 28px rgba(0,0,0,.24), inset 0 -8px 0 rgba(0,0,0,.14), inset 0 3px 0 rgba(255,255,255,.25); }
+.rc-mouth { position: absolute; left: 12%; right: 12%; top: 8px; height: 12px; border-radius: 6px; background: var(--key, #1B1633); box-shadow: inset 0 3px 4px rgba(0,0,0,.6); }
+.rc-plate { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%) rotate(-1.5deg); display: grid; justify-items: center; gap: 3px; padding: 5px 16px 6px;
+  background: #F4EEDF; color: #1d1d1f; clip-path: polygon(0 8%, 8% 0, 22% 6%, 40% 1%, 58% 7%, 76% 0, 92% 5%, 100% 10%, 97% 52%, 100% 92%, 84% 100%, 62% 94%, 44% 100%, 26% 95%, 8% 100%, 0 92%, 3% 50%); }
+.rc-plate b { font-family: "DS Phrase", serif; font-weight: normal; font-size: 14px; letter-spacing: .3em; white-space: nowrap; }
+.rc-plate i { font-style: normal; font-family: "DS CapsMed", sans-serif; font-size: 7px; letter-spacing: .24em; opacity: .6; white-space: nowrap; }
+.rc-led { position: absolute; right: 16px; bottom: 16px; width: 8px; height: 8px; border-radius: 50%; background: rgba(0,0,0,.25); transition: background .3s, box-shadow .3s; }
+.rc-printer.on .rc-led { background: #B6F03C; box-shadow: 0 0 8px #B6F03C; }
+.rc-acts { position: absolute; display: flex; justify-content: center; gap: 4px 26px; flex-wrap: wrap; z-index: 7; }
+.rc-veil { position: absolute; inset: 0; z-index: 5; background: rgba(20,18,16,0); pointer-events: none; transition: background .4s; }
+.rc-veil.on { background: rgba(20,18,16,.35); pointer-events: auto; }
+.rc-kept { position: absolute; z-index: 6; pointer-events: none; }
+.rc-kept canvas { display: block; filter: drop-shadow(0 12px 20px rgba(0,0,0,.28)); }
+.rc-acts .kit-btn[hidden] { display: none; }

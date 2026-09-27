@@ -91,6 +91,17 @@ const Kit = (() => {
       seed: Math.floor(rnd() * 1e9), shift: Math.floor(rnd() * 4), emblem: 'auto', misregister: true, grain: true, side: 'front' };
   }
 
+  /** n of this visit's home stamps, each a different word, drawn by seed. They are printed already and kept by
+   *  Press.makeFront, so a page showing them only scales a copy down: a phone never decodes a fresh set of 1024 px plates
+   *  per stamp (web/app/assets.js). Pages that deal many stamps take these. */
+  function visitStamps(deps, seed, n) {
+    const seen = new Set(), pool = (deps.homePlans || []).filter(s => !seen.has(s.phrase) && seen.add(s.phrase));
+    const rnd = Print.rng(hash(seed + '|' + visit)), out = [];
+    while (out.length < n && pool.length) out.push({ ...pool.splice(Math.floor(rnd() * pool.length), 1)[0] });
+    while (out.length < n) out.push(stampFor(seed + '|' + out.length, deps.words, deps.palettes, out.length + 1, deps.date));
+    return out;
+  }
+
   /** a stamp-shaped card that turns over: the face shown at even turns is `back` (the gum side, then the leaflet), the
    *  one at odd turns is `front`. print(st) inks the front plate by plate and puts the leaflet on the back. */
   function card(parent, deps, { w, h, cls = '' } = {}) {
@@ -103,8 +114,12 @@ const Kit = (() => {
       place(cx, cy, W, H) { Object.assign(box.style, { left: cx - W / 2 + 'px', top: cy - H / 2 + 'px', width: W + 'px', height: H + 'px' }); c.w = W; c.h = H; },
       turn(n, instant = false) {
         turns = n;
-        if (instant) { inner.style.transition = 'none'; inner.style.transform = `rotateY(${turns * 180}deg)`; void inner.offsetWidth; inner.style.transition = ''; }
-        else inner.style.transform = `rotateY(${turns * 180}deg)`;
+        // WebKit ignores backface-visibility on a face with a filter (the shadow): the face turned away is hidden by hand,
+        // halfway through the turn (kit.css)
+        if (instant) { box.classList.add('instant'); inner.style.transition = 'none'; }
+        box.classList.toggle('odd', n % 2 === 1);
+        inner.style.transform = `rotateY(${turns * 180}deg)`;
+        if (instant) { void inner.offsetWidth; inner.style.transition = ''; box.classList.remove('instant'); }
       },
       scale() { return clamp((c.h || h) * Math.min(2, devicePixelRatio || 1) / Stamp.BH, 0.3, 0.9); },
       /** print a stamp state onto the front (plate by plate), then its leaflet onto the back */
@@ -115,6 +130,27 @@ const Kit = (() => {
         put(front, fr.stages.blank);
         await new Promise(res => deps.printIn(front, fr.stages, { D, onDone: res }));
         if (backToo) put(back, deps.makeBack(st, sc, null));
+        c.ready = true; c.st = st;
+        return c;
+      },
+      /** a stamp the home already printed (Kit.visitStamps): its kept print, scaled down, seeps onto a blank at once
+       *  instead of plate by plate, so none of its plates is decoded again */
+      async printCopy(st, { D = 1100 } = {}) {
+        c.ready = false;
+        await deps.loadLeaflet(st.phrase);
+        const sc = Math.min(c.scale(), 0.36), fr = deps.makeFront(st, sc), blank = Stamp.blank(sc, 7);
+        front.width = fr.width; front.height = fr.height;
+        const g = front.getContext('2d');
+        await new Promise(res => {
+          const t0 = performance.now();
+          const f = t => {
+            const k = Math.min(1, (t - t0) / D), e = k * k * (3 - 2 * k);
+            g.globalAlpha = 1; g.clearRect(0, 0, fr.width, fr.height); g.drawImage(blank, 0, 0); g.globalAlpha = e; g.drawImage(fr, 0, 0);
+            if (k < 1) requestAnimationFrame(f); else { g.globalAlpha = 1; res(); }
+          };
+          requestAnimationFrame(f);
+        });
+        put(back, deps.makeBack(st, sc, null));
         c.ready = true; c.st = st;
         return c;
       },
@@ -137,6 +173,41 @@ const Kit = (() => {
     g.save(); g.translate(x, y); g.rotate(rot); g.strokeStyle = ink; g.lineWidth = Math.max(0.6, r * 0.05);
     g.beginPath(); g.arc(0, 0, r, 0, TAU); g.stroke(); g.beginPath(); g.arc(0, 0, r * 0.84, 0, TAU); g.stroke();
     U.drawCentered(g, 0, 0, '每日邮政', U.font('cjk_small', Math.max(6, Math.round(r * 0.33))), ink); g.restore();
+  }
+
+  /** a stamp of a page's own making (a paper cut, a kaleidoscope…): art(g, w, h) paints the printed field; a postmark,
+   *  the issuer on an askew label and the word print over it in that order, so the type is always on top.
+   *  {sc, pal, phrase, en, date, no, kicker, seed, labelFill, art} -> a perforated canvas at scale sc */
+  function issue({ sc = 0.6, pal, phrase, en = '', date, no = 1, kicker = '', seed = 1, labelFill, art }) {
+    const F = Layouts.F, out = Stamp.blank(sc, seed), W = out.width, H = out.height, rnd = Print.rng(seed * 7 + 3);
+    const lay = U.canvas(W, H), g = lay.getContext('2d');
+    const fw = Math.round((F.x1 - F.x0) * sc), fh = Math.round((F.y1 - F.y0) * sc), field = U.canvas(fw, fh), f = field.getContext('2d');
+    art(f, fw, fh); U.grain(f, fw, fh, 0.22, 5 + seed % 7);
+    g.drawImage(field, F.x0 * sc, F.y0 * sc);
+    // the postmark, top right: dark ink on light print, pale where the art under it is dark
+    const px = F.x1 - 330, py = F.y0 + 240, probe = U.canvas(8, 8).getContext('2d', { willReadFrequently: true });
+    probe.drawImage(field, (px - 150 - F.x0) * sc, (py - 150 - F.y0) * sc, 300 * sc, 300 * sc, 0, 0, 8, 8);
+    const d = probe.getImageData(0, 0, 8, 8).data; let lum = 0;
+    for (let i = 0; i < d.length; i += 4) lum += U.lum(U.rgbToHex([d[i], d[i + 1], d[i + 2]])) / 64;
+    Stamp.postmark(g, px * sc, py * sc, 150 * sc, sc, { no, date }, -0.22 + (rnd() - 0.5) * 0.2, Math.floor(rnd() * 1e5), lum < 0.3);
+    // the issuer on a label stuck on askew, top left
+    const L = { s: sc, ink: pal.ink, paper: Stamp.PAPER, TP: g, TK: g, K: g };
+    const fr = Layouts.label(L, 330, 200, 470, 130, ['tape', 'swipe', 'balloon'][Math.floor(rnd() * 3)], labelFill || pal.c[1], rnd);
+    Layouts.inLabel(L, g, 330, 200, fr, c => {
+      U.drawMixed(c, 0, -14 * sc, `每日邮政 · ${(date || '').replace(/-/g, '.')}`, 'caps', 'cjk_small', Math.round(32 * sc), pal.ink, 3 * sc, 1, 'center');
+      if (kicker) U.drawTracked(c, 0, 24 * sc, kicker, U.font('caps_med', Math.round(18 * sc)), pal.ink, 5 * sc, 'center');
+    });
+    // the word, big along the foot, paper-white with an offset key shadow (a Warhol screen's misprint)
+    const word = U.hasCjk(phrase) ? phrase : phrase.toUpperCase(), n = Math.max(2, [...word].length), fs = Math.round(Math.min(190, 860 / n) * sc);
+    const right = rnd() < 0.5, x = right ? (F.x1 - 50) * sc : (F.x0 + 50) * sc, y = (F.y1 - 70) * sc - fs * 0.5;
+    const ink = '#F4EEDF';
+    g.save(); g.shadowColor = pal.ink; g.shadowOffsetX = 7 * sc; g.shadowOffsetY = 7 * sc;
+    U.drawMixed(g, x, y, word, 'phrase_latin', 'phrase_cjk', fs, ink, 4 * sc, 1, right ? 'right' : 'left');
+    if (en) U.drawTracked(g, x, y - fs * 0.62 - 16 * sc, en.toUpperCase(), U.font('caps', Math.round(26 * sc)), ink, 6 * sc, right ? 'right' : 'left');
+    g.restore();
+    const o = out.getContext('2d'); o.save(); o.globalCompositeOperation = 'source-atop'; o.drawImage(lay, 0, 0); o.restore();
+    lay.width = lay.height = field.width = field.height = 0;
+    return out;
   }
 
   // ---- cancellations (盖戳). A mark is {type: round|wave|seal, x, y (stamp units, 1200 x 1500), rot, weight 0..1, seed,
@@ -260,6 +331,6 @@ const Kit = (() => {
   function button(parent, label, cls = '') { const b = el('button', 'kit-btn ' + cls, label); b.type = 'button'; parent.append(b); return b; }
 
   return { DEBUG, debugRow, TAU, reduce, el, clamp, wait, two, put, visible, localDate, dayNo, addDays, hash, head, status, audio, buzz, crackle, thump, rustle,
-    visit, stampFor, card, page, photoPlates, gum, watermark, save, blobOf, imageOf, button, drawMark, drawMarks, mySeal,
+    visit, visitStamps, stampFor, card, issue, page, photoPlates, gum, watermark, save, blobOf, imageOf, button, drawMark, drawMarks, mySeal,
     thumbs: {} };   // thumbs[kind](entry, scale, deps): how the album draws works that are not plain stamps
 })();
