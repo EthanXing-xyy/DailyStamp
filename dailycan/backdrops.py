@@ -3,15 +3,12 @@ tone-on-tone on the home desk, two a day. codex draws each once as a black silho
 shape on a transparent ground (the alpha is the shape) in backdrops/, so the page can tint it with any colour."""
 from __future__ import annotations
 
-import json
 import os
-import subprocess
-import sys
-import time
 
 import numpy as np
 from PIL import Image, ImageFilter
 
+from .assetset import CodexSet
 from .library import ROOT
 
 BACKDROPS_DIR = os.path.join(ROOT, "backdrops")
@@ -43,21 +40,6 @@ Save the PNG as "{out}" (overwrite if it exists), then reply with exactly one li
 """
 
 
-def path_for(key: str, raw: bool = False) -> str:
-    return os.path.join(BACKDROPS_DIR, key + (".raw.png" if raw else ".png"))
-
-
-def write_index() -> None:
-    items = []
-    for k, _ in SHAPES:
-        p = path_for(k)
-        if os.path.exists(p):
-            w, h = Image.open(p).size
-            items.append({"key": k, "file": f"backdrops/{k}.png", "w": w, "h": h, "v": int(os.path.getmtime(p))})
-    with open(os.path.join(BACKDROPS_DIR, "index.json"), "w", encoding="utf-8") as f:
-        json.dump(items, f, ensure_ascii=False, indent=2)
-
-
 def build_mask(src: Image.Image) -> tuple[Image.Image, float]:
     """The silhouette as white on transparent, cropped to the shape with a small margin; also returns how much of the
     raw square was ink (a drawing on a dark ground would come out as a slab)."""
@@ -84,52 +66,17 @@ def build_mask(src: Image.Image) -> tuple[Image.Image, float]:
     return img, ink
 
 
-def generate(key: str, timeout: int = 900) -> bool:
-    """Ask codex for one shape, then build its mask. Returns True on success."""
-    subject = next(s for k, s in SHAPES if k == key)
-    os.makedirs(BACKDROPS_DIR, exist_ok=True)
-    raw = path_for(key, raw=True)
-    work = os.path.join(BACKDROPS_DIR, "_work", key)
-    os.makedirs(work, exist_ok=True)
-    cmd = ["codex", "exec", "--skip-git-repo-check", "-s", "danger-full-access",
-           "--enable", "image_generation", "-c", 'model_reasoning_effort="low"',
-           "-C", work, "-o", os.path.join(work, "last.txt"),
-           PROMPT_TMPL.format(subject=subject, out=raw)]
-    for _ in range(2):
-        if os.path.exists(raw):
-            os.remove(raw)
-        try:
-            subprocess.run(cmd, cwd=work, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                           stderr=subprocess.DEVNULL, timeout=timeout, check=False)
-        except subprocess.TimeoutExpired:
-            print(f"  {key}: codex timed out", file=sys.stderr)
-        if not os.path.exists(raw):
-            continue
-        mask, ink = build_mask(Image.open(raw))
-        if ink > 0.6 or ink < 0.08:                         # a black slab, or next to nothing
-            print(f"  {key}: ink covers {ink:.0%}, drawing again", file=sys.stderr)
-            continue
-        mask.save(path_for(key), optimize=True)
-        return True
-    return False
+def _mask(raw: Image.Image):
+    m, ink = build_mask(raw)
+    if ink > 0.6 or ink < 0.08:                                # a black slab, or next to nothing
+        return None, f"ink covers {ink:.0%}"
+    return m, ""
 
 
-def rebuild() -> None:
-    """Rebuild every mask from its raw drawing (after changing build_mask)."""
-    for k, _ in SHAPES:
-        if os.path.exists(path_for(k, raw=True)):
-            build_mask(Image.open(path_for(k, raw=True)))[0].save(path_for(k), optimize=True)
-    write_index()
+def _entry(it, p, file):
+    w, h = Image.open(p).size
+    return {"key": it[0], "file": file, "w": w, "h": h}
 
 
-def generate_missing(keys: list[str] | None = None) -> None:
-    """Draw the given shapes (redraw even if present), or every shape not drawn yet, one codex run at a time
-    (parallel runs have picked up each other's images)."""
-    todo = keys or [k for k, _ in SHAPES if not os.path.exists(path_for(k))]
-    print(f"{len(todo)} backdrop(s) to draw")
-    for k in todo:
-        t0 = time.time()
-        ok = generate(k)
-        print(f"  {k}: {'ok' if ok else 'failed'}  ({time.time() - t0:.0f}s)", flush=True)
-        write_index()
-    write_index()
+SET = CodexSet(BACKDROPS_DIR, SHAPES, what="backdrop", mask=_mask, entry=_entry,
+               prompt=lambda it, out: PROMPT_TMPL.format(subject=it[1], out=out))

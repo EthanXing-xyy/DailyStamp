@@ -6,11 +6,9 @@ import mimetypes
 import os
 import posixpath
 import urllib.parse
-from dataclasses import asdict
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 from . import leaflet, library
-from .palettes import PALETTES
 
 ROOT = library.ROOT
 WEB = os.path.join(ROOT, "web")
@@ -49,8 +47,6 @@ class Handler(SimpleHTTPRequestHandler):
         if p == "/api/leaflet":
             q = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
             return self._json(leaflet.status((q.get("phrase") or [""])[0].strip()))
-        if p == "/api/palettes":
-            return self._json([asdict(x) for x in PALETTES])
         self.send_header_no_cache = True
         return super().do_GET()
 

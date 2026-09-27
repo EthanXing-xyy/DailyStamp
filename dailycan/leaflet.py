@@ -134,19 +134,6 @@ def generate(phrase: str, en: str = "") -> dict:
         raise
 
 
-def generate_async(phrase: str, en: str = "") -> dict:
-    got = load(phrase)
-    if got:
-        return got
-    key = _id(phrase)
-    with _lock:
-        if key in _pending and _pending[key]["status"] == "pending":
-            return _pending[key]
-        _pending[key] = {"phrase": phrase, "status": "pending"}
-    threading.Thread(target=generate, args=(phrase, en), daemon=True).start()
-    return {"phrase": phrase, "status": "pending"}
-
-
 def status(phrase: str) -> dict:
     got = load(phrase)
     if got:
