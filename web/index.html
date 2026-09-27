@@ -18,13 +18,15 @@
 <link rel="stylesheet" href="pages/later.css">
 <link rel="stylesheet" href="pages/silkscreen.css">
 <link rel="stylesheet" href="pages/collage.css">
+<link rel="stylesheet" href="pages/soak.css">
 <style>
 /* the loading screen (web/loader.js): inline, so it is the very first thing painted. Paper and ink only: the colour on it
-   is the eleven real stamps coming off the press. One thing moves at a time, and nothing bounces. */
+   is the home's real stamps coming off the press. One thing moves at a time, and nothing bounces. */
 #loader { position: fixed; inset: 0; z-index: 1000; overflow: hidden; color: #1B1633; --ink: #1B1633; --paper: #ECE7DD;
   background: radial-gradient(120% 90% at 50% 38%, rgba(255,253,248,.55), rgba(255,253,248,0) 70%), var(--paper);
   display: grid; place-items: center; user-select: none; -webkit-user-select: none; cursor: progress;
-  --sw: min(5.2vw, 7.6vh); --sg: calc(var(--sw) * .24); --row: calc(var(--sw) * 11 + var(--sg) * 10); --title: min(12vh, 9.5vw); }
+  --sw: min(calc(57vw / var(--per, 11)), calc(7.6vh * 11 / var(--per, 11)), 6.4vh); --sg: calc(var(--sw) * .24);
+  --row: calc(var(--sw) * var(--per, 11) + var(--sg) * (var(--per, 11) - 1)); --title: min(12vh, 9.5vw); }
 /* the paper's grain: a fine fractal noise, drawn by the browser at the screen's own resolution */
 #loader::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .1; mix-blend-mode: multiply;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .25 1.4 0 0 0 -.3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 220px 220px; }
@@ -35,7 +37,7 @@
   font-size: var(--title); letter-spacing: .16em; padding-left: .16em; white-space: nowrap; }
 .ld-sub { margin: calc(var(--title) * .26) 0 0; font-family: "DS LoadCaps", sans-serif; font-size: max(10px, min(1.6vh, 12px));
   letter-spacing: .28em; padding-left: .28em; white-space: nowrap; opacity: .62; }
-.ld-slots { display: flex; justify-content: center; gap: var(--sg); margin-top: min(7vh, 56px); }
+.ld-slots { display: flex; flex-wrap: wrap; width: 100%; justify-content: center; gap: var(--sg); row-gap: calc(var(--sg) * 1.6); margin-top: min(7vh, 56px); }
 .ld-slot { position: relative; width: var(--sw); aspect-ratio: 4 / 5; }
 .ld-slot canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .ld-slot canvas.blank { filter: drop-shadow(0 1px 1.5px rgba(60,45,30,.2)); opacity: .9; }
@@ -98,7 +100,7 @@
   #loader.ready .ld-mark, #loader.ready .ld-go { animation: ld-fade .4s ease both; }
   @keyframes ld-fade { from { opacity: 0; } }
 }
-/* upright screens (a phone): a column as wide as the screen allows, the slots in two rows of 6 + 5 */
+/* upright screens (a phone): a column as wide as the screen allows, the slots in rows of six */
 @media (max-aspect-ratio: 1/1) {
   #loader { --row: min(calc(100vw - 48px), 440px); --sg: 10px; --sw: calc((var(--row) - 5 * var(--sg)) / 6); --title: min(14vw, 10vh); }
   .ld-slots { flex-wrap: wrap; width: 100%; row-gap: 12px; margin-top: min(5.6vh, 44px); }
@@ -241,6 +243,7 @@
 <script src="pages/later.js"></script>
 <script src="pages/silkscreen.js"></script>
 <script src="pages/collage.js"></script>
+<script src="pages/soak.js"></script>
 <script src="vendor/axes.pkgd.min.js"></script>
 <!-- the app: assets, printing, the studio stage, navigation, preloading -->
 <script src="app/context.js"></script>

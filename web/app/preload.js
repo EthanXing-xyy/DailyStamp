@@ -36,9 +36,9 @@ const Preload = (() => {
     if (!useOpening) return;
     const inks = Assets.words();
 
-    // the day's stamps (the home sheets); today's stamp and the studio's are two of them
+    // the day's stamps (the home sheets); today's is one of them, and the studio starts from it too
     App.homePlans = Home.plan(state.date, inks, Assets.palettes);
-    Object.assign(state, App.homePlans[Home.FEATURES.findIndex(f => f.key === (App.view === 'studio' ? 'studio' : 'today'))]);
+    Object.assign(state, App.homePlans[Home.FEATURES.findIndex(f => f.key === 'today')]);
     Stage.setDailyMessage(await Stage.getDailyMessage(state.date));
     document.getElementById('opening-date').textContent = state.date.replace(/-/g, '.');
     Stage.flip.setAttribute('aria-label', '轻点揭示今日短句，双击翻面；左键拖动平面旋转，按住滚轮拖动空间翻转');

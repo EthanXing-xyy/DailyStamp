@@ -1,0 +1,26 @@
+/* ---------- 泡票: an enamel wash basin, an envelope corner, blotting paper, tweezers, a book to press with */
+.sq-desk { position: absolute; inset: 0; touch-action: none; }
+.sq-basin { position: absolute; pointer-events: none; filter: drop-shadow(0 12px 20px rgba(40,30,20,.22)); }
+.sq-blotter { position: absolute; pointer-events: none; transform: rotate(2.5deg); background:
+  radial-gradient(circle at 30% 20%, rgba(255,255,255,.35), rgba(255,255,255,0) 60%), #F3B9C8;
+  clip-path: polygon(0 2%, 9% 0, 22% 1.5%, 37% 0, 52% 1%, 67% 0, 81% 1.2%, 100% 0, 99% 18%, 100% 36%, 98.8% 55%, 100% 73%, 99% 100%, 80% 98.8%, 61% 100%, 44% 98.6%, 27% 100%, 10% 98.9%, 0 100%, 1.2% 80%, 0 61%, 1% 42%, 0 22%); }
+.sq-blotter::after { content: "吸水纸 · BLOTTING"; position: absolute; left: 0; right: 0; bottom: 7%; text-align: center; font-family: "DS CapsMed", "DS CjkMed", sans-serif;
+  font-size: 9px; letter-spacing: .3em; color: rgba(120,40,60,.5); }
+.sq-env { position: absolute; cursor: grab; transform-origin: 50% 50%; will-change: transform, filter; }
+.sq-env:active { cursor: grabbing; }
+.sq-env canvas { display: block; width: 100%; height: 100%; filter: drop-shadow(1px 2px 1.5px rgba(0,0,0,.22)) drop-shadow(6px 12px 16px rgba(0,0,0,.14)); }
+.sq-stamp { position: absolute; cursor: grab; transform-origin: 50% 50%; will-change: transform, filter; }
+.sq-stamp canvas { display: block; width: 100%; height: 100%; filter: drop-shadow(1px 2px 1.5px rgba(0,0,0,.25)); }
+.sq-stamp.lifted canvas { filter: drop-shadow(2px 5px 5px rgba(0,40,60,.3)); }
+.sq-gloss { position: absolute; inset: 5%; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+  background: linear-gradient(118deg, rgba(255,255,255,0) 28%, rgba(255,255,255,.6) 44%, rgba(255,255,255,0) 58%, rgba(255,255,255,.3) 72%, rgba(255,255,255,0) 84%); }
+.sq-tweezers { position: fixed; z-index: 40; width: 26px; height: 78px; margin: -78px 0 0 -13px; pointer-events: none; opacity: 0;
+  transform: rotate(22deg); transform-origin: 50% 100%; transition: opacity .2s; }
+.sq-tweezers.on { opacity: 1; }
+.sq-tweezers svg { width: 100%; height: 100%; fill: none; stroke: #7d7c84; stroke-width: 5; stroke-linecap: round; filter: drop-shadow(2px 3px 2px rgba(0,0,0,.25)); }
+.sq-book { position: absolute; z-index: 20; opacity: 0; pointer-events: none; display: grid; place-content: center; justify-items: center; gap: 6px;
+  border-radius: 3px 7px 7px 3px; background: #1B1633; color: #F4EEDF; box-shadow: 0 16px 28px rgba(0,0,0,.3);
+  background-image: linear-gradient(90deg, rgba(255,255,255,.1) 0 9%, rgba(0,0,0,0) 9% 100%); }
+.sq-book span { font-family: "DS Phrase", serif; font-size: 18px; letter-spacing: .3em; }
+.sq-book i { font-style: normal; font-family: "DS CapsMed", sans-serif; font-size: 8px; letter-spacing: .3em; opacity: .6; }
+.sq-acts { position: absolute; display: flex; justify-content: center; gap: 28px; }
