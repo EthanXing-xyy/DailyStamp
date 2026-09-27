@@ -51,7 +51,7 @@ def text_chars(paths: list[str]) -> set[str]:
 
 
 def project_chars() -> set[str]:
-    paths = glob.glob(os.path.join(WEB, "*.js")) + glob.glob(os.path.join(WEB, "*.html"))
+    paths = [p for ext in ("js", "html") for p in glob.glob(os.path.join(WEB, "**", "*." + ext), recursive=True) if os.sep + "vendor" + os.sep not in p]
     paths += glob.glob(os.path.join(ROOT, "leaflets", "*.json")) + glob.glob(os.path.join(ROOT, "emblems", "*.json"))
     paths += [os.path.join(ROOT, d, "index.json") for d in ("terms", "posters", "backdrops") if os.path.exists(os.path.join(ROOT, d, "index.json"))]
     return text_chars(paths)

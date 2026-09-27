@@ -1,0 +1,40 @@
+/* ---------- 时光信: paper, a brush hand, an envelope, a letter box */
+.lt-desk { position: absolute; inset: 0; pointer-events: none; }
+.lt-desk > * { pointer-events: auto; }
+.lt-paper { position: absolute; filter: drop-shadow(0 12px 22px rgba(0,0,0,.2)); transform-origin: 50% 50%; }
+.lt-paper canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lt-to, .lt-date { position: absolute; font-family: "DC Brand", "STXingkai", serif; color: #1f2a55; }
+.lt-to { left: 10%; top: 7%; font-size: calc(54px * var(--lk, .4)); }
+.lt-date { right: 10%; bottom: 6%; font-size: calc(40px * var(--lk, .4)); }
+.lt-text { position: absolute; left: 10%; top: 17%; width: 80%; height: 70%; border: 0; outline: none; resize: none; background: transparent; padding: 0;
+  font-family: "DC Brand", "STXingkai", serif; color: #1f2a55; font-size: calc(46px * var(--lk, .4)); line-height: calc(72px * var(--lk, .4)); }
+.lt-text::placeholder { color: rgba(31,42,85,.3); }
+.lt-when { position: absolute; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 14px; }
+.lt-when .kit-btn { font-size: 12px; letter-spacing: .16em; padding: 6px 4px 8px; }
+.lt-when .kit-btn::after { opacity: 0; }
+.lt-when .kit-btn.on::after { opacity: .6; }
+.lt-custom { display: none; width: auto; padding: 3px 6px; font-size: 12px; background: transparent; border: 0; border-bottom: 1px dashed rgba(0,0,0,.35);
+  color: #1d1d1f; border-radius: 0; }
+.lt-custom.on { display: inline-block; }
+.lt-seal { --swash: #1f2a55; font-size: 16px; }
+.lt-note { position: absolute; margin: 0; text-align: center; font-family: "DC CjkMed", sans-serif; font-size: 10px; letter-spacing: .22em; opacity: .45; }
+.lt-box-head { position: absolute; margin: 0; font-family: "DC Phrase", serif; font-size: 20px; letter-spacing: .3em; opacity: .75; }
+.lt-box { position: absolute; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 18px 16px; overflow-y: auto; padding: 16px 8px 30px;
+  scrollbar-width: none; }
+.lt-box::-webkit-scrollbar { display: none; }
+.lt-env { position: relative; width: clamp(120px, 12vw, 170px); aspect-ratio: 3 / 2; transform: rotate(var(--r)); cursor: pointer; touch-action: none;
+  filter: drop-shadow(0 4px 7px rgba(0,0,0,.22)); transition: filter .4s; }
+.lt-env canvas { display: block; width: 100%; height: 100%; border-radius: 2px; }
+.lt-env span { position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; text-align: center; font-family: "DC CjkMed", sans-serif; font-size: 10px;
+  letter-spacing: .18em; opacity: .7; }
+.lt-env.due { animation: lt-glow 2.6s ease-in-out infinite; }
+.lt-env.due span { opacity: 1; color: #b0172f; }
+@keyframes lt-glow { 50% { filter: drop-shadow(0 0 12px rgba(255,200,90,.95)) drop-shadow(0 4px 7px rgba(0,0,0,.22)); } }
+.lt-empty { margin: 30px auto; font-family: "DC CjkMed", sans-serif; font-size: 12px; letter-spacing: .3em; opacity: .4; }
+.lt-light { position: fixed; z-index: 30; pointer-events: none; border-radius: 3px;
+  background: radial-gradient(circle at 50% 50%, rgba(255,250,230,.95), rgba(255,236,190,.75) 60%, rgba(255,220,160,.4)); box-shadow: 0 0 40px rgba(255,220,150,.9); }
+.lt-light canvas { width: 100%; height: 100%; display: block; mix-blend-mode: multiply; }
+.lt-fly { position: fixed; z-index: 30; filter: drop-shadow(0 10px 18px rgba(0,0,0,.25)); }
+.lt-read { position: absolute; z-index: 25; filter: drop-shadow(0 16px 30px rgba(0,0,0,.35)); }
+.lt-veil { position: absolute; inset: 0; z-index: 24; background: rgba(20,18,16,0); pointer-events: none; transition: background .4s; }
+.lt-veil.on { background: rgba(20,18,16,.45); pointer-events: auto; }

@@ -1,0 +1,27 @@
+/* ---------- 丝网印刷机: a sheet on the bed, the screen over the next square, a squeegee */
+.sk-bed { position: absolute; background: #F4EFE3; box-shadow: 0 16px 30px rgba(0,0,0,.22); touch-action: none; cursor: ew-resize; }
+.sk-cell { position: absolute; display: block; transition: clip-path .05s linear; }
+.sk-frame { position: absolute; pointer-events: none; border: 7px solid #8a6a3c; border-radius: 2px; transition: opacity .5s;
+  background: repeating-linear-gradient(60deg, rgba(40,40,40,.05) 0 2px, transparent 2px 5px), rgba(250,245,230,.06);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25), 0 6px 14px rgba(0,0,0,.25); }
+.sk-blade { position: absolute; width: 18px; pointer-events: none; transition: opacity .5s; z-index: 2; }
+.sk-blade::before { content: ""; position: absolute; left: 3px; right: 3px; top: 0; bottom: 0; border-radius: 6px;
+  background: linear-gradient(90deg, #b88c50, #e0bb7a 40%, #9c7440); box-shadow: 2px 4px 8px rgba(0,0,0,.35); }
+.sk-blade i { position: absolute; left: 7px; width: 4px; top: 6px; bottom: 6px; background: #2a2a2e; border-radius: 2px; }
+.sk-frame.off, .sk-blade.off { opacity: 0; }
+.sk-stencil { position: absolute; opacity: .3; mix-blend-mode: multiply; transition: opacity .35s ease; }
+.sk-frame.pull .sk-stencil { opacity: 0; }
+.sk-side { position: absolute; display: grid; gap: 14px; }
+.sk-grid-row, .sk-acts { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+.sk-grid-row .kit-btn::after { opacity: 0; }
+.sk-grid-row .kit-btn.on::after { opacity: .6; }
+.sk-src { display: flex; flex-wrap: wrap; gap: 6px; max-height: 40vh; overflow-y: auto; scrollbar-width: none; }
+.sk-src::-webkit-scrollbar { display: none; }
+.sk-pick { width: 46px; height: 46px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; opacity: .75; transition: transform .2s, opacity .2s; }
+.sk-pick:hover { background: none; opacity: 1; transform: scale(1.08); }
+.sk-pick.on { opacity: 1; transform: scale(1.12); filter: drop-shadow(0 3px 5px rgba(0,0,0,.3)); }
+.sk-pick canvas, .sk-pick img { width: 100%; height: 100%; display: block; }
+.sk-note { margin: 0; font-family: "DC CjkMed", sans-serif; font-size: 10px; letter-spacing: .2em; opacity: .5; }
+@media (max-aspect-ratio: 1/1) { .sk-src { flex-wrap: nowrap; overflow-x: auto; max-height: none; padding: 4px 6px; margin: -4px -6px; } .sk-pick { flex: none; } }
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) { .sk-side { gap: 8px; } .sk-pick { width: 38px; height: 38px; } .sk-src { max-height: 34vh; } }
+@media (max-height: 380px) and (min-aspect-ratio: 1/1) { .sk-note { display: none; } }

@@ -1,0 +1,32 @@
+/* ---------- pages in layers of their own (web/pages.js): a desk, a way home, a header, a status line */
+.layer { display: none; }
+/* while the loading screen is up every page is mounted out of sight, laid out at full size (app.js preload) */
+body.preloading .layer:not(.on) { display: block; position: fixed; inset: 0; visibility: hidden; pointer-events: none; }
+body.daily-layer { display: block; overflow: hidden; }
+body.daily-layer #stage, body.daily-layer #panel, body.daily-layer #wall { display: none; }
+body.daily-layer .layer.on { display: block; position: fixed; inset: 0; z-index: 15; padding: 0; border: 0; background: #D9D5CC; color: #1d1d1f;
+  outline: none; overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+.layer::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(120% 90% at 30% 15%, rgba(255,255,255,.10), rgba(0,0,0,.14)); }
+.layer .to-home { position: absolute; left: 20px; top: 16px; z-index: 30; color: #49443c; }
+.kit-head { position: absolute; left: 0; right: 0; top: 20px; text-align: center; pointer-events: none; z-index: 2; }
+.kit-kicker { margin: 0; font-family: "DC CapsMed", "DC CjkMed", sans-serif; font-size: 10px; letter-spacing: .34em; opacity: .78; }
+.kit-head h2 { display: block; margin: 8px 0 0; font-family: "DC Phrase", serif; font-weight: normal; font-size: clamp(26px, 4.4vh, 40px);
+  line-height: 1.1; letter-spacing: .12em; text-transform: none; color: #1d1d1f; }
+.kit-status { position: absolute; margin: 0; text-align: center; font-family: "DC CapsMed", "DC CjkMed", sans-serif; font-size: 11px;
+  letter-spacing: .24em; opacity: .72; pointer-events: none; transition: color .3s; }
+.kit-status.flash { color: #b0172f; opacity: .9; }
+.kit-card { position: absolute; perspective: 1800px; will-change: transform; cursor: pointer; z-index: 3; }
+.kit-card-in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .9s cubic-bezier(.45,0,.2,1); }
+.kit-face { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  filter: drop-shadow(1px 2px 1.5px rgba(0,0,0,.24)) drop-shadow(8px 18px 24px rgba(0,0,0,.18)); }
+.kit-face.front { transform: rotateY(180deg); }
+/* buttons on the desk: ink words with a hand-drawn underline swash, never a boxed rectangle */
+.kit-btn { position: relative; border: 0; background: none; color: #1d1d1f; padding: 8px 6px 10px; font-family: "DC Cjk", sans-serif; font-size: 14px;
+  letter-spacing: .24em; cursor: pointer; border-radius: 0; }
+.kit-btn::after { content: ""; position: absolute; left: 4px; right: 4px; bottom: 3px; height: 7px; border-radius: 60% 40% 55% 45%;
+  background: var(--swash, #ff5fa2); opacity: .55; transform: rotate(-2deg); transition: opacity .2s, transform .2s; z-index: -1; }
+.kit-btn:hover { background: none; }
+.kit-btn:hover::after { opacity: .85; transform: rotate(-1deg) scaleY(1.2); }
+.kit-btn:disabled { opacity: .35; cursor: default; }
+.kit-btn:disabled::after { opacity: .2; }
