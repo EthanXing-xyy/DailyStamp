@@ -1,0 +1,72 @@
+[
+  {
+    "key": "sun",
+    "file": "backdrops/sun.png",
+    "w": 1016,
+    "h": 1020,
+    "v": 1790476324
+  },
+  {
+    "key": "algae",
+    "file": "backdrops/algae.png",
+    "w": 683,
+    "h": 1020,
+    "v": 1790476378
+  },
+  {
+    "key": "star",
+    "file": "backdrops/star.png",
+    "w": 1004,
+    "h": 1003,
+    "v": 1790476432
+  },
+  {
+    "key": "wave",
+    "file": "backdrops/wave.png",
+    "w": 1000,
+    "h": 978,
+    "v": 1790476952
+  },
+  {
+    "key": "flower",
+    "file": "backdrops/flower.png",
+    "w": 957,
+    "h": 940,
+    "v": 1790476608
+  },
+  {
+    "key": "burst",
+    "file": "backdrops/burst.png",
+    "w": 990,
+    "h": 986,
+    "v": 1790476666
+  },
+  {
+    "key": "bolt",
+    "file": "backdrops/bolt.png",
+    "w": 887,
+    "h": 998,
+    "v": 1790476714
+  },
+  {
+    "key": "moon",
+    "file": "backdrops/moon.png",
+    "w": 907,
+    "h": 980,
+    "v": 1790476772
+  },
+  {
+    "key": "palm",
+    "file": "backdrops/palm.png",
+    "w": 988,
+    "h": 1023,
+    "v": 1790476824
+  },
+  {
+    "key": "cloud",
+    "file": "backdrops/cloud.png",
+    "w": 1024,
+    "h": 843,
+    "v": 1790476878
+  }
+]
