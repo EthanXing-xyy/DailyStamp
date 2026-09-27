@@ -108,7 +108,7 @@
       // the cut: a darker hollow with a lit lower edge
       const k = U.canvas(N, N), kg = k.getContext('2d'); kg.drawImage(cut, 0, 0); kg.globalCompositeOperation = 'destination-in'; kg.drawImage(faceWant, 0, 0);
       const hollow = U.canvas(N, N), hg = hollow.getContext('2d');
-      hg.drawImage(k, 0, 0); hg.globalCompositeOperation = 'source-in'; hg.fillStyle = U.shade(stoneCol, -0.42); hg.fillRect(0, 0, N, N);
+      hg.drawImage(k, 0, 0); hg.globalCompositeOperation = 'source-in'; hg.fillStyle = U.shade(stoneCol, 0.52); hg.fillRect(0, 0, N, N);
       hg.globalCompositeOperation = 'destination-out'; hg.globalAlpha = 0.5; hg.drawImage(k, 0, -3);
       g.drawImage(hollow, 0, 0, s, s);
       const lit = U.canvas(N, N), lg = lit.getContext('2d'); lg.drawImage(k, 0, 2); lg.globalCompositeOperation = 'destination-out'; lg.drawImage(k, 0, 0);
@@ -157,7 +157,7 @@
       for (let i = flying.length - 1; i >= 0; i--) {
         const c = flying[i]; c.t++; c.vy += 0.25; c.x += c.vx; c.y += c.vy;
         if (c.t > 40) { flying.splice(i, 1); continue; }
-        g.fillStyle = U.shade(stoneCol, -0.1); g.globalAlpha = 1 - c.t / 40;
+        g.fillStyle = U.shade(stoneCol, 0.85); g.globalAlpha = 1 - c.t / 40;
         g.fillRect(c.x * dpr, c.y * dpr, 3 * dpr, 2 * dpr);
       }
       g.globalAlpha = 1;
