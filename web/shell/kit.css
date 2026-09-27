@@ -30,3 +30,10 @@ body.daily-layer .layer.on { display: block; position: fixed; inset: 0; z-index:
 .kit-btn:hover::after { opacity: .85; transform: rotate(-1deg) scaleY(1.2); }
 .kit-btn:disabled { opacity: .35; cursor: default; }
 .kit-btn:disabled::after { opacity: .2; }
+/* debugging buttons (Kit.debugRow): the desk's own buttons, quieter, in a corner out of the way */
+.kit-debug { position: absolute; right: 18px; bottom: 14px; z-index: 30; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px 16px;
+  max-width: calc(100% - 36px); }
+.kit-debug .kit-btn { --swash: #9f9684; font-size: 12px; letter-spacing: .16em; opacity: .78; }
+.kit-debug .kit-btn small { font-family: "DC CapsMed", "DC CjkMed", sans-serif; font-size: 9px; letter-spacing: .12em; opacity: .6; margin-right: .5em; }
+.kit-debug .kit-btn:hover { opacity: 1; }
+@media (max-aspect-ratio: 1/1) { .kit-debug { right: 12px; bottom: 40px; } }

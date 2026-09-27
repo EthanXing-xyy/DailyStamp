@@ -13,7 +13,7 @@
   function mount(root, deps) {
     const { el, clamp, TAU } = Kit;
     const today = deps.date, year = +today.slice(0, 4);
-    Kit.head(root, 3, 'SOLAR TERMS', '节气历');
+    Kit.head(root, 'terms');
     const ringEl = el('div', 'terms-ring'), info = el('div', 'terms-info', '<b></b><span></span><em></em>');
     const status = Kit.status(root);
     root.append(ringEl, info);

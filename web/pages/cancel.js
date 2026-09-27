@@ -5,8 +5,8 @@
   function mount(root, deps) {
     const { el, clamp, TAU } = Kit;
     const date = deps.date, KEY = 'dc-cancel';
-    Kit.head(root, 8, 'CANCEL', '盖戳');
-    const status = Kit.status(root);
+    const P = Kit.page(root, 'cancel', () => layout());
+    const status = P.status;
     const desk = el('div', 'cx-desk'), stackEl = el('div', 'cx-stack'), pile = el('div', 'cx-pile'), ring = el('div', 'cx-ring');
     desk.append(stackEl, pile, ring); root.append(desk);
 
@@ -17,7 +17,7 @@
 
     let W = 0, H = 0, sh = 0, sw = 0, sx = 0, sy = 0, phone = false;
     function layout() {
-      W = innerWidth; H = innerHeight; phone = W < H;
+      ({ W, H, phone } = P.measure());
       sh = phone ? Math.min((W - 60) * 1.25, H * 0.52) : Math.min(H * 0.6, 520); sw = sh * 0.8;
       sx = phone ? W / 2 : W * 0.42; sy = phone ? H * 0.47 : H * 0.55;
       Object.assign(stackEl.style, { left: sx - sw / 2 + 'px', top: sy - sh / 2 + 'px', width: sw + 'px', height: sh + 'px' });
@@ -144,16 +144,15 @@
     }
 
     layout();
-    addEventListener('resize', layout);
     makeUnder();
     top = makeTop(S.i, false);
     top.box.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 700, easing: 'ease' });
     status.set(S.count ? `今天盖了 ${S.count} 个戳` : '点邮票盖一个戳 · 按久一点墨更重 · 甩走换下一枚');
-    return {
+    return P.api({
       ready: Promise.resolve(),
       anchor: () => stackEl.getBoundingClientRect(),
       source: () => null,
-    };
+    });
   }
   Pages.define('cancel', mount);
 })();

@@ -4,8 +4,8 @@
 (() => {
   function mount(root, deps) {
     const { el, clamp } = Kit;
-    Kit.head(root, 7, 'MOOD PHARMACY', '情绪药房');
-    const status = Kit.status(root);
+    const P = Kit.page(root, 'pharmacy', () => layout());
+    const status = P.status;
     const cab = el('div', 'rx-cabinet'), counter = el('div', 'rx-counter'), veil = el('div', 'rx-veil');
     root.append(cab, veil, counter);
     const date = deps.date, day = Print.rng(Kit.hash('pharmacy' + date));
@@ -67,7 +67,7 @@
     let W = 0, H = 0, phone = false, bw = 0, bh = 0, bx = 0, by = 0;
     const TAB = 34;                                        // the tabs' height above the cabinet
     function layout() {
-      W = innerWidth; H = innerHeight; phone = W < H;
+      ({ W, H, phone } = P.measure());
       cols = phone ? 4 : 6;
       const most = Math.max(1, ...shown.map(([k]) => drawers.filter(d => d.group === k).length)), rows = Math.ceil(most / cols);
       const top = (phone ? 104 : 100) + TAB, left = phone ? 14 : Math.max(24, W * 0.06);
@@ -188,7 +188,6 @@
     veil.addEventListener('click', () => { if (rx && !busy) { clearRx(); drawers.forEach(x => x.classList.remove('open')); counter.classList.add('on'); } });
 
     layout();
-    addEventListener('resize', () => { layout(); });
     counter.innerHTML = '<span>拉开一格抽屉</span><em>药剂师为你配一枚</em>';
     counter.classList.add('on');
     const ready = deps.album.all().then(all => {
@@ -196,11 +195,11 @@
       status.set(made ? `今日已配 ${made} 剂` : `${drawers.length} 味情绪 · 今天还没配药`);
       requestAnimationFrame(layout);
     });
-    return {
+    return P.api({
       ready,
       anchor: () => { if (rx) return rx.c.box.getBoundingClientRect(); const h = bh * 0.8; return new DOMRect(bx - h * 0.4, by, h * 0.8, h); },
       source: () => (rx && rx.c.ready ? rx.c.front : null),
-    };
+    });
   }
   Pages.define('pharmacy', mount);
 })();

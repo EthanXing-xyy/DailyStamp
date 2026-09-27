@@ -6,7 +6,7 @@
 
   function mount(root, deps) {
     const { el, clamp, TAU } = Kit;
-    Kit.head(root, 4, 'ALBUM', '集邮册');
+    Kit.head(root, 'album');
     const book = el('div', 'album-book'), status = Kit.status(root);
     const veil = el('div', 'album-veil');
     root.append(book, veil);

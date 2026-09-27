@@ -40,7 +40,7 @@ const Tear = (() => {
   /** deps: {date, words, palettes, makeFront, makeBack, printIn, loadLeaflet}; returns {ready, anchor(), source()} */
   function mount(root, deps) {
     const { date, words, palettes } = deps;
-    Kit.head(root, 2, 'TEAR ONE OFF', '撕一张');
+    Kit.head(root, 'tear');
     const paneEl = el('div', 'tear-pane'), posterCv = el('canvas', 'tear-poster'), sheetCv = el('canvas', 'tear-sheet');
     const status = el('p', 'kit-status'), spot = el('p', 'tear-spot', '今天这一枚<br>会落在这里');
     paneEl.append(posterCv, sheetCv);

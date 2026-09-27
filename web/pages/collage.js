@@ -5,8 +5,8 @@
 (() => {
   function mount(root, deps) {
     const { el, clamp, TAU } = Kit;
-    Kit.head(root, 10, 'COLLAGE', '拼贴机');
-    const status = Kit.status(root);
+    const P = Kit.page(root, 'collage', () => layout());
+    const status = P.status;
     const tray = el('div', 'cl-tray'), work = el('div', 'cl-work'), base = el('canvas', 'cl-base'), handle = el('div', 'cl-handle');
     const acts = el('div', 'cl-acts');
     const bMess = Kit.button(acts, '乱拼'), bClear = Kit.button(acts, '清空'), bDone = Kit.button(acts, '完成');
@@ -17,7 +17,7 @@
     let W = 0, H = 0, phone = false, bw = 0, bh = 0, bx = 0, by = 0;
     const dpr = () => Math.min(2, devicePixelRatio || 1);
     function layout() {
-      W = innerWidth; H = innerHeight; phone = W < H;
+      ({ W, H, phone } = P.measure());
       bh = phone ? Math.min(H * 0.5, (W - 60) * 1.25) : Math.min(H - 250, W * 0.36 * 1.25); bw = bh * 0.8;
       bx = phone ? W / 2 - bw / 2 : W * 0.5 - bw / 2; by = phone ? 104 : 108;
       Object.assign(base.style, { left: bx + 'px', top: by + 'px', width: bw + 'px', height: bh + 'px' });
@@ -226,11 +226,10 @@
     }
 
     layout();
-    addEventListener('resize', () => { if (Kit.visible(root)) layout(); });
     bDone.disabled = true;
     status.set('点左边的邮票撕一片下来 · 或者先乱拼一版');
     const ready = fillTray();
-    return { ready: Promise.race([ready, Kit.wait(500)]), anchor: () => base.getBoundingClientRect(), source: () => (result ? result.front : null) };
+    return P.api({ ready: Promise.race([ready, Kit.wait(500)]), anchor: () => base.getBoundingClientRect(), source: () => (result ? result.front : null) });
   }
   Pages.define('collage', mount);
 })();
