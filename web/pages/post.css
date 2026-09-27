@@ -1,0 +1,20 @@
+/* ---------- 寄一张: a two-sided postcard, the message in a brush hand */
+.post-card { position: absolute; perspective: 2400px; filter: drop-shadow(0 16px 26px rgba(0,0,0,.24)); }
+.post-in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .9s cubic-bezier(.45,0,.2,1); }
+.post-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 3px; overflow: hidden; }
+.post-face canvas { display: block; }
+.post-front { transform: rotateY(180deg); }
+.post-msg, .post-to { position: absolute; border: 0; outline: none; resize: none; background: transparent; color: #1f2a55; padding: 0;
+  font-family: "DC Brand", "STXingkai", serif; line-height: 1.38; overflow: hidden; }
+.post-msg { left: 5%; top: 17%; width: 46%; height: 72%; font-size: calc(64px * var(--k, .5)); line-height: calc(88px * var(--k, .5)); }
+.post-to { left: 60%; top: 54%; width: 34%; height: 30%; font-size: calc(58px * var(--k, .5)); line-height: calc(84px * var(--k, .5)); }
+.post-msg::placeholder, .post-to::placeholder { color: rgba(31,42,85,.32); }
+.post-tools { position: absolute; display: flex; justify-content: center; gap: 28px; }
+.post-tray { position: absolute; display: flex; gap: 10px; overflow-x: auto; overflow-y: hidden; padding: 6px 4px 8px; justify-content: safe center;
+  scrollbar-width: none; }
+.post-tray::-webkit-scrollbar { display: none; }
+.post-pick { flex: none; height: 100%; aspect-ratio: 4 / 5; padding: 0; border: 0; background: none; cursor: pointer; transition: transform .2s; }
+.post-pick:hover { background: none; transform: translateY(-4px) rotate(-2deg); }
+.post-pick.on { transform: translateY(-6px); filter: drop-shadow(0 6px 8px rgba(0,0,0,.3)); }
+.post-pick canvas { display: block; width: 100%; height: 100%; filter: drop-shadow(1px 2px 1.5px rgba(0,0,0,.25)); }
+.post-fly { position: fixed; z-index: 40; pointer-events: none; }

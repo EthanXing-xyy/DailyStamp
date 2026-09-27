@@ -5,7 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>每日一枚 · Studio</title>
 <link rel="stylesheet" href="fonts/sub/fonts.css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/studio.css">
+<link rel="stylesheet" href="css/home.css">
+<link rel="stylesheet" href="shell/kit.css">
+<link rel="stylesheet" href="pages/tear.css">
+<link rel="stylesheet" href="pages/terms.css">
+<link rel="stylesheet" href="pages/album.css">
+<link rel="stylesheet" href="pages/post.css">
+<link rel="stylesheet" href="pages/pharmacy.css">
+<link rel="stylesheet" href="pages/cancel.css">
+<link rel="stylesheet" href="pages/later.css">
+<link rel="stylesheet" href="pages/silkscreen.css">
+<link rel="stylesheet" href="pages/collage.css">
 <style>
 /* the loading screen (web/loader.js): inline, so it is the very first thing painted. Paper and ink only: the colour on it
    is the eleven real stamps coming off the press. One thing moves at a time, and nothing bounces. */
@@ -203,29 +215,33 @@
   <div id="wall-items"></div>
 </footer>
 
-<script src="util.js"></script>
-<script src="colors.js"></script>
-<script src="pattern.js"></script>
-<script src="print.js"></script>
-<script src="leaflet.js"></script>
-<script src="terms.js"></script>
-<script src="layouts.js"></script>
-<script src="stamp.js"></script>
-<script src="sheet.js"></script>
-<script src="home.js"></script>
-<script src="pages.js"></script>
-<script src="kit.js"></script>
-<script src="album.js"></script>
-<script src="tear.js"></script>
-<script src="p-terms.js"></script>
-<script src="p-album.js"></script>
-<script src="p-post.js"></script>
-<script src="p-pharmacy.js"></script>
-<script src="p-cancel.js"></script>
-<script src="p-later.js"></script>
-<script src="p-silk.js"></script>
-<script src="p-collage.js"></script>
+<!-- the stamp engine: pure drawing, no app state -->
+<script src="core/util.js"></script>
+<script src="core/colors.js"></script>
+<script src="core/pattern.js"></script>
+<script src="core/print.js"></script>
+<script src="core/leaflet.js"></script>
+<script src="core/terms.js"></script>
+<script src="core/layouts.js"></script>
+<script src="core/stamp.js"></script>
+<script src="core/sheet.js"></script>
+<!-- the shell: the home carousel, the page framework and what pages share -->
+<script src="shell/home.js"></script>
+<script src="shell/pages.js"></script>
+<script src="shell/kit.js"></script>
+<script src="shell/album.js"></script>
+<!-- one file per function (web/pages/<key>.js + .css) -->
+<script src="pages/tear.js"></script>
+<script src="pages/terms.js"></script>
+<script src="pages/album.js"></script>
+<script src="pages/post.js"></script>
+<script src="pages/pharmacy.js"></script>
+<script src="pages/cancel.js"></script>
+<script src="pages/later.js"></script>
+<script src="pages/silkscreen.js"></script>
+<script src="pages/collage.js"></script>
 <script src="vendor/axes.pkgd.min.js"></script>
-<script src="app.js"></script>
+<!-- the app: assets, printing, the studio stage, navigation, preloading -->
+<script src="app/main.js"></script>
 </body>
 </html>

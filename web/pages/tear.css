@@ -1,0 +1,13 @@
+/* ---------- 撕一张: a pane face down on a hidden poster; one stamp a day is torn off along its perforations */
+.tear-pane { position: absolute; left: 0; top: 0; transform-origin: 0 0; touch-action: none; }
+.tear-poster, .tear-sheet { position: absolute; left: 0; top: 0; display: block; }
+.tear-poster { box-shadow: 0 .6px 1px rgba(0,0,0,.22), 0 8px 22px rgba(0,0,0,.14); }
+.tear-sheet { filter: drop-shadow(0 .6px .8px rgba(0,0,0,.28)) drop-shadow(0 6px 14px rgba(0,0,0,.12)); }
+.tear-piece { position: absolute; transform-origin: 0 0; will-change: transform; pointer-events: none; }
+.tear-piece-in { position: absolute; inset: 0; will-change: transform; }
+.tear-piece canvas { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 .5px .6px rgba(0,0,0,.28)); }
+.tear-piece-shadow { position: absolute; inset: 9%; background: rgba(40,30,20,.55); opacity: 0; will-change: transform, opacity, filter; }
+.tear-gloss { position: absolute; inset: 0; opacity: 0; pointer-events: none; mask-size: 100% 100%; -webkit-mask-size: 100% 100%;
+  background: linear-gradient(118deg, rgba(255,255,255,0) 38%, rgba(255,255,255,.55) 50%, rgba(255,255,255,0) 62%) 50% 50% / 300% 300%; }
+.tear-spot { position: absolute; margin: 0; transform: translate(-50%, -50%); text-align: center; font-family: "DC CjkMed", sans-serif;
+  font-size: 12px; line-height: 2.2; letter-spacing: .32em; opacity: .4; pointer-events: none; transition: opacity .8s ease; }

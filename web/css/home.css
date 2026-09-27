@@ -1,0 +1,58 @@
+/* ---------- 首页: an endless carousel of the day's stamps */
+#home { display: none; }
+body.daily-home { overflow: hidden; }
+body.daily-home #home { display: block; position: fixed; inset: 0; z-index: 20; background: #D9D5CC; color: #1d1d1f;
+  outline: none; user-select: none; -webkit-user-select: none; }
+/* the desk takes the middle stamp's colour, muted; two hand-cut paper shapes lie on it tone on tone (home.js) */
+.home-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; background: var(--bd-desk, #D9D5CC); }
+.bd-set { position: absolute; opacity: 0; transition: opacity 1.2s ease; will-change: transform; }
+.bd-set.on { opacity: 1; }
+.bd-set i { position: absolute; inset: 0; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
+.bd-set .bd { background: var(--bd-shape, #cbc6bb); }
+.bd-set .bd-ghost { background: var(--bd-ghost, #d2cdc3); transform: translate(var(--gx, 6px), var(--gy, 5px)); }
+.home-bg::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(120% 90% at 30% 15%, rgba(255,255,255,.10), rgba(0,0,0,.14)); }
+.carousel { position: absolute; inset: 0; perspective: 1400px; touch-action: none; cursor: grab; overflow: hidden; }
+.carousel:active { cursor: grabbing; }
+.card { position: absolute; left: 50%; top: var(--cy); width: var(--cw); height: var(--ch);
+  margin: calc(var(--ch) / -2) 0 0 calc(var(--cw) / -2); will-change: transform, opacity; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.card-in { position: relative; width: 100%; height: 100%; will-change: transform; }
+/* the soft shadow stays on the desk while the stamp floats above it; only the contact shadow rides with the paper */
+.card-shadow { position: absolute; inset: 5% 6%; border-radius: 4%; background: rgba(40,30,20,.34); filter: blur(16px);
+  pointer-events: none; will-change: transform, opacity; }
+.card canvas { display: block; width: 100%; height: 100%; pointer-events: none;
+  filter: drop-shadow(1px 2px 1.5px rgba(0,0,0,.24)); }
+.home-top { position: absolute; left: 20px; right: 20px; top: 18px; display: flex; justify-content: space-between; gap: 12px;
+  font-family: "DC CapsMed", "DC CjkMed", sans-serif; font-size: 10px; letter-spacing: .28em; pointer-events: none; }
+.home-kicker { position: absolute; left: 0; right: 0; top: calc(var(--cy) - var(--ch) / 2 - min(38px, 7vh)); margin: 0; height: 16px;
+  display: grid; justify-items: center; font-family: "DC CapsMed", "DC CjkMed", sans-serif; font-size: 10px; letter-spacing: .34em;
+  pointer-events: none; }
+.home-kicker span { grid-area: 1 / 1; white-space: nowrap; }
+.home-kicker span::before, .home-kicker span::after { content: "◦"; margin: 0 1em; opacity: .7; }
+.home-title { position: absolute; left: 0; right: 0; top: calc(var(--cy) + var(--ch) / 2 + min(18px, 3.4vh)); margin: 0;
+  display: grid; justify-items: center; overflow: hidden; padding: .06em 0 .12em;
+  font-family: "DC Phrase", serif; font-weight: normal; font-size: clamp(22px, min(9vw, 7vh), 64px); line-height: 1.1;
+  letter-spacing: .12em; color: #1d1d1f; pointer-events: none; }
+.home-title .line { grid-area: 1 / 1; white-space: nowrap; }
+.home-title .line span { display: inline-block; }
+.home-count { position: absolute; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; align-items: center; gap: 10px;
+  font-family: "DC CapsMed", sans-serif; font-size: 10px; letter-spacing: .3em; pointer-events: none; }
+.home-count svg { width: 18px; height: 18px; transform: rotate(-90deg); fill: none; stroke: currentColor; stroke-width: 1.2; }
+.home-count svg circle:first-child { opacity: .22; }
+.home-count .arc { stroke-dasharray: 100; stroke-dashoffset: 100; }
+.home-top, .home-kicker, .home-count { opacity: 0; transition: opacity .9s ease; }
+body.home-inked .home-top, body.home-inked .home-kicker, body.home-inked .home-count { opacity: .78; }
+/* a stamp lifting off the carousel, flying to (or back from) its page */
+.flyer { position: fixed; z-index: 40; pointer-events: none; transform-origin: 50% 50%; will-change: transform; }
+.flyer canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.flyer-shadow { position: absolute; inset: 3%; box-shadow: 8px 18px 34px rgba(0,0,0,.30); opacity: 0; }
+#flip { transition: opacity .35s ease; }
+body.flip-wait #flip { opacity: 0; transition: none; }
+.to-home { display: none; }
+body.app-mode .to-home { display: inline-block; color: inherit; text-decoration: none; font-size: 12px; letter-spacing: .2em; cursor: pointer; }
+body.app-mode #panel .to-home { margin-bottom: 14px; color: var(--mute); }
+body.app-mode #panel .to-home:hover { color: var(--fg); }
+#stage-home { position: absolute; left: 20px; top: 16px; z-index: 2; }
+body.app-mode:not(.daily-opening) #stage-home { display: none; }
+body.daily-opening #stage-home { color: var(--opening-ink, #49443c); }
