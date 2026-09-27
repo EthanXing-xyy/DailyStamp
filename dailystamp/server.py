@@ -16,6 +16,9 @@ WEB = os.path.join(ROOT, "web")
 mimetypes.add_type("font/ttf", ".ttf")
 mimetypes.add_type("application/json", ".json")
 
+# this start's id: web/boot.js clears a browser's kept data the first time it sees a new one (None: `serve --keep`)
+BOOT: str | None = None
+
 
 class Handler(SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):  # quieter
@@ -47,6 +50,17 @@ class Handler(SimpleHTTPRequestHandler):
         if p == "/api/leaflet":
             q = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
             return self._json(leaflet.status((q.get("phrase") or [""])[0].strip()))
+        if p == "/boot.js":
+            with open(os.path.join(WEB, "boot.js"), encoding="utf-8") as f:
+                js = f.read()
+            if BOOT:
+                js = js.replace("'__BOOT__'", f"'{BOOT}'")
+            data = js.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/javascript; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            return self.wfile.write(data)
         self.send_header_no_cache = True
         return super().do_GET()
 
@@ -113,11 +127,15 @@ def lan_ips() -> list[str]:
     return ips
 
 
-def serve(port: int = 8765, open_browser: bool = True, host: str = "127.0.0.1"):
+def serve(port: int = 8765, open_browser: bool = True, host: str = "127.0.0.1", keep: bool = False):
+    global BOOT
+    import uuid
+    BOOT = None if keep else uuid.uuid4().hex
     library.write_index()
     httpd = ThreadingHTTPServer((host, port), Handler)
     url = f"http://127.0.0.1:{port}/"
     print(f"每日一枚 -> {url}   (Ctrl+C to stop)")
+    print("  浏览器里的使用记录会保留" if keep else "  这次启动后，浏览器第一次打开时会清空之前的使用记录（--keep 可保留）")
     if host in ("0.0.0.0", ""):
         for ip in lan_ips():
             print(f"  局域网 / LAN -> http://{ip}:{port}/")

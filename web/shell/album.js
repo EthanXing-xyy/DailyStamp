@@ -10,7 +10,11 @@ const Album = (() => {
       const r = indexedDB.open('dailystamp', 1);
       let fresh = false;
       r.onupgradeneeded = e => { fresh = e.oldVersion === 0; if (!r.result.objectStoreNames.contains('album')) r.result.createObjectStore('album', { keyPath: 'id' }); };
-      r.onsuccess = () => (fresh ? adopt(r.result) : Promise.resolve()).catch(() => {}).then(() => res(r.result));
+      r.onsuccess = () => {
+        // a newer tab clearing the album (web/boot.js) waits for this one to let go
+        r.result.onversionchange = () => { r.result.close(); dbp = null; };
+        (fresh ? adopt(r.result) : Promise.resolve()).catch(() => {}).then(() => res(r.result));
+      };
       r.onerror = () => rej(r.error);
     });
     return dbp;
