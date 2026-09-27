@@ -5,19 +5,7 @@
 // Tapping the middle one presses it (Win8), then it lifts off and flies to its page. The stamps are all printed while
 // the loading screen is up (fill), so the carousel never draws a stamp while it moves; show() lifts the titles in.
 const Home = (() => {
-  const FEATURES = [
-    { key: 'today', cn: '今日一枚', en: 'TODAY', live: true },
-    { key: 'tear', cn: '撕一张', en: 'TEAR ONE OFF', live: true },
-    { key: 'terms', cn: '节气历', en: 'SOLAR TERMS', live: true },
-    { key: 'album', cn: '集邮册', en: 'ALBUM', live: true },
-    { key: 'post', cn: '寄一张', en: 'POST ONE', live: true },
-    { key: 'studio', cn: '工作室', en: 'STUDIO', live: true },
-    { key: 'pharmacy', cn: '情绪药房', en: 'MOOD PHARMACY', live: true },
-    { key: 'cancel', cn: '盖戳', en: 'CANCEL', live: true },
-    { key: 'silkscreen', cn: '丝网印刷机', en: 'SILKSCREEN', live: true },
-    { key: 'collage', cn: '拼贴机', en: 'COLLAGE', live: true },
-    { key: 'later', cn: '时光信', en: 'LETTER FOR LATER', live: true },
-  ];
+  const FEATURES = Features.LIST.map(f => ({ live: true, ...f }));   // web/app/features.js
   const N = FEATURES.length;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const TILT = reduce ? 0 : 7;
