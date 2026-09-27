@@ -1,6 +1,6 @@
-// The loading screen: a print shop that stays up until everything is in (fonts, artwork, the home's eleven stamps,
+// The loading screen: a print shop that stays up until everything is in (fonts, artwork, every one of the home's stamps,
 // every page), so nothing loads, janks or pops in after it. Paper and ink only: a fine-grained paper sheet, the title, a
-// line with the date, and eleven perforated blanks that the home's real stamps seep onto as they come off the press;
+// line with the date, and a perforated blank per function that the home's real stamps seep onto as they come off the press;
 // they are the only colour on it. Under them, what the press is doing and how far it has got. When all is in, a
 // postmark (date and solar term) strikes the title once and the way in (进入邮局 →) fades up where the status was; the
 // app opens only on its tap, the iris closing on the button. One thing moves at a time and nothing bounces: the user
@@ -25,6 +25,8 @@ const Loader = (() => {
   const row = $('.ld-slots');
   if (row && !row.children.length) for (let i = 0; i < (typeof Features !== 'undefined' ? Features.LIST.length : 11); i++) row.append(document.createElement('i'));
   if (row) for (const s of row.children) s.className = 'ld-slot';
+  // on a wide screen the blanks go in as few rows as keep each row to eleven, evenly filled (18 = 9 + 9)
+  if (row && root) { const n = row.children.length; root.style.setProperty('--per', String(Math.ceil(n / Math.ceil(n / 11)))); }
   const count = $('.ld-count'), status = $('.ld-say'), slots = root ? [...root.querySelectorAll('.ld-slot')] : [];
   const bar = $('.ld-row'), go = $('.ld-go'), mark = $('.ld-mark');
 

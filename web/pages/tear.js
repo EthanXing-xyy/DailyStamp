@@ -66,7 +66,8 @@ const Tear = (() => {
     }
     const tornSet = () => new Set(S.torn.map(t => t.cell));
     const todays = () => S.torn.filter(t => t.date === date && t.st).slice(-1)[0] || null;
-    const canTear = () => FREE || !todays();
+    let extra = 0;                                          // tears granted beyond today's one (the debug button)
+    const canTear = () => FREE || extra > 0 || !todays();
 
     // ---- layout. Pane-local units are CSS px; on a tall screen the pane lies on its side (rotated 90°)
     let W = 0, H = 0, portrait = false, cw = 0, ch = 0, M = 0, pw = 0, ph = 0, ox = 0, oy = 0, dpr = 1;
@@ -304,6 +305,7 @@ const Tear = (() => {
     let card = null;
     function commit(p) {
       const no = (S.pane - 1) * N + S.torn.length + 1, st = stampFor(date, S.pane, p.k, no, words, palettes);
+      if (todays() && extra > 0) extra--;                   // a tear beyond today's one uses up the granted extra
       S.torn.push({ cell: p.k, date, st }); save(S);
       if (deps.album) deps.album.add({ id: `tear:${S.pane}:${p.k}`, kind: 'tear', date, st });
       const g = paneBase.getContext('2d'); g.save(); g.setTransform(dpr, 0, 0, dpr, 0, 0); cutCell(g, p.k, Print.rng(p.k + 5)); g.restore();
@@ -533,6 +535,22 @@ const Tear = (() => {
       root.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 700, easing: 'ease' });
       root.style.opacity = '';
       showToday();
+    });
+
+    // ---- debugging (Kit.DEBUG): tear again today, or lay a fresh pane (and the next poster) down right away
+    const dbg = Kit.debugRow(root);
+    dbg.add('再撕一张', () => { extra = 1; setStatus(); setStatus('可以再撕一张了'); });
+    dbg.add('换一版新的', async () => {
+      if (piece && (piece.next > 0 || piece.holding)) return;
+      if (piece) { piece.box.remove(); piece = null; }
+      if (S.torn.length) S.done = [...(S.done || []), { pane: S.pane, torn: S.torn }];
+      S.pane++; S.torn = []; extra = 0; save(S);
+      if (card) { const c = card; card = null; c.box.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: 'forwards' }).finished.then(() => c.box.remove()); }
+      spot.style.opacity = '';
+      await paneEl.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 450, easing: 'ease', fill: 'forwards' }).finished;
+      renderPane(); poster = await loadPoster(); renderPoster(); setStatus();
+      paneEl.getAnimations().forEach(a => a.cancel());
+      paneEl.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 900, easing: 'ease' });
     });
 
     /** where a stamp flying in from the home lands (today's stamp, or the middle of the pane) */

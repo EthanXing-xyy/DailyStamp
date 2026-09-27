@@ -76,10 +76,10 @@ const Router = (() => {
     async back() {
       const r = Stage.rotation.get();
       if (r.pitch % 360 || r.roll % 360 || r.yaw % 360) { Stage.rotation.setTo({ yaw: r.yaw > 180 ? 360 : 0, pitch: 0, roll: 0 }, 400); await wait(430); }
-      // it goes back into the slot it came from; a stamp changed in the studio takes the studio's slot
+      // it goes back into the slot it came from; a stamp changed in the studio takes today's slot
       let sl = App.homeView.slots.find(x => x.st && sameStamp(x.st));
       if (!sl) {
-        sl = App.homeView.find('studio'); sl.st = { ...App.state, side: 'front' };
+        sl = App.homeView.find('today'); sl.st = { ...App.state, side: 'front' };
         const k = App.homeView.scale / Stage.PREVIEW, c = U.canvas(Math.round(Stage.front.width * k), Math.round(Stage.front.height * k));
         c.getContext('2d').drawImage(Stage.front, 0, 0, c.width, c.height); sl.printed = c;
       }
