@@ -59,8 +59,8 @@
   function mount(root, deps) {
     const { el, clamp } = Kit;
     const today = deps.date;
-    Kit.head(root, 11, 'LETTER FOR LATER', '时光信');
-    const status = Kit.status(root);
+    const P = Kit.page(root, 'later', () => layout());
+    const status = P.status;
     const desk = el('div', 'lt-desk'), paper = el('div', 'lt-paper'), pcv = el('canvas'), txt = el('textarea', 'lt-text');
     txt.placeholder = '写给未来的自己……'; txt.maxLength = 600;
     paper.append(pcv, el('span', 'lt-to', '写给未来的我：'), el('span', 'lt-date', fmt(today)), txt);
@@ -82,7 +82,7 @@
 
     let W = 0, H = 0, phone = false, pw = 0, ph = 0;
     function layout() {
-      W = innerWidth; H = innerHeight; phone = W < H;
+      ({ W, H, phone } = P.measure());
       const short = !phone && H < 560;                        // a phone on its side: same layout, tighter
       ph = phone ? Math.min(H * 0.42, (W - 40) * 1.3) : Math.min(H - (short ? 222 : 290), W * 0.3 * 1.3); pw = ph / 1.3;
       const px = phone ? (W - pw) / 2 : W * 0.3 - pw / 2, py = phone ? 100 : short ? 72 : 110;
@@ -219,10 +219,9 @@
     };
 
     layout(); fillBox();
-    addEventListener('resize', () => { layout(); });
     const due = letters.filter(L => !L.opened && daysLeft(L) <= 0).length;
     status.set(due ? `有 ${due} 封信到日子了` : letters.length ? `信匣里有 ${letters.length} 封信` : '写一封信，定一个拆开的日子');
-    return { ready: Promise.resolve(), anchor: () => paper.getBoundingClientRect(), source: () => null };
+    return P.api({ ready: Promise.resolve(), anchor: () => paper.getBoundingClientRect(), source: () => null });
   }
   Pages.define('later', mount);
   // the album draws letters as envelopes (sealed, or torn open once read)

@@ -7,7 +7,7 @@
 
   function mount(root, deps) {
     const { el, clamp } = Kit;
-    Kit.head(root, 5, 'POST ONE', '寄一张');
+    Kit.head(root, 'post');
     const status = Kit.status(root);
     const card = el('div', 'post-card'), inner = el('div', 'post-in');
     const back = el('div', 'post-face post-back'), front = el('div', 'post-face post-front');

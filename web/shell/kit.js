@@ -15,11 +15,23 @@ const Kit = (() => {
   const addDays = (date, n) => { const [y, m, d] = date.split('-').map(Number); return localDate(new Date(y, m - 1, d + n)); };
   const hash = str => { let h = 2166136261; for (const ch of String(str)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 
-  /** page header: a small kicker over the name, like the home's */
-  function head(root, no, en, cn) {
-    const h = el('div', 'kit-head', `<p class="kit-kicker">${two(no)} · ${en}</p><h2>${cn}</h2>`);
+  /** page header: a small kicker over the name, like the home's; number and names come from web/app/features.js */
+  function head(root, key) {
+    const f = Features.byKey(key) || { cn: key, en: key.toUpperCase() };
+    const h = el('div', 'kit-head', `<p class="kit-kicker">${two(Features.no(key))} · ${f.en}</p><h2>${f.cn}</h2>`);
     root.append(h);
     return h;
+  }
+  /** what every page starts with: its header, its status line, and the screen's size. layout(P) runs on resize while the
+   *  page is on show; a hidden page is laid out again when it next comes on (wrap its api with P.api()).
+   *  P.measure() -> {W, H, phone (upright), short (a phone on its side)} */
+  function page(root, key, layout = null) {
+    const P = { head: head(root, key), status: status(root), W: 0, H: 0, phone: false, short: false, stale: false };
+    P.measure = () => { P.W = innerWidth; P.H = innerHeight; P.phone = P.W < P.H; P.short = !P.phone && P.H < 560; return P; };
+    P.layout = () => { P.stale = false; if (layout) layout(P); };
+    addEventListener('resize', () => { if (visible(root)) P.layout(); else P.stale = true; });
+    P.api = api => { const enter = api.enter; api.enter = () => { if (P.stale) P.layout(); if (enter) enter(); }; return api; };
+    return P;
   }
   /** one line of status under the work; flash() shows a note for a while, then the line goes back */
   function status(root) {
@@ -170,6 +182,36 @@ const Kit = (() => {
     ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(t, 0, 0); ctx.restore();
   }
 
+  // ---- a photo split into Warhol's plates (N x N, cropped square a little high, where faces sit): the black key, the
+  // mid and light tones as soft hand-cut shapes, and a hot accent where the photo is strongly red/pink (lips, cheeks)
+  /** -> {photo: true, key, mid, light, accent}: alpha masks for Print.tinted */
+  function smooth(N, mask, blur, thr, grain = 0) {
+    const c = U.canvas(N, N), g = c.getContext('2d'), id = g.createImageData(N, N);
+    for (let i = 0; i < N * N; i++) id.data[i * 4 + 3] = mask[i] ? 255 : 0;
+    g.putImageData(id, 0, 0);
+    const b = U.canvas(N, N), bg = b.getContext('2d'); bg.filter = `blur(${blur}px)`; bg.drawImage(c, 0, 0);
+    const d = bg.getImageData(0, 0, N, N), o = g.createImageData(N, N);
+    for (let i = 0; i < N * N; i++) { const a = d.data[i * 4 + 3] / 255 + (grain ? (Math.random() - 0.5) * grain : 0); o.data[i * 4 + 3] = a > thr ? 255 : 0; }
+    g.putImageData(o, 0, 0); return c;
+  }
+  function photoPlates(img, N = 420) {
+    const c = U.canvas(N, N), g = c.getContext('2d'), w = img.naturalWidth, h = img.naturalHeight, s = Math.min(w, h);
+    g.drawImage(img, (w - s) / 2, (h - s) / 2 * 0.6, s, s, 0, 0, N, N);        // square, a little high: faces sit in the top half
+    const d = g.getImageData(0, 0, N, N).data, L = new Float32Array(N * N), acc = new Uint8Array(N * N);
+    for (let i = 0; i < N * N; i++) {
+      const r = d[i * 4] / 255, gg = d[i * 4 + 1] / 255, b = d[i * 4 + 2] / 255, mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
+      L[i] = 0.3 * r + 0.59 * gg + 0.11 * b;
+      const sat = mx ? (mx - mn) / mx : 0; let hue = 0;
+      if (mx !== mn) hue = mx === r ? ((gg - b) / (mx - mn) + 6) % 6 : mx === gg ? (b - r) / (mx - mn) + 2 : (r - gg) / (mx - mn) + 4;
+      hue *= 60; acc[i] = sat > 0.42 && (hue < 22 || hue > 335) && L[i] > 0.18 && L[i] < 0.8 ? 1 : 0;
+    }
+    const sorted = Float32Array.from(L).sort(), p = q => sorted[Math.floor(q * (sorted.length - 1))];
+    const lo = p(0.26), hi = p(0.62);
+    const key = new Uint8Array(N * N), mid = new Uint8Array(N * N), light = new Uint8Array(N * N);
+    for (let i = 0; i < N * N; i++) { key[i] = L[i] < lo ? 1 : 0; light[i] = L[i] > hi ? 1 : 0; mid[i] = !key[i] && !light[i] ? 1 : 0; }
+    return { photo: true, key: smooth(N, key, 1.2, 0.5, 0.25), mid: smooth(N, mid, 6, 0.45), light: smooth(N, light, 6, 0.5), accent: smooth(N, acc, 3, 0.55) };
+  }
+
   /** hand a picture over: the share sheet on phones that can take files, a download everywhere else */
   async function save(items) {
     const blobs = await Promise.all(items.map(it => new Promise(r => it.cv.toBlob(b => r(new File([b], it.name, { type: 'image/png' })), 'image/png'))));
@@ -185,10 +227,24 @@ const Kit = (() => {
   const blobOf = cv => new Promise(r => cv.toBlob(r, 'image/png'));
   const imageOf = blob => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = URL.createObjectURL(blob); });
 
+  // ---- debugging: while the app is being tried out, anything rationed (one tear a day, five coins…) gets a button that
+  // gives it back at once. They all hang off DEBUG, so switching it off hides every one of them.
+  const DEBUG = true;
+  /** a quiet row of desk buttons in the page's lower right corner (on a phone: above the status line); add(label, fn) */
+  function debugRow(root) {
+    const row = el('div', 'kit-debug');
+    if (!DEBUG) row.hidden = true;
+    root.append(row);
+    return {
+      el: row,
+      add(label, fn) { const b = button(row, `<small>调试 ·</small>${label}`); b.onclick = fn; return b; },
+    };
+  }
+
   /** a round button with a label; never a boxed rectangle */
   function button(parent, label, cls = '') { const b = el('button', 'kit-btn ' + cls, label); b.type = 'button'; parent.append(b); return b; }
 
-  return { TAU, reduce, el, clamp, wait, two, put, visible, localDate, dayNo, addDays, hash, head, status, audio, buzz, crackle, thump, rustle,
-    visit, stampFor, card, gum, watermark, save, blobOf, imageOf, button, drawMark, drawMarks,
+  return { DEBUG, debugRow, TAU, reduce, el, clamp, wait, two, put, visible, localDate, dayNo, addDays, hash, head, status, audio, buzz, crackle, thump, rustle,
+    visit, stampFor, card, page, photoPlates, gum, watermark, save, blobOf, imageOf, button, drawMark, drawMarks,
     thumbs: {} };   // thumbs[kind](entry, scale, deps): how the album draws works that are not plain stamps
 })();

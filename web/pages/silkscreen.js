@@ -5,8 +5,8 @@
 (() => {
   function mount(root, deps) {
     const { el, clamp } = Kit;
-    Kit.head(root, 9, 'SILKSCREEN', '丝网印刷机');
-    const status = Kit.status(root);
+    const P = Kit.page(root, 'silkscreen', () => layout());
+    const status = P.status;
     const bed = el('div', 'sk-bed'), frame = el('div', 'sk-frame'), stencil = el('canvas', 'sk-stencil'), blade = el('div', 'sk-blade', '<i></i>');
     const side = el('div', 'sk-side'), srcRow = el('div', 'sk-src'), note = el('p', 'sk-note', '照片只在你的浏览器里处理，不会上传');
     const file = el('input'); file.type = 'file'; file.accept = 'image/*'; file.setAttribute('capture', 'user'); file.hidden = true;
@@ -21,34 +21,9 @@
     let n = 2, cells = [], cur = 0, prog = 0, plates = null, srcName = '', W = 0, H = 0, S = 0, phone = false, prints = [];
     const dpr = () => Math.min(2, devicePixelRatio || 1);
 
-    // ---- plates
+    // ---- plates: a photo is split by Kit.photoPlates; an emblem already comes as ink plates
     const N = 420;
-    function smooth(mask, blur, thr, grain = 0) {
-      const c = U.canvas(N, N), g = c.getContext('2d'), id = g.createImageData(N, N);
-      for (let i = 0; i < N * N; i++) id.data[i * 4 + 3] = mask[i] ? 255 : 0;
-      g.putImageData(id, 0, 0);
-      const b = U.canvas(N, N), bg = b.getContext('2d'); bg.filter = `blur(${blur}px)`; bg.drawImage(c, 0, 0);
-      const d = bg.getImageData(0, 0, N, N), o = g.createImageData(N, N);
-      for (let i = 0; i < N * N; i++) { const a = d.data[i * 4 + 3] / 255 + (grain ? (Math.random() - 0.5) * grain : 0); o.data[i * 4 + 3] = a > thr ? 255 : 0; }
-      g.putImageData(o, 0, 0); return c;
-    }
-    function fromImage(img) {
-      const c = U.canvas(N, N), g = c.getContext('2d'), w = img.naturalWidth, h = img.naturalHeight, s = Math.min(w, h);
-      g.drawImage(img, (w - s) / 2, (h - s) / 2 * 0.6, s, s, 0, 0, N, N);        // square, a little high: faces sit in the top half
-      const d = g.getImageData(0, 0, N, N).data, L = new Float32Array(N * N), acc = new Uint8Array(N * N);
-      for (let i = 0; i < N * N; i++) {
-        const r = d[i * 4] / 255, gg = d[i * 4 + 1] / 255, b = d[i * 4 + 2] / 255, mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
-        L[i] = 0.3 * r + 0.59 * gg + 0.11 * b;
-        const sat = mx ? (mx - mn) / mx : 0; let hue = 0;
-        if (mx !== mn) hue = mx === r ? ((gg - b) / (mx - mn) + 6) % 6 : mx === gg ? (b - r) / (mx - mn) + 2 : (r - gg) / (mx - mn) + 4;
-        hue *= 60; acc[i] = sat > 0.42 && (hue < 22 || hue > 335) && L[i] > 0.18 && L[i] < 0.8 ? 1 : 0;
-      }
-      const sorted = Float32Array.from(L).sort(), p = q => sorted[Math.floor(q * (sorted.length - 1))];
-      const lo = p(0.26), hi = p(0.62);
-      const key = new Uint8Array(N * N), mid = new Uint8Array(N * N), light = new Uint8Array(N * N);
-      for (let i = 0; i < N * N; i++) { key[i] = L[i] < lo ? 1 : 0; light[i] = L[i] > hi ? 1 : 0; mid[i] = !key[i] && !light[i] ? 1 : 0; }
-      return { photo: true, key: smooth(key, 1.2, 0.5, 0.25), mid: smooth(mid, 6, 0.45), light: smooth(light, 6, 0.5), accent: smooth(acc, 3, 0.55) };
-    }
+    const fromImage = img => Kit.photoPlates(img, N);
     function fromEmblem(e) {
       const [key, accent, band] = Print.channelMasks(e);
       return { photo: false, key, mid: Print.silhouette(e, 0.05), light: band, accent };
@@ -84,7 +59,7 @@
 
     // ---- the sheet on the bed, the screen frame over the square being printed, the squeegee
     function layout() {
-      W = innerWidth; H = innerHeight; phone = W < H;
+      ({ W, H, phone } = P.measure());
       const short = !phone && H < 560;                        // a phone on its side: same layout, less head room
       S = phone ? W - 32 : short ? Math.min(H - 116, W * 0.46) : Math.min(H - 220, W * 0.46);
       const bx = phone ? 16 : W * 0.42 - S / 2, by = phone ? 100 : short ? 72 : 108;
@@ -229,7 +204,6 @@
     };
 
     layout(); fillSources();
-    addEventListener('resize', () => { if (Kit.visible(root)) layout(); });
     bSave.disabled = true;
     // the square under the screen is where a stamp from the home lands; its emblem goes onto the screen
     const anchor = () => { const b = bed.getBoundingClientRect(), r = cellRect(Math.min(cur, n * n - 1)); return new DOMRect(b.left + r.x, b.top + r.y, r.s, r.s); };
@@ -238,7 +212,7 @@
       if (i >= 0) useEmblem(deps.words[i], srcRow.querySelectorAll('.sk-pick')[i]);
       return 480;                                           // the stamp melts into its stencil on the screen
     }
-    return { ready: Promise.resolve(), anchor, source: () => null, receive };
+    return P.api({ ready: Promise.resolve(), anchor, source: () => null, receive });
   }
   Pages.define('silkscreen', mount);
 })();

@@ -21,6 +21,10 @@ const Loader = (() => {
   let shown = 0, active = !!root, say = '', lastKey = '';
 
   const $ = sel => root && root.querySelector(sel);
+  // one blank per function on the home (web/app/features.js), which the home's stamps seep onto as they are printed
+  const row = $('.ld-slots');
+  if (row && !row.children.length) for (let i = 0; i < (typeof Features !== 'undefined' ? Features.LIST.length : 11); i++) row.append(document.createElement('i'));
+  if (row) for (const s of row.children) s.className = 'ld-slot';
   const count = $('.ld-count'), status = $('.ld-say'), slots = root ? [...root.querySelectorAll('.ld-slot')] : [];
   const bar = $('.ld-row'), go = $('.ld-go'), mark = $('.ld-mark');
 
