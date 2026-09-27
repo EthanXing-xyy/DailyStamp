@@ -3,16 +3,12 @@ they are stored as palette-independent channel masks in terms/ (same R/G/B schem
 in the browser. The motif of every term is fixed here so the symbol stays accurate."""
 from __future__ import annotations
 
-import json
 import os
-import subprocess
-import sys
-import time
-from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 from PIL import Image
 
+from .assetset import CodexSet
 from .emblem import build_mask
 from .library import ROOT
 
@@ -58,59 +54,18 @@ Save the PNG as "{out}" (overwrite if it exists), then reply with exactly one li
 """
 
 
-def path_for(key: str, raw: bool = False) -> str:
-    return os.path.join(TERMS_DIR, key + (".raw.png" if raw else ".png"))
+def _mask(raw: Image.Image):
+    m = build_mask(raw, 512)
+    if (np.asarray(m)[..., 0] > 127).mean() > 0.35:           # drawn on a dark ground: it would print as a solid square
+        return None, "dark background"
+    return m, ""
 
 
-def write_index() -> None:
-    items = [{"key": k, "name": n, "file": f"terms/{k}.png", "v": int(os.path.getmtime(path_for(k)))}
-             for k, n, _, _ in TERMS if os.path.exists(path_for(k))]
-    with open(os.path.join(TERMS_DIR, "index.json"), "w", encoding="utf-8") as f:
-        json.dump(items, f, ensure_ascii=False, indent=2)
+def _cut():
+    from .cutmasks import build                                # the web app's pre-cut masks and outlines
+    build()
 
 
-def generate(key: str, timeout: int = 600) -> bool:
-    """Ask codex for one icon, then build its channel mask. Returns True on success."""
-    _, name, en, motif = next(t for t in TERMS if t[0] == key)
-    os.makedirs(TERMS_DIR, exist_ok=True)
-    raw = path_for(key, raw=True)
-    work = os.path.join(TERMS_DIR, "_work", key)
-    os.makedirs(work, exist_ok=True)
-    cmd = ["codex", "exec", "--skip-git-repo-check", "-s", "danger-full-access",
-           "--enable", "image_generation", "-c", 'model_reasoning_effort="low"',
-           "-C", work, "-o", os.path.join(work, "last.txt"),
-           PROMPT_TMPL.format(name=name, en=en, motif=motif, out=raw)]
-    for _ in range(2):
-        if os.path.exists(raw):
-            os.remove(raw)
-        try:
-            subprocess.run(cmd, cwd=work, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                           stderr=subprocess.DEVNULL, timeout=timeout, check=False)
-        except subprocess.TimeoutExpired:
-            print(f"  {key}: codex timed out", file=sys.stderr)
-        if not os.path.exists(raw):
-            continue
-        mask = build_mask(Image.open(raw), 512)
-        if (np.asarray(mask)[..., 0] > 127).mean() > 0.35:   # drawn on a dark ground: it would print as a solid square
-            print(f"  {key}: dark background, drawing again", file=sys.stderr)
-            continue
-        mask.save(path_for(key), optimize=True)
-        return True
-    return False
-
-
-def generate_missing(keys: list[str] | None = None, jobs: int = 1) -> None:
-    """Draw the given icons (redraw even if present), or every icon not drawn yet. Keep jobs at 1: parallel codex
-    sessions have picked up each other's images and saved them under the wrong term."""
-    todo = keys or [k for k, *_ in TERMS if not os.path.exists(path_for(k))]
-    print(f"{len(todo)} solar-term icon(s) to draw")
-
-    def one(k):
-        t0 = time.time()
-        ok = generate(k)
-        print(f"  {k}: {'ok' if ok else 'failed'}  ({time.time() - t0:.0f}s)")
-    with ThreadPoolExecutor(max_workers=jobs) as ex:
-        list(ex.map(one, todo))
-    write_index()
-    from .cutmasks import build as cut_plates              # the web app's pre-cut masks and outlines
-    cut_plates()
+SET = CodexSet(TERMS_DIR, TERMS, what="solar-term icon", timeout=600, mask=_mask, after=_cut,
+               prompt=lambda it, out: PROMPT_TMPL.format(name=it[1], en=it[2], motif=it[3], out=out),
+               entry=lambda it, p, file: {"key": it[0], "name": it[1], "file": file})

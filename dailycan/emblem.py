@@ -1,21 +1,17 @@
-"""Medallion emblem: codex image generation, posterised onto the palette; procedural fallback."""
+"""Library emblems: codex draws one per word, and it is split into a palette-free R/G/B channel mask (dark / magenta /
+cyan ink) that the web app tints with any palette."""
 from __future__ import annotations
 
-import math
 import os
-import shutil
 import subprocess
 import sys
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter
-
-from .fonts import font
-from .palettes import Palette, hex_to_rgb
+from PIL import Image, ImageFilter
 
 EMBLEM_SIZE = 1024
 
-PROMPT_TMPL = """You are the illustrator for a pop-art series of imaginary tin cans, each "condensing" one mood.
+PROMPT_TMPL = """You are the illustrator for a pop-art series of postage stamps, each "condensing" one mood.
 Today's mood: "{phrase}"{en}.
 
 Step 1: {step1}
@@ -27,10 +23,6 @@ Step 2: use your image generation tool to draw it as a flat screen-print emblem:
 Step 3: save the PNG as "{out}" (overwrite if it exists).
 Step 4: reply with exactly one line: CONCEPT: <the object you drew, in under 12 English words>
 """
-
-
-def codex_available() -> bool:
-    return shutil.which("codex") is not None
 
 
 STEP1_FREE = "pick ONE iconic, witty object or creature that stands for this mood (be specific and visual, avoid faces of real people, avoid text)."
@@ -146,27 +138,6 @@ def build_mask(src: Image.Image, size: int = EMBLEM_SIZE) -> Image.Image:
     return Image.fromarray(a[..., :3], "RGB")
 
 
-def mask_to_palette(mask: Image.Image, pal: Palette) -> Image.Image:
-    """Colour a channel-mask emblem with a palette: R -> ink, G -> accent, B -> band."""
-    a = np.asarray(mask.convert("RGB"))
-    out = np.zeros(a.shape[:2] + (4,), dtype=np.uint8)
-    for ch, col in ((2, pal.band), (1, pal.accent), (0, pal.ink)):
-        m = a[..., ch] > 127
-        out[m, :3] = hex_to_rgb(col)
-        out[m, 3] = 255
-    return Image.fromarray(out, "RGBA")
-
-
-def posterize_to_palette(src: Image.Image, pal: Palette, size: int = EMBLEM_SIZE) -> Image.Image:
-    """Map an AI image to exactly three inks: dark -> ink, magenta-ish -> accent, cyan-ish -> band. White -> transparent."""
-    dark, mag, cyn = classify(src, size)
-    out = np.zeros((size, size, 4), dtype=np.uint8)
-    for m, col in ((cyn, pal.band), (mag, pal.accent), (dark, pal.ink)):
-        out[m, :3] = hex_to_rgb(col)
-        out[m, 3] = 255
-    return fit_square(Image.fromarray(out, "RGBA"), size)
-
-
 def fit_square(im: Image.Image, size: int, fill: float = 0.86) -> Image.Image:
     """Crop to the opaque content's bounding box and centre it in a size x size canvas, filling `fill` of it."""
     bbox = im.getbbox()
@@ -182,55 +153,3 @@ def fit_square(im: Image.Image, size: int, fill: float = 0.86) -> Image.Image:
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     canvas.paste(Image.fromarray(arr, "RGBA"), ((size - crop.width) // 2, (size - crop.height) // 2))
     return canvas
-
-
-def fallback_emblem(no: int, pal: Palette, size: int = EMBLEM_SIZE) -> Image.Image:
-    """Procedural emblem: Ben-Day sunburst with the can number. Always on-palette."""
-    im = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    c = size / 2
-    acc = hex_to_rgb(pal.accent) + (255,)
-    ink = hex_to_rgb(pal.ink) + (255,)
-    # sunburst rays
-    for i in range(24):
-        a0 = i * math.tau / 24
-        a1 = a0 + math.tau / 48
-        pts = [(c, c)]
-        for a in (a0, a1):
-            pts.append((c + math.cos(a) * size * 0.49, c + math.sin(a) * size * 0.49))
-        d.polygon(pts, fill=acc if i % 2 == 0 else (0, 0, 0, 0))
-    # dot ring
-    for i in range(36):
-        a = i * math.tau / 36
-        rr = size * 0.34
-        x, y = c + math.cos(a) * rr, c + math.sin(a) * rr
-        d.ellipse([x - 9, y - 9, x + 9, y + 9], fill=ink)
-    d.ellipse([c - size * 0.28, c - size * 0.28, c + size * 0.28, c + size * 0.28], fill=(0, 0, 0, 0))
-    d.ellipse([c - size * 0.28, c - size * 0.28, c + size * 0.28, c + size * 0.28], outline=ink, width=14)
-    f = font("caps", int(size * 0.36))
-    d.text((c, c), f"{no:02d}", font=f, fill=ink, anchor="mm")
-    # make the transparent hole truly transparent (polygon fill with alpha 0 does not erase)
-    arr = np.asarray(im).copy()
-    yy, xx = np.mgrid[0:size, 0:size]
-    hole = np.hypot(xx - c, yy - c) < size * 0.28
-    is_acc = np.all(arr[..., :3] == np.array(hex_to_rgb(pal.accent)), axis=-1)
-    arr[hole & is_acc, 3] = 0
-    return Image.fromarray(arr, "RGBA")
-
-
-def get_emblem(spec_phrase: str, en: str, no: int, pal: Palette, out_dir: str, use_ai: bool = True,
-               regenerate: bool = False) -> tuple[Image.Image, str, str]:
-    """Return (emblem RGBA on palette, concept, source)."""
-    raw = os.path.join(out_dir, "emblem_raw.png")
-    concept = ""
-    if use_ai and codex_available():
-        if regenerate or not os.path.exists(raw):
-            print("  asking codex for the emblem (this takes a minute or two)...")
-            concept = generate_with_codex(spec_phrase, en, raw) or ""
-        if os.path.exists(raw):
-            ctxt = os.path.join(out_dir, "concept.txt")
-            if not concept and os.path.exists(ctxt):
-                with open(ctxt, encoding="utf-8") as f:
-                    concept = f.read().strip()
-            return posterize_to_palette(Image.open(raw), pal), concept, "codex"
-    return fallback_emblem(no, pal), "", "fallback"

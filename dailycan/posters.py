@@ -3,15 +3,12 @@ once; like the emblems they are stored as palette-independent channel masks (R =
 posters/, landscape at the pane's 8:5, and printed in the browser in the pane's palette."""
 from __future__ import annotations
 
-import json
 import os
-import subprocess
-import sys
-import time
 
 import numpy as np
 from PIL import Image
 
+from .assetset import CodexSet
 from .emblem import classify
 from .library import ROOT
 
@@ -41,17 +38,6 @@ Save the PNG as "{out}" (overwrite if it exists), then reply with exactly one li
 """
 
 
-def path_for(key: str, raw: bool = False) -> str:
-    return os.path.join(POSTERS_DIR, key + (".raw.png" if raw else ".png"))
-
-
-def write_index() -> None:
-    items = [{"key": k, "file": f"posters/{k}.png", "v": int(os.path.getmtime(path_for(k)))}
-             for k, _ in POSTERS if os.path.exists(path_for(k))]
-    with open(os.path.join(POSTERS_DIR, "index.json"), "w", encoding="utf-8") as f:
-        json.dump(items, f, ensure_ascii=False, indent=2)
-
-
 def build_poster_mask(src: Image.Image) -> Image.Image:
     dark, mag, cyn = classify(src, SIZE)
     arr = np.zeros((SIZE[1], SIZE[0], 3), dtype=np.uint8)
@@ -61,45 +47,12 @@ def build_poster_mask(src: Image.Image) -> Image.Image:
     return Image.fromarray(arr, "RGB")
 
 
-def generate(key: str, timeout: int = 900) -> bool:
-    """Ask codex for one poster, then build its channel masks. Returns True on success."""
-    subject = next(s for k, s in POSTERS if k == key)
-    os.makedirs(POSTERS_DIR, exist_ok=True)
-    raw = path_for(key, raw=True)
-    work = os.path.join(POSTERS_DIR, "_work", key)
-    os.makedirs(work, exist_ok=True)
-    cmd = ["codex", "exec", "--skip-git-repo-check", "-s", "danger-full-access",
-           "--enable", "image_generation", "-c", 'model_reasoning_effort="low"',
-           "-C", work, "-o", os.path.join(work, "last.txt"),
-           PROMPT_TMPL.format(subject=subject, out=raw)]
-    for _ in range(2):
-        if os.path.exists(raw):
-            os.remove(raw)
-        try:
-            subprocess.run(cmd, cwd=work, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                           stderr=subprocess.DEVNULL, timeout=timeout, check=False)
-        except subprocess.TimeoutExpired:
-            print(f"  {key}: codex timed out", file=sys.stderr)
-        if not os.path.exists(raw):
-            continue
-        mask = build_poster_mask(Image.open(raw))
-        a = np.asarray(mask) > 127
-        if a[..., 0].mean() > 0.45:                   # drawn on a dark ground: it would print as a black slab
-            print(f"  {key}: too much black, drawing again", file=sys.stderr)
-            continue
-        mask.save(path_for(key), optimize=True)
-        return True
-    return False
+def _mask(raw: Image.Image):
+    m = build_poster_mask(raw)
+    if (np.asarray(m)[..., 0] > 127).mean() > 0.45:           # drawn on a dark ground: it would print as a black slab
+        return None, "too much black"
+    return m, ""
 
 
-def generate_missing(keys: list[str] | None = None) -> None:
-    """Draw the given posters (redraw even if present), or every poster not drawn yet, one codex run at a time
-    (parallel runs have picked up each other's images)."""
-    todo = keys or [k for k, _ in POSTERS if not os.path.exists(path_for(k))]
-    print(f"{len(todo)} poster(s) to draw")
-    for k in todo:
-        t0 = time.time()
-        ok = generate(k)
-        print(f"  {k}: {'ok' if ok else 'failed'}  ({time.time() - t0:.0f}s)", flush=True)
-        write_index()
-    write_index()
+SET = CodexSet(POSTERS_DIR, POSTERS, what="poster", mask=_mask,
+               prompt=lambda it, out: PROMPT_TMPL.format(subject=it[1], out=out))
