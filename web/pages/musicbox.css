@@ -1,0 +1,12 @@
+/* ---------- 八音盒: a box, a punched strip through the works, a brass comb, a crank */
+.mb-stage { position: absolute; cursor: pointer; filter: drop-shadow(0 16px 28px rgba(0,0,0,.25)); }
+.mb-crank { position: absolute; border-radius: 50%; touch-action: none; cursor: grab; --turn: 0rad;
+  background: radial-gradient(circle, #F4EEDF 0 18%, rgba(0,0,0,0) 19%), rgba(27,22,51,.12); box-shadow: inset 0 0 0 2px rgba(27,22,51,.25); }
+.mb-crank:active { cursor: grabbing; }
+.mb-crank i { position: absolute; left: 50%; top: 50%; width: 46%; height: 12%; margin-top: -6%; border-radius: 6px; background: #1B1633; transform-origin: 0 50%;
+  transform: rotate(var(--turn)); }
+.mb-crank b { position: absolute; left: 50%; top: 50%; width: 26%; aspect-ratio: 1; margin: -13% 0 0 -13%; border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #ff8a8a, #e0242c 55%, #9b1017); box-shadow: 0 2px 4px rgba(0,0,0,.35);
+  transform: rotate(var(--turn)) translateX(170%); }
+.mb-acts { position: absolute; display: flex; justify-content: center; gap: 4px 24px; flex-wrap: wrap; }
+.mb-acts .kit-btn.on::after { opacity: .9; }
