@@ -48,7 +48,9 @@ const Preload = (() => {
     await App.homeView.fill(App.homePlans, { date: state.date, term: Terms.of(state.date).name, breath: pace,
       // drawn at least at the collage tray's 0.36, so its scraps (and the post tray's thumbnails) come from these same prints
       render: (st, sc) => Press.makeFront(st, Math.max(sc, 0.36)),
-      onEach: (i, cv) => { Loader.step('stamps', ++n / App.homePlans.length); Loader.stamp(i, cv); } });
+      onEach: (i, cv) => { Loader.step('stamps', 0.7 * ++n / App.homePlans.length); Loader.stamp(i, cv); },
+      // then the home's stamps are aged (web/shell/age.js); Loader.times.age: when it began and ended
+      onAged: f => { const t = Math.round(performance.now()); (Loader.times.age ||= [t, t])[1] = t; Loader.step('stamps', f >= 1 ? 1 : 0.7 + 0.3 * f); } });
 
     // the studio and today's stamp (today's waits unprinted for the curtain, then prints)
     if (App.view === 'today') Stage.hold();

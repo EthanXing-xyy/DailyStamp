@@ -115,7 +115,8 @@ const Router = (() => {
       const from = sl.btn.getBoundingClientRect();
       if (push) history.pushState({ home: true }, '', '#' + sl.key);
       App.view = sl.key;
-      const t0 = performance.now(), flying = Home.fly(sl.printed || sl.cv, from, V.enter(sl));
+      const over = sl.aged && { canvas: sl.contact, ...sl.aged };   // the home's aged stamp grows new on the way
+      const t0 = performance.now(), flying = Home.fly(sl.printed || sl.cv, from, V.enter(sl), { over });
       sl.btn.style.visibility = 'hidden';
       // the home fades off the view once the view is ready under it (a page built just now finishes during the flight)
       const home = $('home'), ready = Promise.resolve(V.prepare(sl));
@@ -136,18 +137,18 @@ const Router = (() => {
     try {
       hv.show();
       const V = viewOf(App.view), { sl, src, from } = await V.back();
+      await hv.repaint(sl);                                 // what the page made takes the slot, aged like the rest
       App.view = 'home';
       const home = $('home');
       home.style.opacity = '0'; document.body.classList.add('daily-home');
       hv.reveal(sl);
       const to = sl.btn.getBoundingClientRect();
       sl.btn.style.visibility = 'hidden';
-      const flying = Home.fly(src, from, to, { lift: false });
+      const flying = Home.fly(src, from, to, { lift: false, over: sl.aged && { canvas: sl.contact, ...sl.aged } });
       document.body.classList.add('flip-wait');
       home.style.opacity = '';
       home.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, easing: 'ease' });
       const f = await flying;
-      hv.repaint(sl);
       sl.btn.style.visibility = ''; f.remove();
       document.body.classList.remove('flip-wait');
       V.gone();

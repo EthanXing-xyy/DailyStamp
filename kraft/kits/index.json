@@ -1,0 +1,137 @@
+{
+ "v": 1790631429,
+ "w": 484,
+ "h": 605,
+ "pad": 130,
+ "box": [
+  113,
+  110,
+  629,
+  751
+ ],
+ "a": 1.6,
+ "m": 2.0,
+ "b": 1.6,
+ "grey": 0.07,
+ "fade": 0.13,
+ "p0": [
+  245,
+  242,
+  234
+ ],
+ "kits": [
+  {
+   "i": 0,
+   "what": "halfopen+waves",
+   "picks": [
+    "crumple",
+    "fold"
+   ],
+   "back": false
+  },
+  {
+   "i": 1,
+   "what": "curl+waves",
+   "picks": [
+    "crumple",
+    "fold",
+    "stain"
+   ],
+   "back": false
+  },
+  {
+   "i": 2,
+   "what": "waves",
+   "picks": [
+    "scuff",
+    "stain"
+   ],
+   "back": false
+  },
+  {
+   "i": 3,
+   "what": "dogear+waves",
+   "picks": [
+    "stain",
+    "scuff"
+   ],
+   "back": true
+  },
+  {
+   "i": 4,
+   "what": "bow+waves",
+   "picks": [
+    "crumple",
+    "stain"
+   ],
+   "back": false
+  },
+  {
+   "i": 5,
+   "what": "lift+dogear+waves",
+   "picks": [
+    "scuff",
+    "stain",
+    "fold"
+   ],
+   "back": true
+  },
+  {
+   "i": 6,
+   "what": "halfopen",
+   "picks": [
+    "scuff",
+    "fold",
+    "crumple"
+   ],
+   "back": false
+  },
+  {
+   "i": 7,
+   "what": "curl+corner",
+   "picks": [
+    "crumple",
+    "fold",
+    "stain"
+   ],
+   "back": true
+  },
+  {
+   "i": 8,
+   "what": "waves",
+   "picks": [
+    "stain",
+    "crumple"
+   ],
+   "back": false
+  },
+  {
+   "i": 9,
+   "what": "dogear+lift",
+   "picks": [
+    "fold",
+    "scuff",
+    "crumple"
+   ],
+   "back": true
+  },
+  {
+   "i": 10,
+   "what": "bow",
+   "picks": [
+    "stain",
+    "fold"
+   ],
+   "back": false
+  },
+  {
+   "i": 11,
+   "what": "lift+dogear+waves",
+   "picks": [
+    "crumple",
+    "scuff"
+   ],
+   "back": true
+  }
+ ]
+}
