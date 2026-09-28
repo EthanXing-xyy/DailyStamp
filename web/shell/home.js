@@ -58,15 +58,15 @@ const Home = (() => {
     const ring = el('div', 'carousel');
     const kicker = el('p', 'home-kicker'), title = el('h2', 'home-title');
     const count = el('div', 'home-count', '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="arc" cx="12" cy="12" r="9" pathLength="100"/></svg><span></span>');
-    // the desk: two sheets of plain colour and, for each paper shape, two tinted canvases. The lower ones carry an even
-    // stamp's tones, the upper ones an odd stamp's, faded over as the wheel turns (paintBackdrop)
+    // the desk: two sheets of plain colour and, for each paper shape, two frames holding a tinted canvas. The lower ones
+    // carry an even stamp's tones, the upper ones an odd stamp's, faded over as the wheel turns (paintBackdrop)
     const bg = el('div', 'home-bg');
     const desks = [el('i', 'bd-desk'), el('i', 'bd-desk up')];
     bg.append(...desks);
     const sets = [0, 1].map(() => {
-      const g = el('div', 'bd-set'), cvs = [el('canvas', 'bd-tone'), el('canvas', 'bd-tone up')];
-      g.append(...cvs); bg.append(g);
-      return { g, cvs, pick: null, img: null, drift: null, rot: '' };
+      const g = el('div', 'bd-set'), pair = [el('div', 'bd-tone'), el('div', 'bd-tone up')];
+      g.append(...pair); bg.append(g);
+      return { g, pair, on: [null, null], tints: new Map(), pick: null, img: null, drift: null, rot: '' };
     });
     root.append(bg, top, ring, kicker, title, count);
     root.tabIndex = 0;
@@ -209,12 +209,13 @@ const Home = (() => {
       near.sort((p, q) => p.a - q.a || p.index - q.index);
       near.forEach((sl, i) => { const z = String(100 - i); if (z !== sl.z) sl.btn.style.zIndex = sl.z = z; });
       paintBackdrop(t);
+      if (settled()) warm();
       const off = (Math.round((100 - (mod(pos, N) + 1) / N * 100) * 2) / 2).toFixed(1);
       if (off !== arc) count.querySelector('.arc').style.strokeDashoffset = arc = off;
       if (c !== shown) showTitle(c);
       return true;
     }
-    const moving = () => dragging || Math.abs(to - pos) > 1e-4 || Math.abs(tilt) > 0.01 || (tintFrom > 0 && performance.now() - tintFrom < 1000);
+    const moving = () => dragging || Math.abs(to - pos) > 1e-4 || Math.abs(tilt) > 0.01 || hangLater || (tintFrom > 0 && performance.now() - tintFrom < 1000);
     const loop = t => { raf = 0; if (frame(t) && moving()) raf = requestAnimationFrame(loop); else last = 0; };
     const kick = () => { if (!raf) raf = requestAnimationFrame(loop); };
     // the home coming on show (loaded, back from a page) is a change of the body's classes
@@ -284,22 +285,35 @@ const Home = (() => {
       sl.toneOf = sl.printed; sl.tone = tone;
       return tone;
     }
-    let tintFrom = 0, live = false, toned = [null, null], upOp = null;   // live: the loading screen has lifted
-    const blend = (a, b, k) => ({ desk: U.mixOklab(a.desk, b.desk, k), shape: U.mixOklab(a.shape, b.shape, k), ghost: U.mixOklab(a.ghost, b.ghost, k) });
+    let tintFrom = 0, live = false, deskOn = [null, null], upOp = null;   // live: the loading screen has lifted
     const TR = Math.min(1.5, devicePixelRatio || 1);        // the shapes are soft and tone on tone: 1.5 px per px is plenty
+    // Tinting a shape is a dozen ms of canvas work (WebKit), a dropped frame each time a stamp was passed. So each shape
+    // keeps its canvases in a few stamps' tones: at rest the ones either side are tinted ahead (warm), and passing a
+    // stamp only hangs another canvas in a frame. A fling beyond them still tints on the way.
+    const KEEP_TINTS = 5, toneKey = c => c.shape + c.ghost;
+    let wanted = new Set();                                 // the tones warm() keeps: the stamps round the middle
     /** a shape's canvas in tones c: its misregistered ghost with the shape over it. Only plain compositing: the ghost's
      *  mask filled with its ink, the shape's outline cut out of it, the shape's ink laid behind, then everything outside
      *  the two outlines (s.union, drawn once per size) taken away */
-    function tint(s, L, c) {
+    function tinted(s, c, keep = null) {
+      const key = toneKey(c);
+      let cv = s.tints.get(key);
+      if (cv) { s.tints.delete(key); s.tints.set(key, cv); return cv; }   // the Map's order: last used last
       const p = s.pick, img = s.img;
-      if (!p || !img || !p.size) return;
+      if (!p || !img || !p.size) return null;
       const w = Math.ceil((p.size + p.gx) * TR), h = Math.ceil((p.size + p.gy) * TR), S = p.size * TR, ar = img.naturalWidth / img.naturalHeight;
       const mw = ar >= 1 ? S : S * ar, mh = ar >= 1 ? S / ar : S, mx = (S - mw) / 2, my = (S - mh) / 2, gx = mx + p.gx * TR, gy = my + p.gy * TR;
       if (!s.union || s.union.width !== w || s.union.height !== h) {
         s.union = el('canvas'); s.union.width = w; s.union.height = h;
         const u = s.union.getContext('2d'); u.drawImage(img, gx, gy, mw, mh); u.drawImage(img, mx, my, mw, mh);
       }
-      const cv = s.cvs[L];
+      // a full set gives up a canvas no longer wanted (else the one used longest ago), never one on show (or kept)
+      if (s.tints.size >= KEEP_TINTS) {
+        const free = [...s.tints].filter(([k, x]) => !s.on.includes(x) && x !== keep);
+        const [k] = free.find(([k]) => !wanted.has(k)) || free[0] || [];
+        if (k) { cv = s.tints.get(k); s.tints.delete(k); }
+      }
+      cv = cv || el('canvas');
       if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
       const g = cv.getContext('2d'), op = m => { g.globalCompositeOperation = m; };
       op('source-over'); g.clearRect(0, 0, w, h); g.drawImage(img, gx, gy, mw, mh);
@@ -308,23 +322,59 @@ const Home = (() => {
       op('destination-over'); g.fillStyle = c.shape; g.fillRect(0, 0, w, h);
       op('destination-in'); g.drawImage(s.union, 0, 0);
       op('source-over');
+      s.tints.set(key, cv); cv.fresh = true;
+      return cv;
+    }
+    let hangLater = false;                                  // a fresh tint waits for the next frame (moving() keeps it coming)
+    /** hangs a shape's canvases in its two frames; when both stamps share their tones the upper frame stays empty. A tint
+     *  made on the way is drawn off screen and hung a frame later, so no frame waits for its drawing; the canvas it
+     *  replaces is all but covered by then (passing a stamp changes the pair the other one covers) */
+    function hang(s, c0, c1) {
+      const lower = tinted(s, c0), want = [lower, toneKey(c0) === toneKey(c1) ? null : tinted(s, c1, lower)];
+      for (const L of [0, 1]) {
+        const cv = want[L];
+        if (s.on[L] === cv) continue;
+        if (cv && cv.fresh && s.on[L]) { cv.fresh = false; hangLater = true; continue; }
+        s.on[L] = cv; s.pair[L].replaceChildren(...(cv ? [cv] : []));
+      }
+    }
+    let warmT = 0, warmFor = null;
+    const settled = () => !dragging && Math.abs(to - pos) < 0.02;   // a few px from rest: a late frame there shows nothing
+    /** once the wheel (nearly) rests, the shapes' tints for the stamps either side are made ahead, one a task; it stops
+     *  if the wheel moves on, and the next rest starts it again */
+    function warm(again) {
+      const c = mod(Math.round(to), N);
+      if (!again && warmFor === c) return;
+      clearTimeout(warmT); warmT = 0; warmFor = c;
+      if (!sets.some(s => s.pick && s.img)) return;
+      const tns = [0, 1, -1, 2, -2].map(d => tones(slots[mod(c + d, N)]) || NEUTRAL);
+      wanted = new Set(tns.map(toneKey));
+      const todo = tns.flatMap(tn => sets.map(s => [s, tn]));
+      const next = () => {
+        warmT = 0;
+        if (!settled()) { warmFor = null; return; }
+        const job = todo.find(([s, tn]) => s.pick && s.img && s.pick.size && !s.tints.has(toneKey(tn)));
+        if (!job) return;
+        tinted(...job).fresh = false;                       // long drawn by the time it is hung
+        warmT = setTimeout(next, 30);
+      };
+      warmT = setTimeout(next, 60);
     }
     function paintBackdrop(t) {
       const k = tintFrom ? Math.min(1, (t - tintFrom) / 900) : 0, kk = k * k * (3 - 2 * k);
       // the lower sheets carry whichever of the two stamps either side of the middle is even, the upper ones the odd
-      // one, faded in by how far the wheel has gone toward it: passing a stamp retints one pair while the other hides it
+      // one, faded in by how far the wheel has gone toward it: passing a stamp changes what one pair holds while the
+      // other hides it. As the loading screen lifts the desk turns from grey to its colour; the shapes fade in (.on)
       const c0 = Math.floor(pos), f = pos - c0, odd = mod(c0, 2) === 1;
       const up = +(odd ? 1 - f : f).toFixed(3);
-      if (up !== upOp) { upOp = up; desks[1].style.opacity = up; for (const s of sets) s.cvs[1].style.opacity = up; }
+      if (up !== upOp) { upOp = up; desks[1].style.opacity = up; for (const s of sets) s.pair[1].style.opacity = up; }
+      const tn = [0, 1].map(L => tones(slots[mod(odd ? c0 + 1 - L : c0 + L, N)]) || NEUTRAL);
       for (const L of [0, 1]) {
-        if ((L ? up <= 0 : up >= 1) && k < 1) continue;   // a hidden pair waits until the desk has taken its colour
-        const tn = tones(slots[mod(odd ? c0 + 1 - L : c0 + L, N)]) || NEUTRAL, c = kk < 1 ? blend(NEUTRAL, tn, kk) : tn;
-        const key = c.desk + c.shape + c.ghost;
-        if (key === toned[L]) continue;
-        toned[L] = key;
-        desks[L].style.backgroundColor = c.desk;
-        for (const s of sets) tint(s, L, c);
+        const desk = kk < 1 ? U.mixOklab(NEUTRAL.desk, tn[L].desk, kk) : tn[L].desk;
+        if (desk !== deskOn[L]) desks[L].style.backgroundColor = deskOn[L] = desk;
       }
+      hangLater = false;
+      for (const s of sets) if (s.pick && s.img) hang(s, ...tn);
       for (const [i, s] of sets.entries()) {
         if (!s.pick) continue;
         const r = (s.pick.rot + (reduce ? 0 : (i ? -5 : 9) * pos)).toFixed(2) + 'deg';
@@ -355,11 +405,15 @@ const Home = (() => {
         const cx = sx ? W - inset : inset, cy2 = sy ? H - inset : inset;
         Object.assign(s.g.style, { left: (cx - p.size / 2).toFixed(1) + 'px', top: (cy2 - p.size / 2).toFixed(1) + 'px',
           width: p.size.toFixed(1) + 'px', height: p.size.toFixed(1) + 'px' });
-        for (const cv of s.cvs) Object.assign(cv.style, { width: (p.size + p.gx).toFixed(1) + 'px', height: (p.size + p.gy).toFixed(1) + 'px' });
+        for (const fr of s.pair) Object.assign(fr.style, { width: (p.size + p.gx).toFixed(1) + 'px', height: (p.size + p.gy).toFixed(1) + 'px' });
+        if (s.tintSize !== p.size) {                        // tints made at another size are no use
+          s.tintSize = p.size; s.tints.clear(); s.on = [null, null];
+          for (const fr of s.pair) fr.replaceChildren();
+        }
         drift(s, i);
       }
-      toned = [null, null];
       paintBackdrop(performance.now());
+      warm(true); kick();                                   // a fresh tint is hung on the next frame
     }
     async function loadBackdrops(date) {
       const list = await fetch('/backdrops/index.json', { cache: 'no-cache' }).then(r => r.json()).catch(() => []);
