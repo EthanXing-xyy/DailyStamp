@@ -315,7 +315,8 @@ const Loader = (() => {
     return new Promise(res => go.addEventListener('click', async () => {
       go.disabled = true; go.classList.add('down');
       kit(k => k.thump(0.7));
-      clearTimeout(letterTimer);
+      // the letters keep going into the box while the door stands open (till the iris: finish()). They used to stop
+      // here, but only if none was in the air right then, so on one tap they stopped, on another not (user 2026-09-29)
       // the door swings in on the compositor, so the app gets ready behind it meanwhile (the home shown under the
       // loading screen, its looping animations made, its first frames drawn): two frames on, once the swing is
       // running. finish() closes the iris once the door is open and the main thread is quiet again
