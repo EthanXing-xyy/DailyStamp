@@ -99,7 +99,7 @@ const Loader = (() => {
     signOn(w, h);
     // the door's thickness and the eye's distance, in step with its size (a door is ~1/16 as thick as it is wide; a
     // fixed distance looked from far off on a phone's small door, so it only narrowed like a card)
-    const door = $('.ld-door'), dw = pic.spots.door[2] * w;
+    const door = $('.ld-door'), dw = (pic.spots.leaf || pic.spots.door)[2] * w;
     if (door) {
       const t = (dw * 0.062).toFixed(1);
       door.style.setProperty('--dt', t + 'px'); door.style.setProperty('--dtn', -t + 'px'); door.style.setProperty('--dp', (dw * 3.2).toFixed(0) + 'px');
@@ -178,13 +178,19 @@ const Loader = (() => {
       load(img, e.cover + v);
       if (e.paper) root.style.setProperty('--paper', e.paper);
       const sp = e.spots;
-      put($('.ld-room'), sp.door); put($('.ld-door'), sp.door);
+      const leaf = sp.leaf || sp.door;                     // the leaf alone: its frame and the doorstep stay on the wall
+      put($('.ld-room'), leaf); put($('.ld-door'), leaf);
       if (e.room) {                                        // the lit room behind it, decoded before the scene shows
         const src = e.room.file + `?v=${e.roomv}`;
         load(new Image(), src); $('.ld-room').style.backgroundImage = `url("${src}")`;
       }
-      const door = $('.ld-door-face'), [dx, dy, dw, dh] = sp.door;   // the door's face: its part of the picture
-      Object.assign(door.style, { backgroundImage: `url("${e.cover + v}")`, backgroundSize: `${100 / dw}% ${100 / dh}%`,
+      const door = $('.ld-door-face'), [dx, dy, dw, dh] = leaf;      // the door's face: its part of the picture
+      if (e.leaf) {                                        // the leaf with the bicycle's wheel painted out; the wheel stays in front
+        const lv = `?v=${e.leaf.v}`, wheel = $('.ld-wheel');
+        door.style.backgroundImage = `url("${e.leaf.face + lv}")`; door.style.backgroundSize = '100% 100%';
+        load(new Image(), e.leaf.face + lv); load(new Image(), e.leaf.wheel + lv);
+        put(wheel, leaf); wheel.style.backgroundImage = `url("${e.leaf.wheel + lv}")`;
+      } else Object.assign(door.style, { backgroundImage: `url("${e.cover + v}")`, backgroundSize: `${100 / dw}% ${100 / dh}%`,
         backgroundPosition: `${dx / (1 - dw) * 100}% ${dy / (1 - dh) * 100}%` });
       if (e.glass && sp.glass) {                          // the glass, lit from inside when the post office opens (in the door, so it turns with it)
         const [gx, gy, gw, gh] = sp.glass, lamp = $('.ld-lamp'), mask = `url("${e.glass.file}?v=${e.glass.v}")`;
@@ -193,6 +199,7 @@ const Loader = (() => {
         put($('.ld-bloom'), grow(sp.glass, 0.9));
       }
       put($('.ld-glow'), [dx - dw * 0.7, dy + dh * 0.82, dw * 2.4, dh * 0.34]);
+      put($('.ld-spill'), [dx - dw * 0.25, dy + dh * 0.9, dw * 1.6, dh * 0.2]);
       // the cat: its first pose only, sitting still on its spot as part of the picture (the user asked it not to move)
       const cat = $('.ld-cat'), [cx, cy, ch] = sp.cat;
       if (cat && e.cat && e.cat.length) {
