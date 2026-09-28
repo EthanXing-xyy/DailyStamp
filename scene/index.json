@@ -71,17 +71,28 @@
       0.2623,
       0.1224,
       0.511
+    ],
+    "wheel": [
+      0.5127,
+      0.6395,
+      0.0174,
+      0.1369
     ]
   },
-  "v": 1790534398,
+  "v": 1790608410,
   "glass": {
     "file": "scene/glass.webp",
-    "v": 1790605274
+    "v": 1790608412
   },
   "leaf": {
     "face": "scene/leaf.webp",
+    "panes": "scene/panes.webp",
     "wheel": "scene/wheel.webp",
-    "v": 1790605274
+    "open": "scene/leaf-open.webp",
+    "film": "scene/film.webp",
+    "pad": 0.0406,
+    "foot": 0.0061,
+    "v": 1790608414
   },
   "cat": [
     {
@@ -115,5 +126,5 @@
     "w": 480,
     "h": 1191
   },
-  "roomv": 1790605280
+  "roomv": 1790608438
 }

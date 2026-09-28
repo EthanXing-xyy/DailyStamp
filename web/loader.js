@@ -99,7 +99,7 @@ const Loader = (() => {
     signOn(w, h);
     // the door's thickness and the eye's distance, in step with its size (a door is ~1/16 as thick as it is wide; a
     // fixed distance looked from far off on a phone's small door, so it only narrowed like a card)
-    const door = $('.ld-door'), dw = (pic.spots.leaf || pic.spots.door)[2] * w;
+    const door = $('.ld-door'), dw = pic.spots.leaf[2] * w;
     if (door) {
       const t = (dw * 0.062).toFixed(1);
       door.style.setProperty('--dt', t + 'px'); door.style.setProperty('--dtn', -t + 'px'); door.style.setProperty('--dp', (dw * 3.2).toFixed(0) + 'px');
@@ -171,32 +171,46 @@ const Loader = (() => {
   if (scene) (async () => {
     try {
       const e = await (await fetch('scene/index.json')).json();
-      if (!e.cover || !e.spots || !e.spots.door) return scene.remove();
+      if (!e.cover || !e.spots || !e.spots.leaf) return scene.remove();
       pic = e;
       const img = $('.ld-cover'), v = `?v=${e.v}`, waits = [];
       const load = (im, src) => { im.src = src; waits.push(im.decode ? im.decode().catch(() => {}) : Promise.resolve()); };
       load(img, e.cover + v);
       if (e.paper) root.style.setProperty('--paper', e.paper);
       const sp = e.spots;
-      const leaf = sp.leaf || sp.door;                     // the leaf alone: its frame and the doorstep stay on the wall
+      const leaf = sp.leaf;                                // the leaf alone: its frame and the doorstep stay on the wall
       put($('.ld-room'), leaf); put($('.ld-door'), leaf);
       if (e.room) {                                        // the lit room behind it, decoded before the scene shows
         const src = e.room.file + `?v=${e.roomv}`;
         load(new Image(), src); $('.ld-room').style.backgroundImage = `url("${src}")`;
       }
       const door = $('.ld-door-face'), [dx, dy, dw, dh] = leaf;      // the door's face: its part of the picture
-      if (e.leaf) {                                        // the leaf with the bicycle's wheel painted out; the wheel stays in front
-        const lv = `?v=${e.leaf.v}`, wheel = $('.ld-wheel');
-        door.style.backgroundImage = `url("${e.leaf.face + lv}")`; door.style.backgroundSize = '100% 100%';
-        load(new Image(), e.leaf.face + lv); load(new Image(), e.leaf.wheel + lv);
-        put(wheel, leaf); wheel.style.backgroundImage = `url("${e.leaf.wheel + lv}")`;
-      } else Object.assign(door.style, { backgroundImage: `url("${e.cover + v}")`, backgroundSize: `${100 / dw}% ${100 / dh}%`,
-        backgroundPosition: `${dx / (1 - dw) * 100}% ${dy / (1 - dh) * 100}%` });
-      if (e.glass && sp.glass) {                          // the glass, lit from inside when the post office opens (in the door, so it turns with it)
-        const [gx, gy, gw, gh] = sp.glass, lamp = $('.ld-lamp'), mask = `url("${e.glass.file}?v=${e.glass.v}")`;
-        put(lamp, [(gx - dx) / dw, (gy - dy) / dh, gw / dw, gh / dh]);
-        lamp.style.webkitMaskImage = mask; lamp.style.maskImage = mask;
-        put($('.ld-bloom'), grow(sp.glass, 0.9));
+      const bg = (el, src) => { load(new Image(), src); el.style.backgroundImage = `url("${src}")`; };
+      if (e.leaf) {
+        // the leaf cut out of the picture (scene.py leaf()): its paint to its ragged edges (a little past the box on
+        // the left and at the foot), its glass as holes, the bicycle's wheel painted out: the wheel stays in front
+        const L = e.leaf, lv = `?v=${L.v}`, pad = L.pad || 0, foot = L.foot || 0;
+        Object.assign(door.style, { left: -pad * 100 + '%', width: (1 + pad) * 100 + '%', height: (1 + foot) * 100 + '%',
+          transformOrigin: `${pad / (1 + pad) * 100}% ${50 / (1 + foot)}%` });
+        bg(door, L.face + lv); bg($('.ld-wheel'), L.wheel + lv); put($('.ld-wheel'), sp.wheel);
+        if (L.open) bg($('.ld-relit'), L.open + lv);
+        // its hinge-side edge: a strip of the same paint
+        const edge = $('.ld-door-edge'), t = 0.062 / (1 + pad);              // the strip, in widths of the face's picture
+        edge.style.height = (1 + foot * 0.7) * 100 + '%';
+        edge.style.backgroundImage = `linear-gradient(90deg, rgba(38,14,8,.34), rgba(38,14,8,.12)), url("${L.face + lv}")`;
+        edge.style.backgroundSize = `100% 100%, ${100 / t}% 100%`;
+        edge.style.backgroundPosition = `0 0, ${0.13 / (1 - t) * 100}% 0`;
+        if (e.glass && sp.glass) {
+          // the glass: as painted (dark) while loading; lit from inside when the post office opens; and as the door
+          // swings, clear: the room shows through the holes, under a thin film of the glass's own reflections
+          const [gx, gy, gw, gh] = sp.glass, mask = `url("${e.glass.file}?v=${e.glass.v}")`, lamp = $('.ld-lamp');
+          const at = [(gx - dx + pad * dw) / (dw * (1 + pad)), (gy - dy) / (dh * (1 + foot)), gw / (dw * (1 + pad)), gh / (dh * (1 + foot))];
+          put($('.ld-pane'), at); put(lamp, at); put($('.ld-film'), at);
+          bg($('.ld-pane'), L.panes + lv);
+          if (L.film) bg($('.ld-film'), L.film + lv);
+          lamp.style.webkitMaskImage = mask; lamp.style.maskImage = mask;
+          put($('.ld-bloom'), grow(sp.glass, 0.9));
+        }
       }
       put($('.ld-glow'), [dx - dw * 0.7, dy + dh * 0.82, dw * 2.4, dh * 0.34]);
       put($('.ld-spill'), [dx - dw * 0.25, dy + dh * 0.9, dw * 1.6, dh * 0.2]);

@@ -58,49 +58,55 @@
 /* behind the door: the lit room it opens onto (scene/room.webp, set by loader.js; this warm light until it's in) */
 .ld-room { background: #D9934E radial-gradient(120% 90% at 50% 100%, #F6CB86, #D9934E 70%, #B9743A) center / cover no-repeat; }
 /* the door itself: a slab with some thickness, turning inward on hinges at its back, left edge. Its face is cut from
-   the picture; as it opens, its hinge-side edge turns towards you (the user found a flat door read as paper). The
-   thickness (--dt) and the eye's distance (--dp) follow the door's size (loader.js), so it turns alike on every screen */
-/* (it darkens as it turns away from the light through a black sheet on it fading in, not a brightness filter: a filter
-   under the iris's clip had the whole screen rasterised again on every frame) */
+   the picture (scene/leaf.webp); as it opens, its hinge-side edge turns towards you. The thickness (--dt) and the
+   eye's distance (--dp) follow the door's size (loader.js), so it turns alike on every screen */
+/* (one picture turning read as a card turning, the user found: a door's look changes as it turns. So the light on it
+   changes with it: its face fades to the same leaf drawn in the light it stands in when open, turned from the day,
+   the room's lamp raking across it (scene/leaf-open.webp, .ld-relit); and its glass, holes in the face, goes clear:
+   the room behind shows through it, moving against the door as it swings. All of it opacity, on the compositor) */
 /* (at rest the same kind of transform as open, so every browser turns it on the compositor: function by function) */
 /* (no preserve-3d: WebKit turned a 3D-nested slab the wrong way. The face and the edge are flat pieces, each carrying
    the whole placement, the same eye and the same hinge, so they turn as one) */
-.ld-door { --a: 0deg; --dt: 4px; --dtn: -4px; --dp: 700px; }
-.ld-door-face, .ld-door-edge { position: absolute; top: 0; height: 100%; transform-origin: 0 50% var(--dtn);
-  transition: transform .75s cubic-bezier(.45,0,.2,1); will-change: transform; }
-.ld-door-face { left: 0; width: 100%; background-repeat: no-repeat; transform: perspective(var(--dp)) rotateY(var(--a)); }
-.ld-door-face::after { content: ""; position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .75s ease; will-change: opacity; }
-/* the hinge-side edge, standing square to the face at its left side: the door's paint, a shade darker than its face
-   and more so towards the frame */
+.ld-door { --a: 0deg; --dt: 4px; --dtn: -4px; --dp: 700px; --swing: .75s cubic-bezier(.45,0,.2,1); }
+/* (the hinge is --dt behind the face, but the eye's distance is taken from the face: shut, the face is in the
+   picture's plane and exactly the size it is painted. Taken from the hinge it stood 2% larger, over its own frame) */
+.ld-door-face, .ld-door-edge { position: absolute; top: 0; height: 100%; transform-origin: 0 50%;
+  transition: transform var(--swing); will-change: transform; background-repeat: no-repeat; }
+.ld-door-face { left: 0; width: 100%; background-size: 100% 100%;
+  transform: perspective(var(--dp)) translateZ(var(--dtn)) rotateY(var(--a)) translateZ(var(--dt)); }
+.ld-door-face > * { position: absolute; background: no-repeat 0 0 / 100% 100%; will-change: opacity; transition: opacity var(--swing); }
+.ld-relit { inset: 0; opacity: 0; }
+.ld-film { opacity: 0; }
+/* the hinge-side edge, standing square to the face at its left side: a strip of the door's paint, in the shade of
+   the frame it turns out of */
 .ld-door-edge { left: 0; width: var(--dt);
-  transform: perspective(var(--dp)) rotateY(var(--a)) translateZ(var(--dt)) rotateY(90deg) translateZ(var(--dtn));
-  background: linear-gradient(90deg, #8F4E37, #7A4130); }
+  transform: perspective(var(--dp)) translateZ(var(--dtn)) rotateY(var(--a)) translateZ(var(--dt)) rotateY(90deg);
+  background-color: #8F4E37; }
 #loader.opening .ld-door { --a: 72deg; }
-#loader.opening .ld-door-face::after { opacity: .28; }
-/* the latch side's edge faces into the lit room as the door swings in: its corner catches that light, a thin warm rim
-   that shows the slab's thickness where the edge itself is out of sight */
-.ld-door-face::before { content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 4%; z-index: 1;
-  background: linear-gradient(90deg, rgba(255,214,150,0), rgba(255,226,172,.9) 55%, rgba(255,236,196,.95)); opacity: 0; transition: opacity .75s ease; will-change: opacity; }
-#loader.opening .ld-door-face::before { opacity: 1; }
 /* open for business: the lamps come on inside. The door's glass (scene/glass.webp, cut from the picture with its brush
    strokes) glows warm from within, and turns with the door; a soft halo round it, a little light on the paper at its
    foot. (A lit line along the door's edge read as its frame glowing: the door is painted shut) */
-.ld-lamp { position: absolute; background: radial-gradient(ellipse 80% 90% at 50% 70%, #FDE4A6, #F2C171 45%, #D88D46);
+.ld-door-face > .ld-lamp { background: radial-gradient(ellipse 80% 90% at 50% 70%, #FDE4A6, #F2C171 45%, #D88D46);
   -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
-  opacity: 0; transition: opacity 1.6s ease; will-change: opacity; }
+  opacity: 0; transition: opacity 1.6s ease; }
 .ld-bloom { border-radius: 50%; background: radial-gradient(closest-side, rgba(250,214,150,.42), rgba(250,214,150,0));
   opacity: 0; transition: opacity 1.6s ease; pointer-events: none; }
 /* the door open, the room's light falls out over the step and onto the ground */
 .ld-spill { border-radius: 50%; background: radial-gradient(closest-side, rgba(246,196,120,.5), rgba(246,196,120,0)); opacity: 0;
   transition: opacity .75s ease; pointer-events: none; }
 #loader.opening .ld-spill { opacity: 1; }
-/* the bicycle's front wheel, which leans over the door's hinge side: it stays where it is as the door swings */
+/* the bicycle's front wheel, which leans over the door's hinge side: it stays where it is as the door swings (under
+   the glow on the ground, as the rest of the wheel in the picture is) */
 .ld-wheel { background: no-repeat 0 0 / 100% 100%; pointer-events: none; }
 .ld-glow { border-radius: 50%; background: radial-gradient(closest-side, rgba(233,169,92,.42), rgba(233,169,92,0)); opacity: 0; transition: opacity 1.4s ease; pointer-events: none; }
 /* in turn: the postmark strikes, then the lamps come up slowly, then the line at the foot */
 #loader.ready .ld-lamp { opacity: 1; transition-delay: .45s; }
 #loader.ready .ld-bloom, #loader.ready .ld-glow { opacity: 1; transition-delay: .45s; }
 #loader.opening .ld-bloom { opacity: 0; transition-duration: .5s; }
+/* the door swings: the light on it changes, its glass clears */
+#loader.opening .ld-relit, #loader.opening .ld-film { opacity: 1; }
+#loader.opening .ld-pane { opacity: 0; }
+#loader.opening .ld-lamp { opacity: .16; transition: opacity var(--swing); }
 /* the hanging sign: how far along, then 营业中, laid onto the board by loader.js */
 .ld-sign { left: 0; top: 0; transform-origin: 0 0; display: grid; place-items: center; color: #3A2C24; mix-blend-mode: multiply; pointer-events: none; }
 .ld-sign > * { grid-area: 1 / 1; white-space: nowrap; transition: opacity .6s ease; }
@@ -195,7 +201,7 @@
 <div id="loader" aria-busy="true">
   <div class="ld-scene">
     <img class="ld-cover" alt="">
-    <i class="ld-room"></i><i class="ld-door"><i class="ld-door-face"><i class="ld-lamp"></i></i><i class="ld-door-edge"></i></i><i class="ld-bloom"></i><i class="ld-glow"></i><i class="ld-spill"></i><i class="ld-wheel"></i>
+    <i class="ld-room"></i><i class="ld-door"><i class="ld-door-face"><i class="ld-pane"></i><i class="ld-lamp"></i><i class="ld-relit"></i><i class="ld-film"></i></i><i class="ld-door-edge"></i></i><i class="ld-wheel"></i><i class="ld-bloom"></i><i class="ld-glow"></i><i class="ld-spill"></i>
     <b class="ld-sign" aria-hidden="true"><span class="ld-pct">0%</span><span class="ld-open">营业中</span></b>
     <div class="ld-cat"></div>
     <div class="ld-mail"><img class="ld-letter" alt=""></div><i class="ld-ring"></i><i class="ld-ring"></i>
