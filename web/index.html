@@ -57,15 +57,26 @@
   mask-composite: intersect; }
 /* behind the door: the lit room it opens onto (scene/room.webp, set by loader.js; this warm light until it's in) */
 .ld-room { background: #D9934E radial-gradient(120% 90% at 50% 100%, #F6CB86, #D9934E 70%, #B9743A) center / cover no-repeat; }
-/* the door itself, cut from the picture, turning inward on its left edge */
+/* the door itself: a slab with some thickness, turning inward on hinges at its back, left edge. Its face is cut from
+   the picture; as it opens, its hinge-side edge turns towards you (the user found a flat door read as paper). The
+   thickness (--dt) and the eye's distance (--dp) follow the door's size (loader.js), so it turns alike on every screen */
 /* (it darkens as it turns away from the light through a black sheet on it fading in, not a brightness filter: a filter
    under the iris's clip had the whole screen rasterised again on every frame) */
 /* (at rest the same kind of transform as open, so every browser turns it on the compositor: function by function) */
-.ld-door { background-repeat: no-repeat; transform-origin: 0 50%; transform: perspective(700px) rotateY(0deg);
+/* (no preserve-3d: WebKit turned a 3D-nested slab the wrong way. The face and the edge are flat pieces, each carrying
+   the whole placement, the same eye and the same hinge, so they turn as one) */
+.ld-door { --a: 0deg; --dt: 4px; --dtn: -4px; --dp: 700px; }
+.ld-door-face, .ld-door-edge { position: absolute; top: 0; height: 100%; transform-origin: 0 50% var(--dtn);
   transition: transform .75s cubic-bezier(.45,0,.2,1); will-change: transform; }
-.ld-door::after { content: ""; position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .75s ease; will-change: opacity; }
-#loader.opening .ld-door { transform: perspective(700px) rotateY(72deg); }
-#loader.opening .ld-door::after { opacity: .28; }
+.ld-door-face { left: 0; width: 100%; background-repeat: no-repeat; transform: perspective(var(--dp)) rotateY(var(--a)); }
+.ld-door-face::after { content: ""; position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .75s ease; will-change: opacity; }
+/* the hinge-side edge, standing square to the face at its left side: the door's paint, a shade darker than its face
+   and more so towards the frame */
+.ld-door-edge { left: 0; width: var(--dt);
+  transform: perspective(var(--dp)) rotateY(var(--a)) translateZ(var(--dt)) rotateY(90deg) translateZ(var(--dtn));
+  background: linear-gradient(90deg, #8F4E37, #7A4130); }
+#loader.opening .ld-door { --a: 72deg; }
+#loader.opening .ld-door-face::after { opacity: .28; }
 /* open for business: the lamps come on inside. The door's glass (scene/glass.webp, cut from the picture with its brush
    strokes) glows warm from within, and turns with the door; a soft halo round it, a little light on the paper at its
    foot. (A lit line along the door's edge read as its frame glowing: the door is painted shut) */
@@ -160,7 +171,7 @@
 @media (prefers-reduced-motion: reduce) {
   #loader.ready .ld-mark, #loader.ready .ld-go { animation: ld-fade .4s ease both; }
   .ld-door { transition: opacity .4s ease; }
-  #loader.opening .ld-door { transform: none; opacity: 0; }
+  #loader.opening .ld-door { --a: 0deg; opacity: 0; }
 }
 /* upright screens (a phone): a column as wide as the screen allows */
 @media (max-aspect-ratio: 1/1) {
@@ -173,7 +184,7 @@
 <div id="loader" aria-busy="true">
   <div class="ld-scene">
     <img class="ld-cover" alt="">
-    <i class="ld-room"></i><i class="ld-door"><i class="ld-lamp"></i></i><i class="ld-bloom"></i><i class="ld-glow"></i>
+    <i class="ld-room"></i><i class="ld-door"><i class="ld-door-face"><i class="ld-lamp"></i></i><i class="ld-door-edge"></i></i><i class="ld-bloom"></i><i class="ld-glow"></i>
     <b class="ld-sign" aria-hidden="true"><span class="ld-pct">0%</span><span class="ld-open">营业中</span></b>
     <div class="ld-cat"></div>
     <div class="ld-mail"><img class="ld-letter" alt=""></div><i class="ld-ring"></i><i class="ld-ring"></i>

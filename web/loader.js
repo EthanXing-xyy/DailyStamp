@@ -97,6 +97,13 @@ const Loader = (() => {
     const x = W / 2 - (cx + cw / 2) * w, y = top + Math.max(0, room - ch * h) * 0.58 - cy * h;
     Object.assign(scene.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
     signOn(w, h);
+    // the door's thickness and the eye's distance, in step with its size (a door is ~1/16 as thick as it is wide; a
+    // fixed distance looked from far off on a phone's small door, so it only narrowed like a card)
+    const door = $('.ld-door'), dw = pic.spots.door[2] * w;
+    if (door) {
+      const t = (dw * 0.062).toFixed(1);
+      door.style.setProperty('--dt', t + 'px'); door.style.setProperty('--dtn', -t + 'px'); door.style.setProperty('--dp', (dw * 3.2).toFixed(0) + 'px');
+    }
   }
   // the type on the sign lies on its board, which hangs a little askew: a box the board's size, sheared and turned onto
   // it (the parallelogram through the middles of the board's four sides; its corners are measured in scene.py). A
@@ -176,7 +183,7 @@ const Loader = (() => {
         const src = e.room.file + `?v=${e.roomv}`;
         load(new Image(), src); $('.ld-room').style.backgroundImage = `url("${src}")`;
       }
-      const door = $('.ld-door'), [dx, dy, dw, dh] = sp.door;
+      const door = $('.ld-door-face'), [dx, dy, dw, dh] = sp.door;   // the door's face: its part of the picture
       Object.assign(door.style, { backgroundImage: `url("${e.cover + v}")`, backgroundSize: `${100 / dw}% ${100 / dh}%`,
         backgroundPosition: `${dx / (1 - dw) * 100}% ${dy / (1 - dh) * 100}%` });
       if (e.glass && sp.glass) {                          // the glass, lit from inside when the post office opens (in the door, so it turns with it)
