@@ -36,8 +36,8 @@
 /* the loading screen (web/loader.js): inline, so it is the very first thing painted. Cream paper, the title up top and,
    standing at the foot of the screen, the door of a small post office: a bicycle with a basket of letters, the red door
    with its hanging sign, an old pillar box, a pot plant and a calico cat (scene/, drawn once by codex:
-   dailystamp/scene.py). Things can be played with while the press works: the cat changes pose, the bell rings, a letter
-   goes into the box. The sign shows how far the loading has got; when all is in it reads 营业中, warm light shows at
+   dailystamp/scene.py). While the press works letters go into the box by themselves (a tap sends one, and the bell
+   rings); the cat sits still. The sign shows how far the loading has got; when all is in it reads 营业中, warm light shows at
    the door, and the door swings open onto the lit post office inside, then onto the app. Everything moves softly and once: nothing bounces, nothing blinks. */
 #loader { position: fixed; inset: 0; z-index: 1000; overflow: hidden; --ink: #2E2520; --paper: #EDE4D4; --door: #A5452F; --warm: #E9A95C;
   color: var(--ink); background: var(--paper);
@@ -71,10 +71,9 @@
 .ld-open { font-family: "DS LoadPhrase", serif; letter-spacing: .18em; padding-left: .18em; opacity: 0; }
 #loader.ready .ld-pct { opacity: 0; }
 #loader.ready .ld-open { opacity: .85; }
-/* the cat: its poses stacked, one showing */
+/* the cat: one pose, sitting still */
 .ld-cat { pointer-events: none; }
-.ld-cat img { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity .6s ease; }
-.ld-cat img.on { opacity: 1; }
+.ld-cat img { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); }
 /* a letter on its way to the box, and the bell's ring */
 .ld-letter { pointer-events: none; opacity: 0; will-change: transform; }
 .ld-ring { border: 1.5px solid var(--ink); border-color: transparent var(--ink) transparent transparent; border-radius: 50%; opacity: 0; pointer-events: none; }
@@ -164,7 +163,6 @@
     <b class="ld-sign" aria-hidden="true"><span class="ld-pct">0%</span><span class="ld-open">营业中</span></b>
     <div class="ld-cat"></div>
     <img class="ld-letter" alt=""><i class="ld-ring"></i><i class="ld-ring"></i>
-    <button class="ld-hit ld-hit-cat" type="button" tabindex="-1" aria-label="逗猫"></button>
     <button class="ld-hit ld-hit-bell" type="button" tabindex="-1" aria-label="按车铃"></button>
     <button class="ld-hit ld-hit-basket" type="button" tabindex="-1" aria-label="寄一封信"></button>
     <button class="ld-hit ld-hit-box" type="button" tabindex="-1" aria-label="寄一封信"></button>

@@ -3,8 +3,8 @@
 // is first opened. On cream paper, the title, the date and
 // what the press is doing up top; at the foot of the screen a bicycle with a basket of letters leans by a red door, an
 // old pillar box stands beside it and a calico cat sits by the wheel (scene/, drawn once by codex: dailystamp/scene.py).
-// While the press works the scene lives by itself: the cat changes pose every few seconds and a letter flies from the
-// basket into the box every few more; a tap does either at once, and the bell rings. The hanging sign shows
+// While the press works a letter flies from the basket into the box every few seconds by itself (a tap sends one at
+// once), and the bell rings; the cat sits still, part of the picture. The hanging sign shows
 // how far the loading has got. When all is in the sign reads 营业中, warm light shows at the door, a postmark (date and
 // solar term) strikes the title once and the way in (进入邮局 →) fades up where the status was; the app opens only on a
 // tap of the button or the door, which swings open onto the lit post office (the stamp cabinet, the counter, the clerk)
@@ -77,9 +77,9 @@ const Loader = (() => {
   function blanks() {}
 
   // ---- the door of the post office (scene/index.json: the picture, where things are in it as fractions [x, y, w, h],
-  // the cat's poses and the letter). It is sized to the room left under the type; everything in it is placed in %.
+  // the cat and the letter). It is sized to the room left under the type; everything in it is placed in %.
   const scene = $('.ld-scene'), main = $('.ld-main');
-  let pic = null, poses = [], pose = 0, catTimer = 0, letterTimer = 0, busy = false;
+  let pic = null, letterTimer = 0, busy = false;
   const kit = f => { if (typeof Kit !== 'undefined') try { Kit.audio(); f(Kit); } catch {} };
   const put = (el, [x, y, w, h]) => { if (el) Object.assign(el.style, { left: x * 100 + '%', top: y * 100 + '%', width: w * 100 + '%', height: h * 100 + '%' }); };
   const grow = ([x, y, w, h], k) => [x - w * k / 2, y - h * k / 2, w * (1 + k), h * (1 + k)];
@@ -107,13 +107,6 @@ const Loader = (() => {
     const bw = Math.hypot(...ex), bh = Math.hypot(...ey);
     const m = [ex[0] / bw, ex[1] / bw, ey[0] / bh, ey[1] / bh, cx - (ex[0] + ey[0]) / 2, cy - (ex[1] + ey[1]) / 2];
     Object.assign(el.style, { width: bw + 'px', height: bh + 'px', fontSize: Math.max(8, bh * 0.36) + 'px', transform: `matrix(${m.join(',')})` });
-  }
-  function showPose(i) {
-    poses.forEach((im, k) => im.classList.toggle('on', k === i)); pose = i;
-  }
-  function idleCat() {                                    // now and then the cat moves by itself
-    clearTimeout(catTimer);
-    catTimer = setTimeout(() => { if (!active || !poses.length) return; showPose((pose + 1) % poses.length); idleCat(); }, 6000 + Math.random() * 3000);
   }
   function idleLetter() {                                 // a letter goes into the box a little after the last one
     clearTimeout(letterTimer);
@@ -183,21 +176,15 @@ const Loader = (() => {
         backgroundPosition: `${dx / (1 - dw) * 100}% ${dy / (1 - dh) * 100}%` });
       put($('.ld-crack'), [dx + dw - 0.004, dy + dh * 0.03, 0.005, dh * 0.94]);
       put($('.ld-glow'), [dx - dw * 0.7, dy + dh * 0.82, dw * 2.4, dh * 0.34]);
-      // the cat's poses, all at the scale of the first, standing on one spot
+      // the cat: its first pose only, sitting still on its spot as part of the picture (the user asked it not to move)
       const cat = $('.ld-cat'), [cx, cy, ch] = sp.cat;
       if (cat && e.cat && e.cat.length) {
-        const k = ch / e.cat[0].h;                                  // picture heights per sprite pixel
-        const box = [cx - 0.2, cy - ch * 1.2, 0.4, ch * 1.2]; put(cat, box);
-        for (const c of e.cat) {
-          const im = document.createElement('img'); im.alt = '';
-          Object.assign(im.style, { width: c.w * k * e.h / e.w / 0.4 * 100 + '%', height: c.h * k / (ch * 1.2) * 100 + '%' });
-          load(im, c.file + `?v=${e.catv}`); cat.append(im); poses.push(im);
-        }
-        showPose(0);
-        const hit = $('.ld-hit-cat'); put(hit, grow([cx - ch * e.h / e.w * 0.55, cy - ch, ch * e.h / e.w * 1.1, ch], 0.4));
-        hit.addEventListener('click', () => { if (!poses.length) return; showPose((pose + 1) % poses.length); idleCat(); });
-        idleCat();
-      } else { const h = $('.ld-hit-cat'); if (h) h.remove(); }
+        const c = e.cat[0], k = ch / c.h;                           // picture heights per sprite pixel
+        put(cat, [cx - 0.2, cy - ch * 1.2, 0.4, ch * 1.2]);
+        const im = document.createElement('img'); im.alt = '';
+        Object.assign(im.style, { width: c.w * k * e.h / e.w / 0.4 * 100 + '%', height: c.h * k / (ch * 1.2) * 100 + '%' });
+        load(im, c.file + `?v=${e.catv}`); cat.append(im);
+      }
       if (e.letter) { const l = $('.ld-letter'); l.src = e.letter.file + `?v=${e.catv}`; }
       const [bx, by] = sp.bell, r = 0.05;
       const rings = root.querySelectorAll('.ld-ring');
@@ -259,7 +246,7 @@ const Loader = (() => {
     return new Promise(res => go.addEventListener('click', async () => {
       go.disabled = true; go.classList.add('down');
       kit(k => k.thump(0.7));
-      clearTimeout(catTimer); clearTimeout(letterTimer);
+      clearTimeout(letterTimer);
       await openDoor();                                      // the door swings in, then the iris closes on it
       res();
     }, { once: true }));
@@ -281,12 +268,12 @@ const Loader = (() => {
           { duration: 720, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
       document.body.classList.add('loaded');
       await out.finished.catch(() => {});
-      clearTimeout(catTimer); clearTimeout(letterTimer);
+      clearTimeout(letterTimer);
       root.remove(); res();
     }, reduce ? 150 : pressed ? 160 : 380));
   }
   /** the debugging views (?gallery, ?sheet=demo, studio params) don't wait for it */
-  function skip() { active = false; clearTimeout(catTimer); clearTimeout(letterTimer); if (root) root.remove(); document.body.classList.add('loaded'); }
+  function skip() { active = false; clearTimeout(letterTimer); if (root) root.remove(); document.body.classList.add('loaded'); }
 
   // 手机只竖着看（用户 2026-09-27 定的）。转屏卡片先注释掉留着，哪天要横屏了把这段和 index.html 里的 #rotate 解开即可。
   /*
