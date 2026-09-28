@@ -10,13 +10,22 @@ const Router = (() => {
   let moving = false, deps = null;
   const layers = new Map();                               // page key -> what its mount() returned
 
-  // ---- pages in layers of their own: a section each, with its way home, mounted the first time they are needed
-  function makeLayers() {
-    for (const key of Pages.keys()) {
-      const sec = document.createElement('section'); sec.className = 'layer'; sec.id = 'layer-' + key;
-      sec.innerHTML = '<a class="to-home" href="#">← 首页</a>'; document.body.prepend(sec);
-    }
+  // ---- pages in layers of their own: a section each, with its way home. A page is built the first time it is opened
+  // and kept while it is one of the KEEP last opened; then the one opened longest ago is closed (whatever it hooked
+  // outside its section undone by Kit.close, the section swapped for an empty one) and built afresh if it comes back
+  const KEEP = 6, recent = [];                            // page keys, the last opened at the end
+  const toHome = e => {
+    e.preventDefault();
+    if (history.state && history.state.home) history.back();
+    else { history.replaceState(null, '', location.pathname + location.search); goHome(); }
+  };
+  function makeLayer(key) {
+    const sec = document.createElement('section'); sec.className = 'layer'; sec.id = 'layer-' + key;
+    sec.innerHTML = '<a class="to-home" href="#">← 首页</a>';
+    sec.querySelector('.to-home').addEventListener('click', toHome);
+    return sec;
   }
+  function makeLayers() { for (const key of Pages.keys()) document.body.prepend(makeLayer(key)); }
   function ensureLayer(key) {
     if (!layers.has(key)) layers.set(key, Pages.mount(key, $('layer-' + key), deps()));
     return layers.get(key);
@@ -25,10 +34,17 @@ const Router = (() => {
     document.body.classList.add('daily-layer');
     document.querySelectorAll('.layer').forEach(sec => sec.classList.toggle('on', sec.id === 'layer-' + key));
     const L = ensureLayer(key);
+    const i = recent.indexOf(key); if (i >= 0) recent.splice(i, 1); recent.push(key);
     if (L.enter) L.enter();
     $('layer-' + key).tabIndex = 0; $('layer-' + key).focus({ preventScroll: true });   // arrow keys go to the page
     return L;
   }
+  function closeLayer(key) {
+    const L = layers.get(key), sec = $('layer-' + key);
+    if (L && L.close) { try { L.close(); } catch (e) { console.error(e); } }
+    Kit.close(sec); sec.replaceWith(makeLayer(key)); layers.delete(key);
+  }
+  const trim = () => { while (recent.length > KEEP && recent[0] !== App.view) closeLayer(recent.shift()); };
   function hideLayer(key) {
     document.body.classList.remove('daily-layer');
     document.querySelectorAll('.layer.on').forEach(sec => sec.classList.remove('on'));
@@ -99,16 +115,18 @@ const Router = (() => {
       const from = sl.btn.getBoundingClientRect();
       if (push) history.pushState({ home: true }, '', '#' + sl.key);
       App.view = sl.key;
-      const flying = Home.fly(sl.printed || sl.cv, from, V.enter(sl));
+      const t0 = performance.now(), flying = Home.fly(sl.printed || sl.cv, from, V.enter(sl));
       sl.btn.style.visibility = 'hidden';
-      const home = $('home'), fade = home.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 450, delay: 160, easing: 'ease', fill: 'forwards' });
-      const ready = V.prepare(sl);
-      const f = await flying; await ready;
+      // the home fades off the view once the view is ready under it (a page built just now finishes during the flight)
+      const home = $('home'), ready = Promise.resolve(V.prepare(sl));
+      const fading = ready.then(() => home.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 450, delay: Math.max(0, 160 - (performance.now() - t0)), easing: 'ease', fill: 'forwards' }));
+      const f = await flying, fade = await fading; await fade.finished;
       document.body.classList.remove('daily-home'); fade.cancel();
       sl.btn.style.visibility = '';
       const out = await V.landed(sl);
       await f.animate([{ opacity: 1 }, { opacity: 0 }], { ...out, fill: 'forwards' }).finished;
       f.remove();
+      trim();                                               // one page too many now: the one opened longest ago goes
     } finally { moving = false; }
   }
   async function goHome() {
@@ -139,12 +157,8 @@ const Router = (() => {
   /** the pages' layers exist before anything is mounted; deps() hands a page what it needs (web/app/main.js) */
   function init(makeDeps) {
     deps = makeDeps;
+    document.querySelectorAll('.to-home').forEach(a => a.addEventListener('click', toHome));   // the stage's own
     makeLayers();
-    document.querySelectorAll('.to-home').forEach(a => a.addEventListener('click', e => {
-      e.preventDefault();
-      if (history.state && history.state.home) history.back();
-      else { history.replaceState(null, '', location.pathname + location.search); goHome(); }
-    }));
     window.addEventListener('popstate', () => {
       const key = location.hash.slice(1);
       if (!key || key === 'home') return goHome();

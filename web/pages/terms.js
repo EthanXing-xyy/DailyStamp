@@ -19,7 +19,8 @@
     root.append(ringEl, info);
     root.tabIndex = 0;
 
-    // ---- when each term begins, this calendar year (and the year after, for the countdown)
+    // ---- when each term begins, this calendar year (and the year after, for the countdown): 730 days of the sun, worked
+    // out once the stamp flying in is off (see ready)
     function starts(y) {
       const out = new Map(); let prev = Terms.of(`${y}-01-01`).key;          // the term running into the new year began last year
       for (let d = new Date(y, 0, 1); d.getFullYear() <= y; d.setDate(d.getDate() + 1)) {
@@ -28,7 +29,7 @@
       }
       return out;
     }
-    const S0 = starts(year), S1 = starts(year + 1);
+    let S0 = null, S1 = null;
     const idxOf = key => Terms.LIST.findIndex(t => t[0] === key);
     const cur = idxOf(Terms.of(today).key);
     const startOf = i => S0.get(Terms.LIST[i][0]);
@@ -72,7 +73,7 @@
       R = portrait ? Math.min(W * 0.43, H * 0.3) : Math.min(H * 0.36, W * 0.3, short ? (H - 112) / 2 - 16 : Infinity);
       cx = W / 2; cy = portrait ? Math.max(120 + R, H * 0.46) : short ? 78 + R + 14 : Math.max(110 + R, H * 0.54);
       isz = clamp(R * 0.17, 26, 64); cardH = R * (portrait ? 0.9 : short ? 0.78 : 0.95);
-      icons.forEach(ic => { Object.assign(ic.box.style, { width: isz + 'px', height: isz + 'px', marginLeft: -isz / 2 + 'px', marginTop: -isz / 2 + 'px' }); drawIcon(ic); });
+      icons.forEach(ic => { Object.assign(ic.box.style, { width: isz + 'px', height: isz + 'px', marginLeft: -isz / 2 + 'px', marginTop: -isz / 2 + 'px' }); if (S0) drawIcon(ic); });
       root.classList.toggle('terms-small', portrait);
       const infoTop = portrait ? cy + R + isz * 0.9 + 6 : cy + cardH * 0.5 + 12;   // on a phone the ring is too tight inside
       // on a short screen there is no room under the card inside the ring: the name and dates stand beside the ring
@@ -150,11 +151,13 @@
       if (i === cur && my === printing && deps.album) deps.album.add({ id: `term:${year}:${Terms.LIST[i][0]}`, kind: 'term', date: today, st: s, meta: { term: true } }, { keep: true });
     }
 
-    Kit.loop(root, frame);
-    addEventListener('resize', () => { layout(); });
-    const ready = Terms.load().then(() => {
+    Kit.on(root, window, 'resize', () => { layout(); });
+    // laid out now (the stamp flies to the middle of the ring); the dates, the icons and the ring's clock come after
+    const ready = Promise.all([Terms.load(), Kit.afterFrame()]).then(() => {
+      S0 = starts(year); S1 = starts(year + 1);
       layout();
       status.set(`${year} · 今天是${Terms.LIST[cur][1]}的第 ${days(startOf(cur), today) + 1} 天 · 转动圆环看每一期`);
+      Kit.loop(root, frame);
       frame(16, 0);
     });
     layout();

@@ -1,5 +1,6 @@
-// The loading screen: the door of a small post office. It stays up until everything is in (fonts, artwork, every one
-// of the home's stamps, every page), so nothing loads, janks or pops in after it. On cream paper, the title, the date and
+// The loading screen: the door of a small post office. It stays up until the home is in (fonts, artwork, every one
+// of the home's stamps, today's stamp), so nothing on it loads, janks or pops in after it; each page is built when it
+// is first opened. On cream paper, the title, the date and
 // what the press is doing up top; at the foot of the screen a bicycle with a basket of letters leans by a red door, an
 // old pillar box stands beside it and a calico cat sits by the wheel (scene/, drawn once by codex: dailystamp/scene.py).
 // While the press works, things can be played with: the cat changes pose (by itself too, now and then), the bell rings,
@@ -19,8 +20,8 @@ const Loader = (() => {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // how much of the progress each step is worth, and what the status line says meanwhile
-  const STEPS = { fonts: 18, art: 6, masks: 18, stamps: 26, studio: 6, pages: 26 };   // roughly by time taken
-  const SAY = { fonts: '上墨', art: '制版', masks: '晒版', stamps: '印刷', studio: '调色', pages: '装订', done: '出版' };
+  const STEPS = { fonts: 18, art: 6, masks: 18, stamps: 26, studio: 6 };   // roughly by time taken
+  const SAY = { fonts: '上墨', art: '制版', masks: '晒版', stamps: '印刷', studio: '调色', done: '出版' };
   const done = Object.fromEntries(Object.keys(STEPS).map(k => [k, 0]));
   const total = Object.values(STEPS).reduce((a, b) => a + b, 0);
   let shown = 0, active = !!root, say = '', lastKey = '';
@@ -274,7 +275,7 @@ const Loader = (() => {
   /** the curtain: an iris closes on the print shop (on the open door, or the button) and opens on the app underneath */
   function finish() {
     if (!active) return Promise.resolve();
-    step('pages', 1); for (const k in STEPS) done[k] = 1; paint(); talk(SAY.done);
+    for (const k in STEPS) done[k] = 1; paint(); talk(SAY.done);
     const pressed = go && go.classList.contains('down');
     return new Promise(res => setTimeout(async () => {
       active = false;

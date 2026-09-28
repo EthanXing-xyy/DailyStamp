@@ -175,7 +175,7 @@
     bSave.onclick = async () => { if (zineCv) await Kit.save([{ cv: zineCv, name: `xerox-zine-${date}.png` }]); };
 
     layout(); bZine.disabled = true;
-    const ready = setSource(stOf(0));
+    const ready = Kit.afterFrame().then(() => setSource(stOf(0)));   // once the stamp flying in is off
     return P.api({
       ready, anchor: () => orig.getBoundingClientRect(),
       async receive(s) { if (busy) return 300; copies = []; pile.replaceChildren(); bZine.disabled = true; await setSource(s); return 350; },

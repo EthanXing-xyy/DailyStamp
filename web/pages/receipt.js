@@ -144,7 +144,7 @@
         requestAnimationFrame(step);
       });
       printer.classList.remove('on');
-      deps.album.add({ id: `receipt:${date}:${n}:${Kit.visit}`, kind: 'receipt', date, image: await Kit.blobOf(cv) }, { keep: true });
+      deps.album.add({ id: `receipt:${date}:${Date.now()}`, kind: 'receipt', date, image: await Kit.blobOf(cv) });   // n starts again when the page is built again
       busy = false; bPrint.disabled = false; bTear.disabled = false;
       status.set(cur.h > room() ? '打好了 · 上下拖动小票看全 · 撕下它收进集邮册' : '打好了 · 撕下它 · 也已收进集邮册');
       bPrint.textContent = '再打一张';

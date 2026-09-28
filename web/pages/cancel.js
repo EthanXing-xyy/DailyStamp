@@ -38,7 +38,7 @@
       Kit.put(cv, Stamp.blank(sc, 20 + i));
       mk.width = cv.width; mk.height = cv.height;
       const t = { i, st, box, cv, mk, marks: [], sc };
-      deps.loadLeaflet(st.phrase).then(() => {
+      Promise.all([deps.loadLeaflet(st.phrase), Kit.afterFrame()]).then(() => {   // drawn once the stamp flying in is off
         const fr = deps.makeFront(st, sc, { stages: true });
         deps.printIn(cv, fr.stages, { D: fromUnder ? 380 : 650 });
       });
@@ -52,7 +52,7 @@
         u.style.zIndex = String(10 - k);
         stackEl.prepend(u); under.push(u);
         const sc = clamp(sh / Stamp.BH, 0.2, 0.4);
-        deps.loadLeaflet(stOf(S.i + k).phrase).then(() => Kit.put(u, deps.makeFront(stOf(S.i + k), sc)));
+        Promise.all([deps.loadLeaflet(stOf(S.i + k).phrase), Kit.afterFrame()]).then(() => Kit.put(u, deps.makeFront(stOf(S.i + k), sc)));
       }
     }
 

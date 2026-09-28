@@ -285,7 +285,7 @@
     };
 
     layout();
-    const ready = deps.loadLeaflet(stOf(0).phrase).then(() => setEnvelope(stOf(0)));
+    const ready = Promise.all([deps.loadLeaflet(stOf(0).phrase), Kit.afterFrame()]).then(() => setEnvelope(stOf(0)));   // once the stamp flying in is off
     // the stamp from the home lands where the envelope's stamp is, and becomes it
     function anchor() {
       if (!cur) return new DOMRect(home.x - sw / 2, home.y - sh / 2, sw, sh);

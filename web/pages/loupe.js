@@ -200,12 +200,13 @@
     };
 
     layout();
-    let first = stOf(0);
-    const ready = deps.loadLeaflet(first.phrase);
+    let first = stOf(0), painting = null;
+    const leaflet = deps.loadLeaflet(first.phrase);
     return P.api({
-      ready,
-      // the big stamp is drawn only while the page is on show (a 1200 x 1500 canvas is ~7 MB a phone keeps otherwise)
-      enter() { if (!hi) load(st || first); },
+      get ready() { return painting || leaflet; },
+      // the big stamp is drawn only while the page is on show (a 1200 x 1500 canvas is ~7 MB a phone keeps otherwise),
+      // and only once the stamp flying in is off
+      enter() { if (!hi) painting = Promise.all([leaflet, Kit.afterFrame()]).then(() => { if (!hi && Kit.visible(root)) load(st || first); }); },
       leave() { if (hi) { hi.width = hi.height = 0; hi = null; } },
       anchor: () => view.getBoundingClientRect(),
       async receive(s) { if (graded || s.seed === (st && st.seed)) return 300; await deps.loadLeaflet(s.phrase); first = s; load(s); return 350; },
