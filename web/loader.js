@@ -132,10 +132,10 @@ const Loader = (() => {
       { opacity: 1, transform: `translate(${x1}px, ${y1}px) rotate(0deg)` }],
       { duration: reduce ? 300 : 1100, easing: 'cubic-bezier(.45,0,.35,1)', fill: 'forwards' });
     await fly.finished.catch(() => {});
-    // into the slot: it goes down by its own height while its lower part is cut away, so it vanishes at the slot line
+    // into the slot: it goes down by its own height, and its frame (.ld-mail) ends at the slot line, so it vanishes there
     const drop = el.animate([
-      { transform: `translate(${x1}px, ${y1}px)`, clipPath: 'inset(0 0 0 0)', opacity: 1 },
-      { transform: `translate(${x1}px, ${y1 + lh}px)`, clipPath: 'inset(0 0 100% 0)', opacity: 1 }],
+      { transform: `translate(${x1}px, ${y1}px)`, opacity: 1 },
+      { transform: `translate(${x1}px, ${y1 + lh}px)`, opacity: 1 }],
       { duration: reduce ? 200 : 380, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' });
     await drop.finished.catch(() => {});
     kit(k => k.thump(0.2, auto));
@@ -185,7 +185,7 @@ const Loader = (() => {
         Object.assign(im.style, { width: c.w * k * e.h / e.w / 0.4 * 100 + '%', height: c.h * k / (ch * 1.2) * 100 + '%' });
         load(im, c.file + `?v=${e.catv}`); cat.append(im);
       }
-      if (e.letter) { const l = $('.ld-letter'); l.src = e.letter.file + `?v=${e.catv}`; }
+      if (e.letter) { const l = $('.ld-letter'); l.src = e.letter.file + `?v=${e.catv}`; put($('.ld-mail'), [0, 0, 1, sp.slot[1]]); }
       const [bx, by] = sp.bell, r = 0.05;
       const rings = root.querySelectorAll('.ld-ring');
       rings.forEach((el, i) => put(el, [bx - r * (0.6 + i * 0.4) * e.h / e.w, by - r * (0.6 + i * 0.4), r * (1.2 + i * 0.8) * e.h / e.w, r * (1.2 + i * 0.8)]));
