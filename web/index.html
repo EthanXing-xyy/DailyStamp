@@ -58,19 +58,26 @@
 /* behind the door: the lit room it opens onto (scene/room.webp, set by loader.js; this warm light until it's in) */
 .ld-room { background: #D9934E radial-gradient(120% 90% at 50% 100%, #F6CB86, #D9934E 70%, #B9743A) center / cover no-repeat; }
 /* the door itself, cut from the picture, turning inward on its left edge */
-.ld-door { background-repeat: no-repeat; transform-origin: 0 50%; transition: transform .75s cubic-bezier(.45,0,.2,1), filter .75s ease; }
-#loader.opening .ld-door { transform: perspective(700px) rotateY(72deg); filter: brightness(.72); }
+/* (it darkens as it turns away from the light through a black sheet on it fading in, not a brightness filter: a filter
+   under the iris's clip had the whole screen rasterised again on every frame) */
+/* (at rest the same kind of transform as open, so every browser turns it on the compositor: function by function) */
+.ld-door { background-repeat: no-repeat; transform-origin: 0 50%; transform: perspective(700px) rotateY(0deg);
+  transition: transform .75s cubic-bezier(.45,0,.2,1); will-change: transform; }
+.ld-door::after { content: ""; position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .75s ease; will-change: opacity; }
+#loader.opening .ld-door { transform: perspective(700px) rotateY(72deg); }
+#loader.opening .ld-door::after { opacity: .28; }
 /* open for business: the lamps come on inside. The door's glass (scene/glass.webp, cut from the picture with its brush
    strokes) glows warm from within, and turns with the door; a soft halo round it, a little light on the paper at its
    foot. (A lit line along the door's edge read as its frame glowing: the door is painted shut) */
 .ld-lamp { position: absolute; background: radial-gradient(ellipse 80% 90% at 50% 70%, #FDE4A6, #F2C171 45%, #D88D46);
   -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
-  opacity: 0; transition: opacity 1.6s ease; }
-.ld-bloom { border-radius: 50%; background: radial-gradient(closest-side, rgba(247,201,120,.5), rgba(247,201,120,0)); mix-blend-mode: screen;
+  opacity: 0; transition: opacity 1.6s ease; will-change: opacity; }
+.ld-bloom { border-radius: 50%; background: radial-gradient(closest-side, rgba(250,214,150,.42), rgba(250,214,150,0));
   opacity: 0; transition: opacity 1.6s ease; pointer-events: none; }
 .ld-glow { border-radius: 50%; background: radial-gradient(closest-side, rgba(233,169,92,.42), rgba(233,169,92,0)); opacity: 0; transition: opacity 1.4s ease; pointer-events: none; }
-#loader.ready .ld-lamp { opacity: 1; }
-#loader.ready .ld-bloom, #loader.ready .ld-glow { opacity: 1; }
+/* in turn: the postmark strikes, then the lamps come up slowly, then the line at the foot */
+#loader.ready .ld-lamp { opacity: 1; transition-delay: .45s; }
+#loader.ready .ld-bloom, #loader.ready .ld-glow { opacity: 1; transition-delay: .45s; }
 #loader.opening .ld-bloom { opacity: 0; transition-duration: .5s; }
 /* the hanging sign: how far along, then 营业中, laid onto the board by loader.js */
 .ld-sign { left: 0; top: 0; transform-origin: 0 0; display: grid; place-items: center; color: #3A2C24; mix-blend-mode: multiply; pointer-events: none; }
@@ -132,7 +139,7 @@
 #loader.ready .ld-row { opacity: 0; }
 #loader.ready .ld-mark { opacity: .9; animation: ld-mark .2s .3s cubic-bezier(.2,.7,.2,1) both; }
 @keyframes ld-mark { from { opacity: 0; transform: rotate(-12deg) scale(1.07); } }
-#loader.ready .ld-go { visibility: visible; opacity: .72; animation: ld-go-in 1s .9s ease both; }
+#loader.ready .ld-go { visibility: visible; opacity: .72; animation: ld-go-in 1s 1.4s ease both; }
 @keyframes ld-go-in { from { opacity: 0; } }
 /* phone is portrait-only for now: the turn-sideways card is parked (see loader.js)
 #rotate { position: fixed; inset: 0; z-index: 1001; display: none; place-items: center; color: var(--ld-ink, #1B1633);
@@ -153,7 +160,7 @@
 @media (prefers-reduced-motion: reduce) {
   #loader.ready .ld-mark, #loader.ready .ld-go { animation: ld-fade .4s ease both; }
   .ld-door { transition: opacity .4s ease; }
-  #loader.opening .ld-door { transform: none; filter: none; opacity: 0; }
+  #loader.opening .ld-door { transform: none; opacity: 0; }
 }
 /* upright screens (a phone): a column as wide as the screen allows */
 @media (max-aspect-ratio: 1/1) {
