@@ -179,7 +179,7 @@ const Loader = (() => {
       { duration: 700, delay: i * 180, easing: 'ease-out' }));
   }
   /** the door swings in, slowly (--swing in index.html), and stands open a moment for the room to be seen (resolves then) */
-  const SWING = 1200, HOLD = 1100;
+  const SWING = 1800, HOLD = 1100;
   let swung = Promise.resolve();
   function openDoor() {
     if (!scene || !pic) return Promise.resolve();
