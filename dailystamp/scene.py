@@ -73,25 +73,17 @@ resting on the empty paper with no shadow:
 and at the far right, well apart, one small closed white envelope lying flat, seen from the front, with a tiny brick-red
 stamp in its corner.
 Nothing else in the picture."""),
-    # (the second drawing of the room: the first was seen from its middle, with a rug far off at the foot, so through
-    # the doorway its floor met the doorstep like a wall. This one is seen from the doorstep, the floor running in from
-    # under your feet; the first is kept in scene/_work/room.v1.raw.png)
-    "room": ("portrait, 1024x1536", ["_work/room.v1.raw.png", "cover.raw.png"], """The inside of the small post office whose
-front door is the SECOND attached picture, as you see it standing on the doorstep of that door, looking straight in.
-Keep everything in the room exactly as in the FIRST attached picture: the same glass-fronted wooden cabinet with its
-rows of stamps, the same faceless clerk (dark hair tied back, white shirt, dark brown apron) behind the same wooden
-counter sorting a letter, the small brass bell, the ink pad and the rubber stamp on it, the same round clock with no
-numerals, the same brick-red pendant lamp, the same plants, the same warm light. Change only where we stand:
-- we stand just outside the door, eyes at standing height: the eye level (horizon) is about 28% down from the top of
-  the picture, so we look slightly down onto the counter top and the floor
-- the floor is warm brown wooden floorboards running straight away from us, their joins converging to one point on
-  the eye level at 60% of the picture's width; the boards come right up to the bottom edge of the picture, where they
-  are closest and widest; NO rug, nothing lying on the near floor
-- the counter stands a few steps in: its top at about 42% down, its foot on the floor at about 66% down; the clerk and
-  the middle of the counter sit between 45% and 75% of the picture's width
-- the room fills the whole picture: no door frame, no doorway, no wall edges round the picture
-Composition: the picture will be shown cropped to a tall narrow doorway (its middle 60% of the width), and the left
-third of that is hidden by the open door, so nothing that matters is left of 40% of the width."""),
+    "room": ("portrait, 1024x1536", ["ref-room-5.png", "ref-room-1.png", "cover.raw.png"], """The inside of the small post
+office whose front door is the THIRD attached picture, seen at eye height straight through that open door.
+Redraw the FIRST attached picture almost exactly as it is: the same glass-fronted wooden cabinet with its rows of stamps,
+the same wooden counter with the small brass bell, the ink pad and the rubber stamp on it, the same round clock with no
+numerals, the same brick-red pendant lamp, the same plants, the same rug and floor. Add only this:
+- the clerk from the SECOND attached picture (faceless, dark hair tied back, white shirt, dark brown apron) stands
+  behind the counter in front of the cabinet, seen from the waist up (the counter hides the rest), both hands on the
+  counter sorting a letter
+Composition: the picture will be shown cropped to a tall narrow doorway whose left quarter is hidden by the open door,
+so the clerk and the middle of the counter sit between 45% and 75% of the picture's width, and everything that
+matters stays between 15% and 90% of its height."""),
 }
 STYLES = {"room": ROOM_STYLE}
 
@@ -121,70 +113,10 @@ SPOTS_RAW = {
 }
 
 
-# the room is cut to the doorway's shape, full height, placed so ROOM_X (the middle of the counter and the clerk, px of
-# the raw drawing) sits ROOM_AT across it: the open door hides about the doorway's left third
-ROOM_X = 512
-ROOM_AT = 0.5
+# the room is cut to the leaf's shape, full height, placed so ROOM_X (the middle of the counter and the clerk, px of the
+# raw drawing, measured by hand) sits 62% across it: the open door hides about the opening's left quarter
+ROOM_X = 500
 ROOM_W = 480                                               # a phone's doorway is ~222 device px wide, a desktop's ~195 css
-# Seen through the doorway, the room lies beyond the wall's thickness. The eye is where the page's door turns from
-# (web/index.html: the hinge line, EYE_Y down the leaf) at EYE_D leaf-widths off; the wall is WALL_D leaf-widths deep.
-# So the room shows a little smaller inside the opening, and round it you see the doorway's own sides in perspective:
-# its head above, the far jamb on the right (the near one is edge-on from the hinge line), the step's top below.
-EYE_Y, EYE_D, WALL_D = 0.28, 3.2, 0.33
-
-
-def doorway(room: Image.Image, cover: Image.Image) -> Image.Image:
-    """The picture that fills the opening when the door swings: the room, set back by the wall's depth, framed by the
-    doorway's head, far jamb and step, painted with the cover's own wall and step (shaded as they turn from the light)."""
-    lx, ly, lw, lh = SPOTS_RAW["leaf"]
-    W, H = ROOM_W, round(ROOM_W * lh / lw)
-    s = EYE_D / (EYE_D + WALL_D)                            # how much smaller the far side of the doorway looks
-    ey = EYE_Y * H
-    x1, y0, y1 = s * W, ey * (1 - s), ey + s * (H - ey)     # the far side's rectangle (x0 = 0: the eye is on the hinge line)
-    # the room, cut to the opening's shape round ROOM_X, then drawn into the far rectangle
-    w = round(room.height * lw / lh)
-    rx = int(min(max(0, ROOM_X - w * ROOM_AT), room.width - w))
-    inner = room.crop((rx, 0, rx + w, room.height)).resize((round(x1), round(y1 - y0)), Image.LANCZOS)
-    out = Image.new("RGB", (W, H))
-    out.paste(inner, (0, round(y0)))
-    a = np.asarray(out).astype(np.float32)
-    c = cover.convert("RGB")
-    def painted(box, colour_box=None):
-        """A surface in the cover's own paint: the colour of colour_box (or box), with the brush grain of box laid
-        over it, mirrored to fill the picture at the cover's scale (stretching it drew streaks)"""
-        p = np.asarray(c.crop(box)).astype(np.float32)
-        base = np.median(np.asarray(c.crop(colour_box or box)).reshape(-1, 3).astype(np.float32), 0)
-        g = p.mean(-1); g = g - ndimage.gaussian_filter(g, 6)            # the grain alone, round zero
-        k = W / lw                                                        # cover px -> doorway px
-        g = np.asarray(Image.fromarray(g.astype(np.float32), "F").resize((max(1, round(g.shape[1] * k)), max(1, round(g.shape[0] * k))), Image.BILINEAR))
-        reps = (H // g.shape[0] + 2, W // g.shape[1] + 2)
-        g = np.tile(np.block([[g, g[:, ::-1]], [g[::-1], g[::-1, ::-1]]]), (reps[0] // 2 + 1, reps[1] // 2 + 1))[:H, :W]
-        return base[None, None, :] + g[..., None] * grain
-    grain = 0.9
-    wall = painted((920, 400, 990, 540))                    # the stuccoed wall right of the door
-    grain = 0.45
-    step = painted((650, 318, 1000, 366), (lx + 10, ly + lh + 3, lx + lw - 10, ly + lh + 12))   # the step's colour, the lintel's stone grain
-    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
-    # which side of the doorway each pixel shows: above the far rectangle the head, right of it the far jamb, below it
-    # the step; in the two right-hand corners the lines from the opening's corners to the far rectangle's split them
-    k = (W - xx) / max(1.0, W - x1)                         # 1 at the far rectangle's side, 0 at the opening's edge
-    head = (yy < y0) & ((xx <= x1) | (yy < y0 * k))
-    sill = (yy > y1) & ((xx <= x1) | (yy > H - (H - y1) * k))
-    jamb = (xx > x1) & ~head & ~sill
-    warm = np.array([1.0, 0.93, 0.82], np.float32)
-    shade_j = (0.80 + 0.12 * (W - xx) / max(1, W - x1))[..., None] * warm   # the far jamb, lit a little more deeper in
-    a = np.where(jamb[..., None], wall * np.clip(shade_j, 0, 1), a)
-    a = np.where(head[..., None], wall * 0.70 * warm, a)
-    a = np.where(sill[..., None], step * 0.96, a)
-    # a soft shadow where the room meets the doorway's sides (the corners the light doesn't reach)
-    dist = np.minimum.reduce([np.where(xx <= x1, x1 - xx, 1e4), np.where(yy >= y0, yy - y0, 1e4), np.where(yy <= y1, y1 - yy, 1e4)])
-    inside = (xx <= x1) & (yy >= y0) & (yy <= y1)
-    ao = np.where(inside, 1 - 0.22 * np.exp(-dist / (0.03 * W)), 1)
-    a = a * ao[..., None]
-    # the step's inner edge, a thin dark line where the floor goes in under the doorway
-    edge = sill & (yy < y1 + 2.2)
-    a[edge] *= 0.78
-    return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
 
 
 def raw_path(key: str) -> str:
@@ -354,12 +286,16 @@ def rebuild() -> None:
         entry["catv"] = int(os.path.getmtime(raw_path("cat")))
         print("pieces", [(f["key"], f["w"], f["h"]) for f in files])
     if os.path.exists(raw_path("room")):
-        room = doorway(Image.open(raw_path("room")).convert("RGB"), Image.open(raw_path("cover")))
+        raw = Image.open(raw_path("room")).convert("RGB")
+        dw, dh = SPOTS_RAW["leaf"][2:]
+        w = round(raw.height * dw / dh)
+        x0 = int(min(max(0, ROOM_X - w * 0.62), raw.width - w))
+        room = raw.crop((x0, 0, x0 + w, raw.height)).resize((ROOM_W, round(ROOM_W * raw.height / w)), Image.LANCZOS)
         rp = os.path.join(SCENE_DIR, "room.webp")
         room.save(rp, quality=90, method=6)
         entry["room"] = {"file": "scene/room.webp", "w": room.width, "h": room.height}
         entry["roomv"] = int(os.path.getmtime(rp))
-        print(f"room {room.size}, set in its doorway")
+        print(f"room {room.size} from x {x0}..{x0 + w}")
     with open(os.path.join(SCENE_DIR, "index.json"), "w", encoding="utf-8") as fh:
         json.dump(entry, fh, ensure_ascii=False, indent=2)
 
