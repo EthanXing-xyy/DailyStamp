@@ -143,11 +143,6 @@
 .rt-portrait { margin-top: 6px; background: none; border: 0; padding: 8px; color: inherit; font-family: "DS LoadPhrase", serif; font-size: 13px;
   letter-spacing: .12em; text-decoration: underline; text-underline-offset: 4px; opacity: .7; cursor: pointer; }
 */
-/* letters sent today, under the status line */
-.ld-sent { margin: 10px 0 0; font-family: "DS LoadPhrase", serif; font-size: max(12px, min(1.7vh, 14px)); letter-spacing: .16em; padding-left: .16em;
-  opacity: 0; transition: opacity .5s ease; }
-.ld-sent.on { opacity: .62; }
-.ld-sent b { font-family: "DS LoadCaps", sans-serif; font-weight: normal; margin: 0 .2em; }
 @media (prefers-reduced-motion: reduce) {
   #loader.ready .ld-mark, #loader.ready .ld-go { animation: ld-fade .4s ease both; }
   .ld-door { transition: opacity .4s ease; }
@@ -183,7 +178,6 @@
       <div class="ld-row" role="progressbar" aria-label="正在印制每日一枚" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><p class="ld-say" aria-live="polite">上墨</p><span class="ld-count">0%</span></div>
       <button class="ld-go" type="button" disabled><span><b>进入邮局</b><i aria-hidden="true">→</i></span><small>TAP TO ENTER</small></button>
     </div>
-    <p class="ld-sent" aria-live="polite"></p>
   </div>
 </div>
 <!-- 转屏卡片：手机暂时只竖着看，先注释掉留着
