@@ -5,10 +5,12 @@
 // old pillar box stands beside it and a calico cat sits by the wheel (scene/, drawn once by codex: dailystamp/scene.py).
 // While the press works a letter flies from the basket into the box every few seconds by itself (a tap sends one at
 // once), and the bell rings; the cat sits still, part of the picture. The hanging sign shows
-// how far the loading has got. When all is in the sign reads 营业中, warm light shows at the door, a postmark (date and
-// solar term) strikes the title once and the way in (进入邮局 →) fades up where the status was; the app opens only on a
-// tap of the button or the door, which swings open onto the lit post office (the stamp cabinet, the counter, the clerk)
-// before the iris closes on it. Everything moves softly and once:
+// how far the loading has got. When all is in the sign reads 营业中, the lamps come on inside (the door's glass glows
+// warm), a postmark (date and solar term) strikes the title once and a line at the foot fades up in the subtitle's type
+// (轻触进门 · TAP TO ENTER). The app opens only on a tap, anywhere but the toys, and the door swings open onto the lit
+// post office (the stamp cabinet, the counter, the clerk) before the iris closes on it. The user turned down a red
+// button (a web widget on a painting), a pencilled note with an arrow at the door (a tutorial's gesture), and a line
+// in another typeface or a 推 plate on the door (out of place, 土). Everything moves softly and once:
 // the user found a screen of bobbing, springing parts cheap, rows of stamps dull, and two drawn post offices (cut paper
 // with a street lamp; a painting replayed stroke by stroke) ugly, before choosing this picture themselves.
 // Every string shown here lives in this file or index.html: `python dailystamp.py fonts` cuts the loader's tiny fonts from them.
@@ -87,7 +89,8 @@ const Loader = (() => {
     if (!scene || !pic) return;
     // what's drawn must fit whole; the picture's own margins are empty paper and may run past the screen's edges
     const W = innerWidth, H = innerHeight, ar = pic.w / pic.h, [cx, cy, cw, ch] = pic.spots.content;
-    const top = main ? main.getBoundingClientRect().bottom + Math.max(16, H * 0.02) : H * 0.4, foot = Math.max(H * 0.03, 12);
+    const top = main ? main.getBoundingClientRect().bottom + Math.max(16, H * 0.02) : H * 0.4;
+    const foot = Math.max(H * 0.03, 12, go ? H - go.getBoundingClientRect().top + Math.max(8, H * 0.012) : 0);   // clear of the way in
     const room = Math.max(H * 0.25, H - top - foot);
     const w = Math.min(W * 0.94 / cw, room / ch * ar, 1080 / cw), h = w / ar;
     // centred on what's drawn, a little below the middle of the room left under the type
@@ -174,7 +177,12 @@ const Loader = (() => {
       const door = $('.ld-door'), [dx, dy, dw, dh] = sp.door;
       Object.assign(door.style, { backgroundImage: `url("${e.cover + v}")`, backgroundSize: `${100 / dw}% ${100 / dh}%`,
         backgroundPosition: `${dx / (1 - dw) * 100}% ${dy / (1 - dh) * 100}%` });
-      put($('.ld-crack'), [dx + dw - 0.004, dy + dh * 0.03, 0.005, dh * 0.94]);
+      if (e.glass && sp.glass) {                          // the glass, lit from inside when the post office opens (in the door, so it turns with it)
+        const [gx, gy, gw, gh] = sp.glass, lamp = $('.ld-lamp'), mask = `url("${e.glass.file}?v=${e.glass.v}")`;
+        put(lamp, [(gx - dx) / dw, (gy - dy) / dh, gw / dw, gh / dh]);
+        lamp.style.webkitMaskImage = mask; lamp.style.maskImage = mask;
+        put($('.ld-bloom'), grow(sp.glass, 0.9));
+      }
       put($('.ld-glow'), [dx - dw * 0.7, dy + dh * 0.82, dw * 2.4, dh * 0.34]);
       // the cat: its first pose only, sitting still on its spot as part of the picture (the user asked it not to move)
       const cat = $('.ld-cat'), [cx, cy, ch] = sp.cat;
@@ -243,6 +251,8 @@ const Loader = (() => {
     root.classList.add('ready'); root.setAttribute('aria-busy', 'false');
     go.disabled = false;
     setTimeout(() => { try { go.focus({ preventScroll: true }); } catch {} }, 1600);
+    // the whole screen takes the tap, but for the toys in the picture: the bell, the basket and the pillar box
+    root.addEventListener('click', e => { if (!go.disabled && !e.target.closest('.ld-hit-bell, .ld-hit-basket, .ld-hit-box')) go.click(); });
     return new Promise(res => go.addEventListener('click', async () => {
       go.disabled = true; go.classList.add('down');
       kit(k => k.thump(0.7));

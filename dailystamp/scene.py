@@ -106,6 +106,7 @@ SPOTS_RAW = {
     "basket": [515, 560, 150, 152],
     "bell": [482, 590],
     "cat": [128, 926, 178],
+    "glass": [726, 425, 136, 194],                         # the door's four panes, with a little frame round them
 }
 
 
@@ -189,6 +190,23 @@ def spots(box, content) -> dict:
     return out
 
 
+def glass(raw: Image.Image) -> Image.Image:
+    """The door's glass as a mask (white, its alpha the glass): the dark grey panes in the "glass" box, their painted
+    edges kept. When the post office opens, the page lights them from inside through it; the paint's own light and
+    dark strokes go into the alpha, so the lit glass keeps the brush."""
+    x, y, w, h = SPOTS_RAW["glass"]
+    a = np.asarray(raw.convert("RGB"))[y:y + h, x:x + w].astype(np.float32)
+    mx, mn = a.max(-1), a.min(-1)
+    pane = (mx < 125) & (mx - mn < 45)                     # dark and grey: the red wood between the panes is neither
+    pane = ndimage.binary_fill_holes(ndimage.binary_closing(pane, iterations=2))
+    pane = ndimage.binary_opening(pane, iterations=1)
+    lum = a.mean(-1)
+    tex = np.clip(0.94 + (lum - lum[pane].mean()) / 80, 0.8, 1)
+    alpha = np.clip(ndimage.gaussian_filter(pane.astype(np.float32), 0.7), 0, 1) * tex
+    rgba = np.dstack([np.full((h, w, 3), 255, np.uint8), (alpha * 255).round().astype(np.uint8)])
+    return Image.fromarray(rgba, "RGBA")
+
+
 def sprites(raw: Image.Image, paper: np.ndarray):
     """The cat sheet cut into its pieces, left to right, each an RGBA picture on nothing. The cat's white fur is close to
     the paper, so the outline is found with a low threshold and then closed and filled: every piece is solid inside."""
@@ -221,6 +239,9 @@ def rebuild() -> None:
         pic.save(os.path.join(SCENE_DIR, "cover.webp"), quality=90, method=6)
         entry = {"cover": "scene/cover.webp", "w": pic.width, "h": pic.height, "paper": "#%02X%02X%02X" % tuple(int(v) for v in paper),
                  "spots": spots(box, content), "v": int(os.path.getmtime(raw_path("cover")))}
+        gp = os.path.join(SCENE_DIR, "glass.webp")
+        glass(Image.open(raw_path("cover"))).save(gp, quality=92, method=6)
+        entry["glass"] = {"file": "scene/glass.webp", "v": int(os.path.getmtime(gp))}   # its own version: the cut may change
         print(f"cover {pic.size}, paper {entry['paper']}")
     if os.path.exists(raw_path("cat")):
         raw = Image.open(raw_path("cat"))
