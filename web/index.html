@@ -83,14 +83,19 @@
   transform: perspective(var(--dp)) translateZ(var(--dtn)) rotateY(var(--a)) translateZ(var(--dt)) rotateY(90deg);
   background-color: #8F4E37; }
 #loader.opening .ld-door { --a: 72deg; }
-/* open for business: the lamps come on inside. The door's glass (scene/glass.webp, cut from the picture with its brush
-   strokes) glows warm from within, and turns with the door; a soft halo round it, a little light on the paper at its
-   foot. (A lit line along the door's edge read as its frame glowing: the door is painted shut) */
-.ld-door-face > .ld-lamp { background: radial-gradient(ellipse 80% 90% at 50% 70%, #FDE4A6, #F2C171 45%, #D88D46);
-  -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
-  opacity: 0; transition: opacity 1.6s ease; }
+/* the lamps inside come up as the loading gets on: the door's glass (scene/glass.webp, cut from the picture with its
+   brush strokes) glows warm from within, and turns with the door; a soft halo round it, a little light on the paper
+   at its foot. How lit is --lit (0..1), set by loader.js with --lit-t, a linear fade no quicker than a lamp warming
+   up. (A lit line along the door's edge read as its frame glowing: the door is painted shut) */
+.ld-door-face > .ld-lamp, .ld-door-face > .ld-ember {
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; transition: opacity var(--lit-t, 0s) linear; }
+.ld-door-face > .ld-lamp { background: radial-gradient(ellipse 80% 90% at 50% 70%, #FDE4A6, #F2C171 45%, #D88D46); opacity: var(--lit, 0); }
+/* under it, a dim lamp's deep amber, up well ahead of it: half lit, the dark glass and the lamp's yellow alone mixed to
+   a dirty olive */
+.ld-door-face > .ld-ember { background: radial-gradient(ellipse 80% 90% at 50% 70%, #A85A2A, #7C3C1E 55%, #52261A);
+  opacity: min(.85, calc(var(--lit, 0) * 2.5)); }
 .ld-bloom { border-radius: 50%; background: radial-gradient(closest-side, rgba(250,214,150,.42), rgba(250,214,150,0));
-  opacity: 0; transition: opacity 1.6s ease; pointer-events: none; }
+  opacity: var(--lit, 0); transition: opacity var(--lit-t, 0s) linear; pointer-events: none; }
 /* the door open, the room's light falls out over the step and onto the ground */
 .ld-spill { border-radius: 50%; background: radial-gradient(closest-side, rgba(246,196,120,.5), rgba(246,196,120,0)); opacity: 0;
   transition: opacity .75s ease; pointer-events: none; }
@@ -98,14 +103,12 @@
 /* the bicycle's front wheel, which leans over the door's hinge side: it stays where it is as the door swings (under
    the glow on the ground, as the rest of the wheel in the picture is) */
 .ld-wheel { background: no-repeat 0 0 / 100% 100%; pointer-events: none; }
-.ld-glow { border-radius: 50%; background: radial-gradient(closest-side, rgba(233,169,92,.42), rgba(233,169,92,0)); opacity: 0; transition: opacity 1.4s ease; pointer-events: none; }
-/* in turn: the postmark strikes, then the lamps come up slowly, then the line at the foot */
-#loader.ready .ld-lamp { opacity: 1; transition-delay: .45s; }
-#loader.ready .ld-bloom, #loader.ready .ld-glow { opacity: 1; transition-delay: .45s; }
-#loader.opening .ld-bloom { opacity: 0; transition-duration: .5s; }
+.ld-glow { border-radius: 50%; background: radial-gradient(closest-side, rgba(233,169,92,.42), rgba(233,169,92,0));
+  opacity: var(--lit, 0); transition: opacity var(--lit-t, 0s) linear; pointer-events: none; }
+#loader.opening .ld-bloom { opacity: 0; transition: opacity .5s ease; }
 /* the door swings: the light on it changes, its glass clears */
 #loader.opening .ld-relit, #loader.opening .ld-film { opacity: 1; }
-#loader.opening .ld-pane { opacity: 0; }
+#loader.opening .ld-pane, #loader.opening .ld-ember { opacity: 0; transition: opacity var(--swing); }
 #loader.opening .ld-lamp { opacity: .16; transition: opacity var(--swing); }
 /* the hanging sign: how far along, then 营业中, laid onto the board by loader.js */
 .ld-sign { left: 0; top: 0; transform-origin: 0 0; display: grid; place-items: center; color: #3A2C24; mix-blend-mode: multiply; pointer-events: none; }
@@ -201,7 +204,7 @@
 <div id="loader" aria-busy="true">
   <div class="ld-scene">
     <img class="ld-cover" alt="">
-    <i class="ld-room"></i><i class="ld-door"><i class="ld-door-face"><i class="ld-pane"></i><i class="ld-lamp"></i><i class="ld-relit"></i><i class="ld-film"></i></i><i class="ld-door-edge"></i></i><i class="ld-wheel"></i><i class="ld-bloom"></i><i class="ld-glow"></i><i class="ld-spill"></i>
+    <i class="ld-room"></i><i class="ld-door"><i class="ld-door-face"><i class="ld-pane"></i><i class="ld-ember"></i><i class="ld-lamp"></i><i class="ld-relit"></i><i class="ld-film"></i></i><i class="ld-door-edge"></i></i><i class="ld-wheel"></i><i class="ld-bloom"></i><i class="ld-glow"></i><i class="ld-spill"></i>
     <b class="ld-sign" aria-hidden="true"><span class="ld-pct">0%</span><span class="ld-open">营业中</span></b>
     <div class="ld-cat"></div>
     <div class="ld-mail"><img class="ld-letter" alt=""></div><i class="ld-ring"></i><i class="ld-ring"></i>

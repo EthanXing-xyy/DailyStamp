@@ -5,9 +5,9 @@
 // old pillar box stands beside it and a calico cat sits by the wheel (scene/, drawn once by codex: dailystamp/scene.py).
 // While the press works a letter flies from the basket into the box every few seconds by itself (a tap sends one at
 // once), and the bell rings; the cat sits still, part of the picture. The hanging sign shows
-// how far the loading has got. When all is in the sign reads 营业中, the lamps come on inside (the door's glass glows
-// warm), a postmark (date and solar term) strikes the title once and a line at the foot fades up in the subtitle's type
-// (轻触进门 · TAP TO ENTER). The app opens only on a tap, anywhere but the toys, and the door swings open onto the lit
+// how far the loading has got, and the lamps inside come up with it (the door's glass glows warm; never quicker than a
+// lamp warming up). When all is in the sign reads 营业中, a postmark (date and solar term) strikes the title once and
+// a line at the foot fades up in the subtitle's type (轻触进门 · TAP TO ENTER). The app opens only on a tap, anywhere but the toys, and the door swings open onto the lit
 // post office (the stamp cabinet, the counter, the clerk) before the iris closes on it. The user turned down a red
 // button (a web widget on a painting), a pencilled note with an arrow at the door (a tutorial's gesture), and a line
 // in another typeface or a 推 plate on the door (out of place, 土). Everything moves softly and once:
@@ -49,6 +49,24 @@ const Loader = (() => {
     if (count) count.textContent = `${Math.round(p * 100)}%`;
     if (pct) pct.textContent = `${Math.round(p * 100)}%`;
     if (bar) bar.setAttribute('aria-valuenow', String(Math.round(p * 100)));
+    light(p);
+  }
+  // the lamps inside come up with the loading, as far as it has got, but never quicker than LIT_S from dark to full (a
+  // quick load would snap them on): each step is a linear fade on the compositor, from wherever the last one has got to
+  // (index.html: --lit, --lit-t). The user asked for it: the light keeps pace with the bar, up to a lamp's own speed.
+  // (at most once a frame, from the light as it is drawn right then: while the page is busy loading, a fade may start
+  // late, and one reckoned from where it should have got to would be too quick)
+  const LIT_S = 1.6;
+  let litTo = 0, litWant = 0, litAsk = 0;
+  function light(p) {
+    litWant = Math.round(p * 100) / 100;
+    if (litWant <= litTo || litAsk) return;
+    litAsk = requestAnimationFrame(() => {
+      litAsk = 0;
+      const glow = $('.ld-glow'), now = glow ? +getComputedStyle(glow).opacity : litTo;
+      litTo = litWant;
+      root.style.setProperty('--lit-t', Math.round((litTo - now) * LIT_S * 1000) + 'ms'); root.style.setProperty('--lit', String(litTo));
+    });
   }
   function talk(text) {
     if (!status || text === say) return;
@@ -201,11 +219,13 @@ const Loader = (() => {
         edge.style.backgroundSize = `100% 100%, ${100 / t}% 100%`;
         edge.style.backgroundPosition = `0 0, ${0.13 / (1 - t) * 100}% 0`;
         if (e.glass && sp.glass) {
-          // the glass: as painted (dark) while loading; lit from inside when the post office opens; and as the door
-          // swings, clear: the room shows through the holes, under a thin film of the glass's own reflections
+          // the glass: as painted (dark) at first; lit from inside as the loading gets on (a dim amber, then the lamp);
+          // and as the door swings, clear: the room shows through the holes, under a thin film of its own reflections
           const [gx, gy, gw, gh] = sp.glass, mask = `url("${e.glass.file}?v=${e.glass.v}")`, lamp = $('.ld-lamp');
           const at = [(gx - dx + pad * dw) / (dw * (1 + pad)), (gy - dy) / (dh * (1 + foot)), gw / (dw * (1 + pad)), gh / (dh * (1 + foot))];
-          put($('.ld-pane'), at); put(lamp, at); put($('.ld-film'), at);
+          const ember = $('.ld-ember');
+          put($('.ld-pane'), at); put(ember, at); put(lamp, at); put($('.ld-film'), at);
+          ember.style.webkitMaskImage = mask; ember.style.maskImage = mask;
           bg($('.ld-pane'), L.panes + lv);
           if (L.film) bg($('.ld-film'), L.film + lv);
           lamp.style.webkitMaskImage = mask; lamp.style.maskImage = mask;
