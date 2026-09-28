@@ -67,7 +67,7 @@
 /* (at rest the same kind of transform as open, so every browser turns it on the compositor: function by function) */
 /* (no preserve-3d: WebKit turned a 3D-nested slab the wrong way. The face and the edge are flat pieces, each carrying
    the whole placement, the same eye and the same hinge, so they turn as one) */
-.ld-door { --a: 0deg; --dt: 4px; --dtn: -4px; --dp: 700px; --swing: .75s cubic-bezier(.45,0,.2,1); }
+.ld-door { --a: 0deg; --dt: 4px; --dtn: -4px; --dp: 700px; --swing: 1.2s cubic-bezier(.45,0,.2,1); }
 /* (the hinge is --dt behind the face, but the eye's distance is taken from the face: shut, the face is in the
    picture's plane and exactly the size it is painted. Taken from the hinge it stood 2% larger, over its own frame) */
 .ld-door-face, .ld-door-edge { position: absolute; top: 0; height: 100%; transform-origin: 0 50%;
@@ -98,14 +98,14 @@
   opacity: var(--lit, 0); transition: opacity var(--lit-t, 0s) linear; pointer-events: none; }
 /* the door open, the room's light falls out over the step and onto the ground */
 .ld-spill { border-radius: 50%; background: radial-gradient(closest-side, rgba(246,196,120,.5), rgba(246,196,120,0)); opacity: 0;
-  transition: opacity .75s ease; pointer-events: none; }
+  transition: opacity 1.2s ease; pointer-events: none; }
 #loader.opening .ld-spill { opacity: 1; }
 /* the bicycle's front wheel, which leans over the door's hinge side: it stays where it is as the door swings (under
    the glow on the ground, as the rest of the wheel in the picture is) */
 .ld-wheel { background: no-repeat 0 0 / 100% 100%; pointer-events: none; }
 .ld-glow { border-radius: 50%; background: radial-gradient(closest-side, rgba(233,169,92,.42), rgba(233,169,92,0));
   opacity: var(--lit, 0); transition: opacity var(--lit-t, 0s) linear; pointer-events: none; }
-#loader.opening .ld-bloom { opacity: 0; transition: opacity .5s ease; }
+#loader.opening .ld-bloom { opacity: 0; transition: opacity .8s ease; }
 /* the door swings: the light on it changes, its glass clears */
 #loader.opening .ld-relit, #loader.opening .ld-film { opacity: 1; }
 #loader.opening .ld-pane, #loader.opening .ld-ember { opacity: 0; transition: opacity var(--swing); }
