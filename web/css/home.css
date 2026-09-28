@@ -10,6 +10,7 @@ body.daily-home #home { display: block; position: fixed; inset: 0; z-index: 20; 
 .bd-set { position: absolute; opacity: 0; transition: opacity 1.2s ease; will-change: transform; }
 .bd-set.on { opacity: 1; }
 .bd-tone { position: absolute; left: 0; top: 0; will-change: opacity; }
+.bd-tone canvas { display: block; width: 100%; height: 100%; }
 .bd-desk.up, .bd-tone.up { opacity: 0; }
 .home-bg::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(120% 90% at 30% 15%, rgba(255,255,255,.10), rgba(0,0,0,.14)); }
@@ -18,7 +19,8 @@ body.daily-home #home { display: block; position: fixed; inset: 0; z-index: 20; 
 .card { position: absolute; left: 50%; top: var(--cy); width: var(--cw); height: var(--ch);
   margin: calc(var(--ch) / -2) 0 0 calc(var(--cw) / -2); will-change: transform, opacity; cursor: pointer;
   perspective: 1000px; -webkit-tap-highlight-color: transparent; }
-.card.far { visibility: hidden; }
+/* out of sight: out of the render tree too, so the compositor's work doesn't grow with the number of functions */
+.card.far { display: none; }
 /* the stamp floats on the compositor (a looping animation); a press tips it with rotate/scale on top of that */
 .card-in { position: relative; width: 100%; height: 100%; will-change: transform; }
 /* the soft shadow stays on the desk while the stamp floats above it; only the contact shadow rides with the paper.
