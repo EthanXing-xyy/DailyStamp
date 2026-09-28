@@ -10,6 +10,7 @@ the local codex CLI; the app itself never calls a model.
   python dailystamp.py leaflets [词…]             # write missing leaflets (stamp backs)
   python dailystamp.py terms | posters | backdrops [keys…]   # the fixed codex art sets
   python dailystamp.py scene [cover|cat|room] [--rebuild]   # the loading screen's picture
+  python dailystamp.py kraft | agekits            # the kraft home: paper, pictures, ink; the aged stamps' kits
   python dailystamp.py masks [--force]            # pre-cut the emblems' ink masks for the web app
   python dailystamp.py fonts                      # subset the web fonts after any text changes
 """
@@ -85,6 +86,8 @@ COMMANDS = {
     "scene": ("draw the loading screen's cover, cat and room again (all, or the given ones), then cut them", [
         (["--rebuild"], {"action": "store_true", "help": "only cut them again from the raw drawings"}), KEYS],
         lambda a: mod("scene").main(a)),
+    "kraft": ("cut the kraft home's paper, little pictures and type ink (kraft/raw -> kraft/)", [], lambda a: mod("kraft").build()),
+    "agekits": ("bake the kits that age the home's stamps (kraft/plates -> kraft/kits/)", [], lambda a: mod("agekit").build()),
     "masks": ("pre-cut the emblems' and term icons' ink masks and outlines for the web app (stale or missing ones)", [
         (["--force"], {"action": "store_true", "help": "cut them all again"})], lambda a: mod("cutmasks").build(a.force)),
     "fonts": ("subset the Chinese web fonts to WOFF2 (web/fonts/sub/), after the text or leaflets change", [],

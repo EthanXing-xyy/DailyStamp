@@ -22,7 +22,7 @@ BOOT: str | None = None
 
 class Handler(SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):  # quieter
-        if "/api/" in (args[0] if args else ""):
+        if "/api/" in str(args[0] if args else ""):         # (an error's first arg is a status, not the request line)
             super().log_message(fmt, *args)
 
     # ---- routing
@@ -37,6 +37,8 @@ class Handler(SimpleHTTPRequestHandler):
             return os.path.join(ROOT, "posters", path[len("/posters/"):])
         if path.startswith("/backdrops/"):
             return os.path.join(ROOT, "backdrops", path[len("/backdrops/"):])
+        if path.startswith("/kraft/"):
+            return os.path.join(ROOT, "kraft", path[len("/kraft/"):])
         if path.startswith("/scene/"):
             return os.path.join(ROOT, "scene", path[len("/scene/"):])
         if path.startswith("/exports/"):
@@ -70,7 +72,7 @@ class Handler(SimpleHTTPRequestHandler):
         # fonts (~23 MB) and vendored libs never change, and emblem/term images carry a ?v= stamp: let the browser keep
         # them, so the landing page doesn't re-download everything. Code and data stay uncached while developing.
         p = urllib.parse.urlsplit(self.path).path
-        keep = (p.startswith(("/fonts/", "/vendor/")) and not p.endswith(".css")) or (p.startswith(("/emblems/", "/terms/", "/posters/", "/backdrops/", "/scene/")) and p.endswith(".png") and "v=" in urllib.parse.urlsplit(self.path).query)
+        keep = (p.startswith(("/fonts/", "/vendor/")) and not p.endswith(".css")) or (p.startswith(("/emblems/", "/terms/", "/posters/", "/backdrops/", "/scene/", "/kraft/")) and p.endswith((".png", ".webp")) and "v=" in urllib.parse.urlsplit(self.path).query)
         self.send_header("Cache-Control", "public, max-age=31536000, immutable" if keep else "no-store")
         super().end_headers()
 
