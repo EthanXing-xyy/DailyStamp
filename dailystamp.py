@@ -9,7 +9,7 @@ the local codex CLI; the app itself never calls a model.
   python dailystamp.py emblem "摆烂" --idea "…"   # one emblem into the library
   python dailystamp.py leaflets [词…]             # write missing leaflets (stamp backs)
   python dailystamp.py terms | posters | backdrops [keys…]   # the fixed codex art sets
-  python dailystamp.py scene [cover|cat] [--rebuild]   # the loading screen's picture
+  python dailystamp.py scene [cover|cat|room] [--rebuild]   # the loading screen's picture
   python dailystamp.py masks [--force]            # pre-cut the emblems' ink masks for the web app
   python dailystamp.py fonts                      # subset the web fonts after any text changes
 """
@@ -82,7 +82,7 @@ COMMANDS = {
                 lambda a: mod("posters").SET.generate_missing(a.keys or None)),
     "backdrops": ("cut the home screen's big Matisse paper shapes (missing ones, or the given keys)", [
         (["--rebuild"], {"action": "store_true", "help": "only rebuild the masks from the raw drawings"}), KEYS], cmd_backdrops),
-    "scene": ("draw the loading screen's cover and cat again (both, or the given ones), then cut them", [
+    "scene": ("draw the loading screen's cover, cat and room again (all, or the given ones), then cut them", [
         (["--rebuild"], {"action": "store_true", "help": "only cut them again from the raw drawings"}), KEYS],
         lambda a: mod("scene").main(a)),
     "masks": ("pre-cut the emblems' and term icons' ink masks and outlines for the web app (stale or missing ones)", [
