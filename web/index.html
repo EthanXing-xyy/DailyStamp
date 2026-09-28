@@ -75,7 +75,10 @@
 .ld-cat { pointer-events: none; }
 .ld-cat img { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); }
 /* a letter on its way to the box, and the bell's ring */
-.ld-letter { pointer-events: none; opacity: 0; will-change: transform; }
+/* (the letter flies inside a still frame whose foot is the slot line, so going down it vanishes there: nothing clipped
+   frame by frame, which left a page open all night slowly growing) */
+.ld-mail { overflow: hidden; pointer-events: none; }
+.ld-letter { position: absolute; pointer-events: none; opacity: 0; will-change: transform; }
 .ld-ring { border: 1.5px solid var(--ink); border-color: transparent var(--ink) transparent transparent; border-radius: 50%; opacity: 0; pointer-events: none; }
 /* what can be tapped: a little more than the thing itself, and nothing drawn */
 /* (the studio's global button:hover would paint them dark: a tap leaves a phone "hovering") */
@@ -162,7 +165,7 @@
     <i class="ld-room"></i><i class="ld-door"></i><i class="ld-crack"></i><i class="ld-glow"></i>
     <b class="ld-sign" aria-hidden="true"><span class="ld-pct">0%</span><span class="ld-open">营业中</span></b>
     <div class="ld-cat"></div>
-    <img class="ld-letter" alt=""><i class="ld-ring"></i><i class="ld-ring"></i>
+    <div class="ld-mail"><img class="ld-letter" alt=""></div><i class="ld-ring"></i><i class="ld-ring"></i>
     <button class="ld-hit ld-hit-bell" type="button" tabindex="-1" aria-label="按车铃"></button>
     <button class="ld-hit ld-hit-basket" type="button" tabindex="-1" aria-label="寄一封信"></button>
     <button class="ld-hit ld-hit-box" type="button" tabindex="-1" aria-label="寄一封信"></button>
