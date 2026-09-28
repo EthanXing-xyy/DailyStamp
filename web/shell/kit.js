@@ -79,8 +79,12 @@ const Kit = (() => {
 
   // ---- sound: band-passed noise for paper, a low knock for a rubber stamp; phones also buzz
   let actx = null, noise = null;
+  // before the first tap the context stays suspended and its clock stands at 0, so a sound scheduled then never
+  // ends and its nodes are never freed (a page left alone all night grew by gigabytes): sound only once it can play
+  const tapped = () => !navigator.userActivation || navigator.userActivation.isActive;
+  const live = () => actx && noise && (actx.state === 'running' || tapped());
   function audio() {
-    if (actx) { if (actx.state === 'suspended') actx.resume(); return actx; }
+    if (actx) { if (actx.state !== 'running' && actx.state !== 'closed' && tapped()) actx.resume().catch(() => {}); return actx; }
     try {
       actx = new (window.AudioContext || window.webkitAudioContext)();
       noise = actx.createBuffer(1, Math.round(actx.sampleRate * 0.6), actx.sampleRate);
@@ -90,7 +94,7 @@ const Kit = (() => {
   }
   const buzz = ms => { if (navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { /* not allowed yet */ } };
   function burst({ f = 2400, q = 1, dur = 0.02, vol = 0.05, attack = 0.002 } = {}) {
-    if (!actx || !noise) return;
+    if (!live()) return;
     const a = actx, t = a.currentTime, src = a.createBufferSource(), bp = a.createBiquadFilter(), gn = a.createGain();
     src.buffer = noise; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
     gn.gain.setValueAtTime(0.0001, t); gn.gain.linearRampToValueAtTime(vol, t + attack); gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
@@ -104,7 +108,7 @@ const Kit = (() => {
   /** a rubber stamp hitting paper: a dull knock, heavier with more weight (0..1); still: no buzz on a phone */
   function thump(weight = 0.5, still = false) {
     if (!still) buzz(Math.round(12 + weight * 22));
-    if (!actx) return;
+    if (!live()) return;
     const a = actx, t = a.currentTime, o = a.createOscillator(), g = a.createGain();
     o.type = 'sine'; o.frequency.setValueAtTime(150 + Math.random() * 30, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.09);
     g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.16 + weight * 0.14, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
@@ -116,7 +120,7 @@ const Kit = (() => {
   /** a bicycle bell: two strikes of a small bell (a few inharmonic partials, each dying away) */
   function bell() {
     buzz(6);
-    if (!actx) return;
+    if (!live()) return;
     const a = actx;
     for (const [at, vol] of [[0, 0.09], [0.16, 0.07]]) {
       const t = a.currentTime + at;
