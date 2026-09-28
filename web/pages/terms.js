@@ -150,9 +150,7 @@
       if (i === cur && my === printing && deps.album) deps.album.add({ id: `term:${year}:${Terms.LIST[i][0]}`, kind: 'term', date: today, st: s, meta: { term: true } }, { keep: true });
     }
 
-    let last = 0;
-    const loop = t => { requestAnimationFrame(loop); if (!Kit.visible(root)) { last = 0; return; } const dt = last ? Math.min(50, t - last) : 16; last = t; frame(dt, t); };
-    requestAnimationFrame(loop);
+    Kit.loop(root, frame);
     addEventListener('resize', () => { layout(); });
     const ready = Terms.load().then(() => {
       layout();

@@ -3,26 +3,34 @@
 body.daily-home { overflow: hidden; }
 body.daily-home #home { display: block; position: fixed; inset: 0; z-index: 20; background: #D9D5CC; color: #1d1d1f;
   outline: none; user-select: none; -webkit-user-select: none; }
-/* the desk takes the middle stamp's colour, muted; two hand-cut paper shapes lie on it tone on tone (home.js) */
-.home-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; background: var(--bd-desk, #D9D5CC); }
+/* the desk takes the middle stamp's colour, muted; two hand-cut paper shapes lie on it tone on tone (home.js). Each is
+   there twice, in two stamps' tones: the upper sheets fade over the lower ones as the wheel turns, so nothing repaints */
+.home-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; background: #D9D5CC; }
+.bd-desk { position: absolute; inset: 0; background: #D9D5CC; will-change: opacity; }
 .bd-set { position: absolute; opacity: 0; transition: opacity 1.2s ease; will-change: transform; }
 .bd-set.on { opacity: 1; }
-.bd-set i { position: absolute; inset: 0; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
-.bd-set .bd { background: var(--bd-shape, #cbc6bb); }
-.bd-set .bd-ghost { background: var(--bd-ghost, #d2cdc3); transform: translate(var(--gx, 6px), var(--gy, 5px)); }
+.bd-tone { position: absolute; left: 0; top: 0; will-change: opacity; }
+.bd-desk.up, .bd-tone.up { opacity: 0; }
 .home-bg::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(120% 90% at 30% 15%, rgba(255,255,255,.10), rgba(0,0,0,.14)); }
 .carousel { position: absolute; inset: 0; perspective: 1400px; touch-action: none; cursor: grab; overflow: hidden; }
 .carousel:active { cursor: grabbing; }
 .card { position: absolute; left: 50%; top: var(--cy); width: var(--cw); height: var(--ch);
   margin: calc(var(--ch) / -2) 0 0 calc(var(--cw) / -2); will-change: transform, opacity; cursor: pointer;
-  -webkit-tap-highlight-color: transparent; }
+  perspective: 1000px; -webkit-tap-highlight-color: transparent; }
+.card.far { visibility: hidden; }
+/* the stamp floats on the compositor (a looping animation); a press tips it with rotate/scale on top of that */
 .card-in { position: relative; width: 100%; height: 100%; will-change: transform; }
-/* the soft shadow stays on the desk while the stamp floats above it; only the contact shadow rides with the paper */
-.card-shadow { position: absolute; inset: 5% 6%; border-radius: 4%; background: rgba(40,30,20,.34); filter: blur(16px);
+/* the soft shadow stays on the desk while the stamp floats above it; only the contact shadow rides with the paper.
+   Both are bitmaps drawn once (home.js): a CSS blur here was redone for every stamp on every frame */
+.card-shadow { position: absolute; transform: translate(6px, 12px) scale(.95); opacity: .62;
   pointer-events: none; will-change: transform, opacity; }
-.card canvas { display: block; width: 100%; height: 100%; pointer-events: none;
-  filter: drop-shadow(1px 2px 1.5px rgba(0,0,0,.24)); }
+.card-contact { position: absolute; pointer-events: none; }
+.card-face { position: relative; display: block; width: 100%; height: 100%; pointer-events: none; }
+/* the studio's 3D stamp lies under the home: out of the compositor's way while the home covers it */
+body.daily-home:not(.flip-wait) #flip { visibility: hidden; }
+.home-fps { position: fixed; left: 12px; bottom: 12px; z-index: 60; margin: 0; pointer-events: none;
+  font-family: "DS CapsMed", sans-serif; font-size: 10px; letter-spacing: .2em; color: #1d1d1f; opacity: .7; }
 .home-top { position: absolute; left: 20px; right: 20px; top: 18px; display: flex; justify-content: space-between; gap: 12px;
   font-family: "DS CapsMed", "DS CjkMed", sans-serif; font-size: 10px; letter-spacing: .28em; pointer-events: none; }
 .home-kicker { position: absolute; left: 0; right: 0; top: calc(var(--cy) - var(--ch) / 2 - min(38px, 7vh)); margin: 0; height: 16px;
