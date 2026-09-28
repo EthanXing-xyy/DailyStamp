@@ -8,7 +8,8 @@
 // how far the loading has got, and the lamps inside come up with it (the door's glass glows warm; never quicker than a
 // lamp warming up). When all is in the sign reads 营业中, a postmark (date and solar term) strikes the title once and
 // a line at the foot fades up in the subtitle's type (轻触进门 · TAP TO ENTER). The app opens only on a tap, anywhere but the toys, and the door swings open onto the lit
-// post office (the stamp cabinet, the counter, the clerk) before the iris closes on it. The user turned down a red
+// post office (the stamp cabinet, the counter, the clerk), and stands open: a second tap closes the iris on it (no
+// word of it on screen: the user's call, a tap that seems to do nothing gets another). The user turned down a red
 // button (a web widget on a painting), a pencilled note with an arrow at the door (a tutorial's gesture), and a line
 // in another typeface or a 推 plate on the door (out of place, 土). Everything moves softly and once:
 // the user found a screen of bobbing, springing parts cheap, rows of stamps dull, and two drawn post offices (cut paper
@@ -178,13 +179,20 @@ const Loader = (() => {
       [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 0.7, transform: 'scale(.9)', offset: 0.3 }, { opacity: 0, transform: 'scale(1.5)' }],
       { duration: 700, delay: i * 180, easing: 'ease-out' }));
   }
-  /** the door swings in, slowly (--swing in index.html), and stands open a moment for the room to be seen (resolves then) */
-  const SWING = 1800, HOLD = 1100;
+  /** the door swings in, slowly (--swing in index.html), and stands open till a second tap takes you in (resolves then).
+      Taps while it is still swinging don't count. The same way in as the first: anywhere but the toys, or the button */
+  const SWING = 1800;
   let swung = Promise.resolve();
   function openDoor() {
     if (!scene || !pic) return Promise.resolve();
     root.classList.add('opening');
-    return new Promise(res => setTimeout(res, reduce ? 400 : SWING + HOLD));
+    // 原来开到底停 HOLD 毫秒后自己进首页；用户 2026-09-28 改成再轻触一下才进（提示文字不变）。要恢复自动就换回这行：
+    // return new Promise(res => setTimeout(res, reduce ? 400 : SWING + 1100));
+    return new Promise(res => setTimeout(() => {
+      go.addEventListener('click', () => { go.disabled = true; res(); }, { once: true });
+      go.disabled = false;
+      try { go.focus({ preventScroll: true }); } catch {}
+    }, reduce ? 400 : SWING));
   }
   const frames = n => new Promise(r => { const f = () => (n-- > 0 ? requestAnimationFrame(f) : r()); f(); });
   if (scene) (async () => {
