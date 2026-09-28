@@ -527,7 +527,7 @@ const Home = (() => {
       wheelUntil = now + 160;
     }, { passive: false });
     addEventListener('keydown', e => {
-      if (busy || !document.body.classList.contains('daily-home') || e.target.closest?.('input, textarea')) return;
+      if (busy || !document.body.classList.contains('daily-home') || e.target.closest?.('input, textarea') || document.getElementById('loader')) return;
       if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
       else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); presser.down(); presser.release(); activate(current()); }
