@@ -443,9 +443,22 @@ def outline():
     return np.asarray(Image.open(os.path.join(KRAFT, "raw", "outline.png")).convert("L")).astype(np.float32) / 255
 
 
+def shadow_box():
+    """the box all the kits' shadows keep to, in px of the shadow maps (half size): the home cuts its shadow canvases to
+    it (most of the PAD round a stamp has no shadow on it, and a phone draws every px of a layer)"""
+    box = None
+    for i in range(KITS):
+        a = np.asarray(Image.open(os.path.join(OUT, f"{i}.s.webp")).convert("RGBA"))[..., 3]
+        ys, xs = np.nonzero(a > 1)
+        b = [xs.min(), ys.min(), xs.max() + 1, ys.max() + 1]
+        box = b if box is None else [min(box[0], b[0]), min(box[1], b[1]), max(box[2], b[2]), max(box[3], b[3])]
+    return [int(max(0, box[0] - 3)), int(max(0, box[1] - 3)), int(min(a.shape[1], box[2] + 3)), int(min(a.shape[0], box[3] + 3))]
+
+
 def build(only=None):
     """all the kits, then each cut to one box: as far as the paper of any of them reaches (the lifted parts stand a
-    little outside the stamp), so the home's aged canvases are no bigger than they need be. The shadows keep all PAD"""
+    little outside the stamp), so the home's aged canvases are no bigger than they need be. The shadows keep all PAD
+    (the index says which part of them holds any shadow: sbox)"""
     os.makedirs(OUT, exist_ok=True)
     a0 = outline(); assert a0.shape == (H0, W0), a0.shape
     index = []
@@ -470,5 +483,5 @@ def build(only=None):
             im = Image.open(f).convert("RGB").crop(box)
             im.save(f, **(dict(quality=92, method=6) if n in ("a", "b") else dict(lossless=True, method=6)))
     print(f"  cut to {box} (of {W0 + 2 * PAD}x{H0 + 2 * PAD})")
-    json.dump(dict(v=int(time.time()), w=W0, h=H0, pad=PAD, box=box, a=A_MAX, m=M_MAX, b=B_MAX, grey=GREY, fade=FADE,
-                   p0=[245, 242, 234], kits=index), open(os.path.join(OUT, "index.json"), "w"), indent=1)
+    json.dump(dict(v=int(time.time()), w=W0, h=H0, pad=PAD, box=box, sbox=shadow_box(), a=A_MAX, m=M_MAX, b=B_MAX, grey=GREY,
+                   fade=FADE, p0=[245, 242, 234], kits=index), open(os.path.join(OUT, "index.json"), "w"), indent=1)

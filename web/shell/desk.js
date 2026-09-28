@@ -93,7 +93,7 @@ const Desk = (() => {
     if (my !== turn || !pap) return;                       // a later layout took over
     const r = Math.min(2, devicePixelRatio || 1), cw = Math.round(W * r), ch = Math.round(H * r);
     if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
-    const g = cv.getContext('2d', { willReadFrequently: true });
+    const g = cv.getContext('2d', { willReadFrequently: true, alpha: false });   // (nothing shows through the desk)
     const k = Math.max(cw / pap.naturalWidth, ch / pap.naturalHeight);
     g.imageSmoothingQuality = 'high';
     g.drawImage(pap, (cw - pap.naturalWidth * k) / 2, (ch - pap.naturalHeight * k) / 2, pap.naturalWidth * k, pap.naturalHeight * k);
@@ -119,5 +119,5 @@ const Desk = (() => {
     tmp.width = tmp.height = 0;
     cv.classList.add('on');
   }
-  return { load, draw, get set() { return name; } };
+  return { load, draw, get set() { return name; }, get version() { return index && index.v; } };
 })();

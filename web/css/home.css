@@ -8,7 +8,6 @@ body.daily-home #home { display: block; position: fixed; inset: 0; z-index: 20; 
 .home-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; background: #C4996C; }
 .home-bg canvas { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity .6s ease; }
 .home-bg canvas.on { opacity: 1; }
-.home-roughs { position: absolute; width: 0; height: 0; overflow: hidden; }
 .carousel { position: absolute; inset: 0; perspective: 1400px; touch-action: none; cursor: grab; overflow: hidden; }
 .carousel:active { cursor: grabbing; }
 .card { position: absolute; left: 50%; top: var(--cy); width: var(--cw); height: var(--ch);
@@ -24,8 +23,9 @@ body.daily-home #home { display: block; position: fixed; inset: 0; z-index: 20; 
   pointer-events: none; will-change: transform, opacity; }
 .card-contact { position: absolute; pointer-events: none; }
 .card-face { position: relative; display: block; width: 100%; height: 100%; pointer-events: none; }
-/* an aged stamp (web/shell/age.js) is its contact canvas, the desk round it included; the printed one stays hidden */
-.card.aged .card-face { visibility: hidden; }
+/* an aged stamp (web/shell/age.js) is its contact canvas, the desk round it included; the printed one is kept, off
+   the page */
+.card.aged .card-face { display: none; }
 .card.aged .card-shadow { transform: translate(0, 0); opacity: 1; }
 /* the studio's 3D stamp lies under the home: out of the compositor's way while the home covers it */
 body.daily-home:not(.flip-wait) #flip { visibility: hidden; }
@@ -36,28 +36,30 @@ body.daily-home:not(.flip-wait) #flip { visibility: hidden; }
 .home-kicker { position: absolute; left: 0; right: 0; top: calc(var(--cy) - var(--ch) / 2 - min(38px, 7vh)); margin: 0; height: 16px;
   display: grid; justify-items: center; font-family: "DS CapsMed", "DS CjkMed", sans-serif; font-size: 10px; letter-spacing: .34em;
   pointer-events: none; }
-.home-kicker span { grid-area: 1 / 1; white-space: nowrap; }
-.home-kicker span::before, .home-kicker span::after { content: "◦"; margin: 0 1em; opacity: .7; }
+.home-kicker > * { grid-area: 1 / 1; white-space: nowrap; }
 .home-title { position: absolute; left: 0; right: 0; top: calc(var(--cy) + var(--ch) / 2 + min(18px, 3.4vh)); margin: 0;
   display: grid; justify-items: center; overflow: hidden; padding: .06em 0 .12em;
   font-family: "DS Phrase", serif; font-weight: normal; font-size: clamp(22px, min(9vw, 7vh), 64px); line-height: 1.1;
   letter-spacing: .12em; pointer-events: none; }
 @media (orientation: portrait) { .home-title { font-size: clamp(22px, min(7.7vw, 6vh), 56px); } }
-/* every word on the home printed on the kraft: the ink not quite solid (a mask: missed specks, thin patches), its edges
-   a little rough, the paper showing through (multiply); the small type from the same press, finer */
-.home-title, .home-top, .home-kicker, .home-count { color: #241a13; mix-blend-mode: multiply; }
-.home-title { filter: url(#rough); -webkit-mask: url("/kraft/ink.png") 0 0 / 220px repeat; mask: url("/kraft/ink.png") 0 0 / 220px repeat; }
-.home-top, .home-kicker, .home-count { filter: url(#rough-s);
-  -webkit-mask: url("/kraft/ink.png") 0 0 / 150px repeat; mask: url("/kraft/ink.png") 0 0 / 150px repeat; }
-.home-title .line { grid-area: 1 / 1; white-space: nowrap; }
+/* every word on the home printed on the kraft: the ink not quite solid (missed specks, thin patches), its edges a
+   little rough, the paper's colour in it. The words are bitmaps, printed once (web/shell/type.js): nothing here is
+   worked out while the page moves. (The colour: #241a13 multiplied by the kraft's; the faces and spacings above are
+   what type.js prints with, and what a word that couldn't be printed is set in) */
+.home-title, .home-top, .home-kicker, .home-count { color: #1b0f08; }
+.home-title canvas, .home-top canvas, .home-kicker canvas, .home-count canvas { display: block; flex: none; pointer-events: none; }
+.home-top span, .home-count span { display: flex; }
+.home-title .line { grid-area: 1 / 1; display: flex; white-space: nowrap; }
 .home-title .line span { display: inline-block; }
 .home-count { position: absolute; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; align-items: center; gap: 10px;
   font-family: "DS CapsMed", sans-serif; font-size: 10px; letter-spacing: .3em; pointer-events: none; }
 .home-count svg { width: 18px; height: 18px; transform: rotate(-90deg); fill: none; stroke: currentColor; stroke-width: 1.2; }
-.home-count svg circle:first-child { opacity: .22; }
-.home-count .arc { stroke-dasharray: 100; stroke-dashoffset: 100; }
+.home-count svg circle:first-child { stroke-opacity: .2; }
+.home-count .arc { stroke-dasharray: 100; stroke-dashoffset: 100; stroke-opacity: .9; }
+/* (the small type's ink is a little thin: that is in its bitmaps, so nothing here stands half seen while the page moves) */
+.home-top .plain, .home-kicker .plain, .home-count .plain { opacity: .9; }
 .home-top, .home-kicker, .home-count { opacity: 0; transition: opacity .9s ease; }
-body.home-inked .home-top, body.home-inked .home-kicker, body.home-inked .home-count { opacity: .9; }
+body.home-inked .home-top, body.home-inked .home-kicker, body.home-inked .home-count { opacity: 1; }
 /* a stamp lifting off the carousel, flying to (or back from) its page */
 .flyer { position: fixed; z-index: 40; pointer-events: none; transform-origin: 50% 50%; will-change: transform; }
 .flyer canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
