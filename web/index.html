@@ -59,16 +59,14 @@
 .ld-room { background: #D9934E radial-gradient(120% 90% at 50% 100%, #F6CB86, #D9934E 70%, #B9743A) center / cover no-repeat; }
 /* the door itself: a slab with some thickness, turning inward on hinges at its back, left edge. Its face is cut from
    the picture; as it opens, its hinge-side edge turns towards you (the user found a flat door read as paper). The
-   thickness (--dt) and the eye's distance (--dp) follow the door's size (loader.js), so it turns alike on every screen.
-   The eye is on the hinge line, 28% down the door, 3.2 door-widths off: the room behind (scene.py doorway()) is drawn
-   from that same eye, with the doorway's head, far jamb and step round it */
+   thickness (--dt) and the eye's distance (--dp) follow the door's size (loader.js), so it turns alike on every screen */
 /* (it darkens as it turns away from the light through a black sheet on it fading in, not a brightness filter: a filter
    under the iris's clip had the whole screen rasterised again on every frame) */
 /* (at rest the same kind of transform as open, so every browser turns it on the compositor: function by function) */
 /* (no preserve-3d: WebKit turned a 3D-nested slab the wrong way. The face and the edge are flat pieces, each carrying
    the whole placement, the same eye and the same hinge, so they turn as one) */
 .ld-door { --a: 0deg; --dt: 4px; --dtn: -4px; --dp: 700px; }
-.ld-door-face, .ld-door-edge { position: absolute; top: 0; height: 100%; transform-origin: 0 28% var(--dtn);
+.ld-door-face, .ld-door-edge { position: absolute; top: 0; height: 100%; transform-origin: 0 50% var(--dtn);
   transition: transform .75s cubic-bezier(.45,0,.2,1); will-change: transform; }
 .ld-door-face { left: 0; width: 100%; background-repeat: no-repeat; transform: perspective(var(--dp)) rotateY(var(--a)); }
 .ld-door-face::after { content: ""; position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .75s ease; will-change: opacity; }
@@ -79,6 +77,11 @@
   background: linear-gradient(90deg, #8F4E37, #7A4130); }
 #loader.opening .ld-door { --a: 72deg; }
 #loader.opening .ld-door-face::after { opacity: .28; }
+/* the latch side's edge faces into the lit room as the door swings in: its corner catches that light, a thin warm rim
+   that shows the slab's thickness where the edge itself is out of sight */
+.ld-door-face::before { content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 4%; z-index: 1;
+  background: linear-gradient(90deg, rgba(255,214,150,0), rgba(255,226,172,.9) 55%, rgba(255,236,196,.95)); opacity: 0; transition: opacity .75s ease; will-change: opacity; }
+#loader.opening .ld-door-face::before { opacity: 1; }
 /* open for business: the lamps come on inside. The door's glass (scene/glass.webp, cut from the picture with its brush
    strokes) glows warm from within, and turns with the door; a soft halo round it, a little light on the paper at its
    foot. (A lit line along the door's edge read as its frame glowing: the door is painted shut) */
