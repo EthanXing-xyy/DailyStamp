@@ -178,12 +178,13 @@ const Loader = (() => {
       [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 0.7, transform: 'scale(.9)', offset: 0.3 }, { opacity: 0, transform: 'scale(1.5)' }],
       { duration: 700, delay: i * 180, easing: 'ease-out' }));
   }
-  /** the door swings in (resolves when it has) */
+  /** the door swings in, slowly (--swing in index.html), and stands open a moment for the room to be seen (resolves then) */
+  const SWING = 1200, HOLD = 1100;
   let swung = Promise.resolve();
   function openDoor() {
     if (!scene || !pic) return Promise.resolve();
     root.classList.add('opening');
-    return new Promise(res => setTimeout(res, reduce ? 400 : 750));
+    return new Promise(res => setTimeout(res, reduce ? 400 : SWING + HOLD));
   }
   const frames = n => new Promise(r => { const f = () => (n-- > 0 ? requestAnimationFrame(f) : r()); f(); });
   if (scene) (async () => {
