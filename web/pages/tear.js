@@ -511,7 +511,7 @@ const Tear = (() => {
     Kit.loop(root, step);
 
     let resizeT = 0;
-    addEventListener('resize', () => {
+    Kit.on(root, window, 'resize', () => {
       clearTimeout(resizeT);
       resizeT = setTimeout(() => {
         if (piece && !piece.free) { piece.box.remove(); piece = null; }

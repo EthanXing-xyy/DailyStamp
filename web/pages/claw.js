@@ -242,6 +242,7 @@
     // the stamps inside are drawn small, a few at a time once the page is up
     let thumbing = null;
     const thumbs = () => thumbing || (thumbing = (async () => {
+      await Kit.afterFrame();                                    // not before the stamp flying in is off
       for (const c of caps.slice()) {
         if (c.thumb) continue;
         await deps.loadLeaflet(c.st.phrase).catch(() => null);
@@ -253,7 +254,8 @@
     layout(); coins();
     status.set(S.left ? `今天有 ${S.left} 个币 · 推摇杆，按「抓」` : '今天的币用完了 · 明天再来');
     const ready = thumbs();
-    setInterval(() => { if (Kit.visible(root) && caps.some(c => !c.thumb)) thumbs(); }, 1500);
+    const topUp = setInterval(() => { if (Kit.visible(root) && caps.some(c => !c.thumb)) thumbs(); }, 1500);
+    Kit.hold(root, () => clearInterval(topUp));
     return P.api({ ready: Promise.race([ready, Kit.wait(1500)]), anchor: () => door.getBoundingClientRect(), source: () => (card && card.ready ? card.front : null) });
   }
   Pages.define('claw', mount);

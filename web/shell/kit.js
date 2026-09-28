@@ -7,6 +7,9 @@ const Kit = (() => {
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const wait = ms => new Promise(r => setTimeout(r, ms));
+  /** resolves once the next frame is out: a page built on the tap does its heavy drawing after this, so the stamp's
+   *  flight (started in that frame, then run by the compositor) never waits for it (100 ms at most in a hidden tab) */
+  const afterFrame = () => new Promise(r => { let go = () => { go = () => {}; setTimeout(r, 0); }; requestAnimationFrame(() => go()); setTimeout(() => go(), 100); });
   const two = n => String(n).padStart(2, '0');
   const put = (cv, src) => { cv.width = src.width; cv.height = src.height; cv.getContext('2d').drawImage(src, 0, 0); return cv; };
   const visible = root => root.classList.contains('on') && document.body.classList.contains('daily-layer') && !document.hidden;
@@ -22,14 +25,26 @@ const Kit = (() => {
     root.append(h);
     return h;
   }
+  // A page may be closed (web/app/router.js keeps the six last opened): whatever it hooks outside its own section
+  // (window, document, timers) is listed here against the section and undone by close(root), or the old page's
+  // canvases stay alive behind a listener
+  const hooks = new WeakMap();
+  const hold = (root, off) => { if (!hooks.has(root)) hooks.set(root, []); hooks.get(root).push(off); };
+  function on(root, target, type, fn, opts) { target.addEventListener(type, fn, opts); hold(root, () => target.removeEventListener(type, fn, opts)); }
+  function close(root) {
+    for (const off of hooks.get(root) || []) { try { off(); } catch (e) { console.error(e); } }
+    hooks.delete(root);
+  }
+
   /** what every page starts with: its header, its status line, and the screen's size. layout(P) runs on resize while the
    *  page is on show; a hidden page is laid out again when it next comes on (wrap its api with P.api()).
-   *  P.measure() -> {W, H, phone (upright), short (a phone on its side)} */
+   *  P.measure() -> {W, H, phone (upright), short (a phone on its side)}. Listeners on the window or the document go
+   *  through Kit.on(root, ...), timers through Kit.hold(root, off), so closing the page undoes them. */
   function page(root, key, layout = null) {
     const P = { head: head(root, key), status: status(root), W: 0, H: 0, phone: false, short: false, stale: false };
     P.measure = () => { P.W = innerWidth; P.H = innerHeight; P.phone = P.W < P.H; P.short = !P.phone && P.H < 560; return P; };
     P.layout = () => { P.stale = false; if (layout) layout(P); };
-    addEventListener('resize', () => { if (visible(root)) P.layout(); else P.stale = true; });
+    on(root, window, 'resize', () => { if (visible(root)) P.layout(); else P.stale = true; });
     P.api = api => { const enter = api.enter; api.enter = () => { if (P.stale) P.layout(); if (enter) enter(); }; return api; };
     return P;
   }
@@ -46,8 +61,9 @@ const Kit = (() => {
       fn(dt, t);
     };
     const wake = () => { if (!raf && visible(root)) raf = requestAnimationFrame(tick); };
-    for (const target of [root, document.body]) new MutationObserver(wake).observe(target, { attributes: true, attributeFilter: ['class'] });
-    document.addEventListener('visibilitychange', wake);
+    const seen = [root, document.body].map(target => { const o = new MutationObserver(wake); o.observe(target, { attributes: true, attributeFilter: ['class'] }); return o; });
+    on(root, document, 'visibilitychange', wake);
+    hold(root, () => { seen.forEach(o => o.disconnect()); cancelAnimationFrame(raf); raf = 0; });
     wake();
   }
   /** one line of status under the work; flash() shows a note for a while, then the line goes back */
@@ -362,7 +378,7 @@ const Kit = (() => {
   /** a round button with a label; never a boxed rectangle */
   function button(parent, label, cls = '') { const b = el('button', 'kit-btn ' + cls, label); b.type = 'button'; parent.append(b); return b; }
 
-  return { DEBUG, debugRow, TAU, reduce, el, clamp, wait, two, put, visible, loop, localDate, dayNo, addDays, hash, head, status, audio, buzz, crackle, thump, rustle, bell,
+  return { DEBUG, debugRow, TAU, reduce, el, clamp, wait, afterFrame, two, put, visible, loop, on, hold, close, localDate, dayNo, addDays, hash, head, status, audio, buzz, crackle, thump, rustle, bell,
     visit, visitStamps, stampFor, card, issue, page, photoPlates, gum, watermark, save, blobOf, imageOf, button, drawMark, drawMarks, mySeal,
     thumbs: {} };   // thumbs[kind](entry, scale, deps): how the album draws works that are not plain stamps
 })();

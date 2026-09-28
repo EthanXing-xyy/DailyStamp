@@ -1,7 +1,5 @@
 /* ---------- pages in layers of their own (web/pages.js): a desk, a way home, a header, a status line */
 .layer { display: none; }
-/* while the loading screen is up every page is mounted out of sight, laid out at full size (app.js preload) */
-body.preloading .layer:not(.on) { display: block; position: fixed; inset: 0; visibility: hidden; pointer-events: none; }
 body.daily-layer { display: block; overflow: hidden; }
 body.daily-layer #stage, body.daily-layer #panel, body.daily-layer #wall { display: none; }
 body.daily-layer .layer.on { display: block; position: fixed; inset: 0; z-index: 15; padding: 0; border: 0; background: #D9D5CC; color: #1d1d1f;

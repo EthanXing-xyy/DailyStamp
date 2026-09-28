@@ -176,12 +176,12 @@
 
     bCancel.disabled = true; bSend.disabled = true;
     layout();
-    drawBack(); drawFront();
+    const ready = Kit.afterFrame().then(() => { drawBack(); drawFront(); });   // two 1800 x 1200 sides, once the stamp flying in is off
     status.set('从下面挑一枚邮票贴上');
-    addEventListener('resize', layout);
+    Kit.on(root, window, 'resize', layout);
     Kit.wait(1100).then(fillTray);                             // after the flight in: the tray fades in stamp by stamp
     return {
-      ready: Promise.resolve(),
+      ready,
       anchor: spot,
       source: () => null,
       receive: s => pick(s, null, { fly: false }).then(() => 250),         // the stamp tapped on the home lands on the stamp spot and stays

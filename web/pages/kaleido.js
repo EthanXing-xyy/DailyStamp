@@ -148,10 +148,11 @@
 
     layout();
     status.set('拖动镜筒转一转 · 往里往外拖换个花样');
+    let painting = Promise.resolve();
     return P.api({
-      ready: Promise.resolve(),
-      // the eyepiece is only drawn while the page is on show
-      enter() { if (!src) load(st); },
+      get ready() { return painting; },
+      // the eyepiece is only drawn while the page is on show, and only once the stamp flying in is off
+      enter() { if (!src) painting = Kit.afterFrame().then(() => { if (!src && Kit.visible(root)) load(st); }); },
       leave() {
         if (tilting) bTilt.onclick();
         if (card) dropCard();

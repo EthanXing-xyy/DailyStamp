@@ -1,7 +1,7 @@
-// Everything the app will ever need is fetched, decoded and drawn while the loading screen (web/loader.js) is up:
-// fonts, artwork, emblem masks, the home's stamps, the stage, and every page mounted. Nothing loads later.
+// What the home and today's stamp need is fetched, decoded and drawn while the loading screen (web/loader.js) is up:
+// fonts, artwork, emblem masks, the home's stamps and the stage. The pages are not: each is built when its stamp is
+// first tapped, and the router keeps the six last opened (web/app/router.js).
 const Preload = (() => {
-  const wait = ms => new Promise(r => setTimeout(r, ms));
   // a breath between heavy steps, so the loading screen's bar and slots get painted
   // (a task boundary is enough: the browser paints there whenever a frame is due, without waiting a whole frame)
   let breathAt = 0;
@@ -55,19 +55,6 @@ const Preload = (() => {
     Stage.syncInputs(); Stage.drawSheet(); Stage.refreshLeaflet({ draw: false });
     await Stage.rendered();
     Loader.step('studio', 1);
-    await breath();
-
-    // every page, mounted out of sight so that opening one is only the flight
-    document.body.classList.add('preloading');
-    const keys = Pages.keys();
-    for (const [i, key] of keys.entries()) {
-      const t0 = performance.now();
-      try { Router.ensureLayer(key); await Promise.race([Promise.resolve(Router.layers.get(key).ready), wait(8000)]); } catch (e) { console.error(e); }
-      Loader.times['page:' + key] = Math.round(performance.now() - t0);
-      Loader.step('pages', (i + 1) / keys.length);
-      await breath();
-    }
-    document.body.classList.remove('preloading');
   }
   return { run };
 })();

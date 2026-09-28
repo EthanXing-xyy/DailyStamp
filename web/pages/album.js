@@ -205,7 +205,7 @@
 
     let ready = null;
     const refresh = () => { ready = load().then(() => { layout(); show(); }); return ready; };
-    addEventListener('resize', () => { if (!Kit.visible(root)) return; const was = single; layout(); if (was !== single) { const at = pages.findIndex(p => p.now); spread = single ? at : Math.floor(at / 2); } show(); });
+    Kit.on(root, window, 'resize', () => { if (!Kit.visible(root)) return; const was = single; layout(); if (was !== single) { const at = pages.findIndex(p => p.now); spread = single ? at : Math.floor(at / 2); } show(); });
     layout();
     refresh();
     return {

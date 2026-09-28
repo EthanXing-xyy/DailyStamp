@@ -2,7 +2,7 @@
 //   features.js  the functions, in the carousel's order        context.js  shared state, URL params, the view on screen
 //   assets.js    palettes, emblems, leaflets, fonts             press.js    stamp state -> printed canvas, plate by plate
 //   stage.js     today's stamp and the studio                   router.js   flying between the home and every view
-//   preload.js   everything loaded under the loading screen     review.js   ?gallery and ?sheet=demo
+//   preload.js   the home, loaded under the loading screen      review.js   ?gallery and ?sheet=demo
 // This file wires them up and opens the app once the loading screen is tapped.
 (async function () {
   const $ = id => document.getElementById(id);
@@ -38,7 +38,6 @@
 
   // a stuck download doesn't keep the curtain down: after 25 s the app opens and the rest carries on behind it
   await Promise.race([Preload.run().catch(e => console.error(e)), wait(25000)]);
-  document.body.classList.remove('preloading');
 
   if (useOpening) {
     // printed: the loading screen waits for a tap on its 进入邮局 button before opening the app
