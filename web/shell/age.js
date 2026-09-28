@@ -59,9 +59,10 @@ const Age = (() => {
   }
 
   /** ages the printed stamp src (a canvas) with the given kit: the aged picture (the stamp and a little desk round it,
-   *  for its lifted parts) into `into`, its shadow on the desk into `shadow` (a small canvas); resolves with where each
-   *  lies, as shares of the stamp's width and height ({ picture: [left, top, width, height], shadow: […] }), or null if
-   *  it couldn't be done (the stamp then stays as printed) */
+   *  for its lifted parts) into `into`, its shadow on the desk into `shadow` (a small canvas: the part of the kit's
+   *  shadow map that holds any shadow); resolves with where each lies, as shares of the stamp's width and height
+   *  ({ picture: [left, top, width, height], shadow: […], origin: the stamp's middle as shares of the shadow's canvas,
+   *  which the shadow turns and grows about }), or null if it couldn't be done (the stamp then stays as printed) */
   function apply(src, kit, into, shadow) {
     const job = chain.then(async () => {
       if (!meta || kit == null || !src.width) return null;
@@ -78,13 +79,19 @@ const Age = (() => {
       }
       into.width = got.w; into.height = got.h;
       into.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(got.buf), got.w, got.h), 0, 0);
-      if (shadow) {
-        const sh = await img(`${BASE}${kit}.s.webp?v=${meta.v}`);
-        shadow.width = Math.round(sh.naturalWidth * s / 2); shadow.height = Math.round(sh.naturalHeight * s / 2);
-        const g = shadow.getContext('2d'); g.clearRect(0, 0, shadow.width, shadow.height); g.drawImage(sh, 0, 0, shadow.width, shadow.height);
-      }
       const [x0, y0, x1, y1] = meta.box, p = meta.pad, w = meta.w, h = meta.h;
-      return { picture: [(x0 - p) / w, (y0 - p) / h, (x1 - x0) / w, (y1 - y0) / h], shadow: [-p / w, -p / h, 1 + 2 * p / w, 1 + 2 * p / h] };
+      let sb = [0, 0, w + 2 * p, h + 2 * p];                 // where the shadow's canvas lies on the padded sheet
+      if (shadow) {
+        const sh = await img(`${BASE}${kit}.s.webp?v=${meta.v}`), b = meta.sbox || [0, 0, sh.naturalWidth, sh.naturalHeight];
+        const kx = (w + 2 * p) / sh.naturalWidth, ky = (h + 2 * p) / sh.naturalHeight;
+        sb = [b[0] * kx, b[1] * ky, b[2] * kx, b[3] * ky];
+        shadow.width = Math.max(1, Math.round((b[2] - b[0]) * s / 2)); shadow.height = Math.max(1, Math.round((b[3] - b[1]) * s / 2));
+        const g = shadow.getContext('2d'); g.clearRect(0, 0, shadow.width, shadow.height);
+        g.drawImage(sh, b[0], b[1], b[2] - b[0], b[3] - b[1], 0, 0, shadow.width, shadow.height);
+      }
+      return { picture: [(x0 - p) / w, (y0 - p) / h, (x1 - x0) / w, (y1 - y0) / h],
+        shadow: [(sb[0] - p) / w, (sb[1] - p) / h, (sb[2] - sb[0]) / w, (sb[3] - sb[1]) / h],
+        origin: [(p + w / 2 - sb[0]) / (sb[2] - sb[0]), (p + h / 2 - sb[1]) / (sb[3] - sb[1])] };
     });
     chain = job.catch(() => null);
     return job;

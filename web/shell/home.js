@@ -5,8 +5,8 @@
 // Tapping the middle one presses it (Win8), then it lifts off and flies to its page. The stamps are all printed while
 // the loading screen is up (fill), so the carousel never draws a stamp while it moves; show() lifts the titles in.
 // Phones: nothing here repaints while the wheel turns. The stamps float on the compositor (looping animations), their
-// shadows are bitmaps drawn once, the desk changes colour by fading one sheet over another, and the frame loop only
-// runs while the wheel moves (`?fps` shows the frame rate).
+// shadows are bitmaps drawn once, so are the desk and every word (web/shell/type.js), a stamp off the screen is off the
+// page, and the frame loop only runs while the wheel moves (`?fps` shows the frame rate).
 const Home = (() => {
   const FEATURES = Features.LIST.map(f => ({ live: true, ...f }));   // web/app/features.js
   const N = FEATURES.length;
@@ -58,12 +58,12 @@ const Home = (() => {
   /** builds the carousel in root with unprinted stamps (needs no fonts or artwork); fill() prints them, show() reveals */
   function mount(root, { onOpen }) {
     root.innerHTML = '';
-    const top = el('div', 'home-top', '<span>每日邮政 · DAILY POST</span><span class="home-date"></span>');
+    const top = el('div', 'home-top', '<span class="home-brand"></span><span class="home-date"></span>');
     const ring = el('div', 'carousel');
     const kicker = el('p', 'home-kicker'), title = el('h2', 'home-title');
     const count = el('div', 'home-count', '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="arc" cx="12" cy="12" r="9" pathLength="100"/></svg><span></span>');
     // the desk: kraft paper with a few little pictures on it, painted once into one canvas (web/shell/desk.js)
-    const bg = el('div', 'home-bg'), deskCv = el('canvas');
+    const bg = el('div', 'home-bg'), deskCv = el('canvas'), arcEl = count.querySelector('.arc');
     bg.append(deskCv);
     root.append(bg, top, ring, kicker, title, count);
     root.tabIndex = 0;
@@ -82,7 +82,8 @@ const Home = (() => {
     // ---- sizes. The stamps ride the rim of a big wheel whose hub sits below the screen: the further out, the lower
     // and the more tipped. Wide screens show five (the outer two cut by the edge), phones three (half a neighbour each side).
     // Both leave the paper at the foot and in the upper corners to the desk's pictures.
-    let W = 0, H = 0, cw = 0, ch = 0, gap = 0, cy = 0, R = 0, fadeFrom = 0, ANG = [0, 0], SCL = [1, 1];
+    let W = 0, H = 0, cw = 0, ch = 0, gap = 0, cy = 0, R = 0, fadeFrom = 0, gone = 0, ANG = [0, 0], SCL = [1, 1];
+    let typed = false, titleSize = 30, typeKey = '', typeT = 0;   // the words: printed yet, the title's size, what they were printed for
     function layout() {
       W = innerWidth; H = innerHeight;
       const wide = W > H;
@@ -122,9 +123,26 @@ const Home = (() => {
       }
       gap = R * Math.sin(ANG[1]);                           // px a drag travels per stamp
       cy = H * (wide ? 0.42 : 0.45);
+      // a stamp is on the page only while some of it (its shadow, a lifted corner, its floating) can be on the screen
+      gone = fadeFrom + 0.6;
+      for (let a = 1; a < gone; a += 0.05) {
+        const th = along(ANG, a), s = along(SCL, a);
+        if (R * Math.sin(th) - (cw * 0.77 * Math.cos(th) + ch * 0.72 * Math.sin(th)) * s - 20 > W / 2) { gone = a; break; }
+      }
       root.style.setProperty('--cw', cw + 'px'); root.style.setProperty('--ch', ch + 'px'); root.style.setProperty('--cy', cy + 'px');
       drawShadows(); slots.forEach(contact);
       paintDesk();
+      // the words are printed for the title's size and the screen's px: when those change (a window being resized:
+      // when it stops), they are printed again, the ones on the page first
+      const fs = parseFloat(getComputedStyle(title).fontSize) || 30, key = fs + '@' + Type.ratio();
+      if (key !== typeKey) {
+        typeKey = key;
+        if (!typed) titleSize = fs;
+        else {
+          clearTimeout(typeT);
+          typeT = setTimeout(() => { titleSize = fs; Type.forget(); retype(); printAll(() => new Promise(r => setTimeout(r, 0))).catch(() => {}); }, 180);
+        }
+      }
     }
     /** where the stamps and the type ever are, on a grid of 4 px: every place a stamp passes as the wheel turns (with
      *  room for its floating and its lifted corners), the lines of type (the title as long as the longest name) */
@@ -181,7 +199,7 @@ const Home = (() => {
         if (sl.aged) continue;                              // (an aged stamp brings its own shadow)
         put(sl.shadow, art);
         Object.assign(sl.shadow.style, { left: (cw * 0.06 - SPILL).toFixed(1) + 'px', top: (ch * 0.05 - SPILL).toFixed(1) + 'px',
-          width: (w / q).toFixed(1) + 'px', height: (h / q).toFixed(1) + 'px' });
+          width: (w / q).toFixed(1) + 'px', height: (h / q).toFixed(1) + 'px', transformOrigin: '' });
       }
     }
     /** the contact shadow round a stamp's own edge (its perforations, a torn fibre), from its canvas at a third the size */
@@ -218,7 +236,7 @@ const Home = (() => {
       const c = mod(Math.round(pos), N), near = [];
       for (const sl of slots) {
         const d = wrap(sl.index - pos), a = Math.abs(d);
-        const far = a > fadeFrom + 0.6;                     // out of sight: hidden, its floating paused
+        const far = a > gone;                               // out of sight: hidden, its floating paused
         if (far !== sl.far) {
           sl.far = far; sl.btn.classList.toggle('far', far);
           if (sl.anims) for (const an of sl.anims) far ? an.pause() : an.play();
@@ -236,7 +254,7 @@ const Home = (() => {
       near.sort((p, q) => p.a - q.a || p.index - q.index);
       near.forEach((sl, i) => { const z = String(100 - i); if (z !== sl.z) sl.btn.style.zIndex = sl.z = z; });
       const off = (Math.round((100 - (mod(pos, N) + 1) / N * 100) * 2) / 2).toFixed(1);
-      if (off !== arc) count.querySelector('.arc').style.strokeDashoffset = arc = off;
+      if (off !== arc) arcEl.style.strokeDashoffset = arc = off;
       if (c !== shown) showTitle(c);
       return true;
     }
@@ -283,6 +301,7 @@ const Home = (() => {
       if (!got) return false;
       const pc = v => (v * 100).toFixed(3) + '%', place = (c, [l, t, w, h]) => Object.assign(c.style, { left: pc(l), top: pc(t), width: pc(w), height: pc(h) });
       place(sl.contact, got.picture); place(sl.shadow, got.shadow);
+      sl.shadow.style.transformOrigin = got.origin.map(pc).join(' ');
       const first = !sl.aged;
       sl.aged = got; sl.agedOf = was; sl.btn.classList.add('aged');
       if (first && sl.anims) {                              // (its shadow floats as an aged one's does now)
@@ -294,38 +313,84 @@ const Home = (() => {
 
     let live = false;                                       // the loading screen has lifted
 
+    // ---- the words. Each is printed once into a little bitmap (web/shell/type.js: specks of missed ink, a rough
+    // edge), all of them under the loading screen; the page only moves them. A word that can't be printed is set plain
+    const BRAND = '每日邮政 · DAILY POST', SOON = '即将发行 · COMING SOON', SMALL = 10;
+    const TRACK = { title: 0.12, top: 0.28, kicker: 0.34, count: 0.3 };   // the letters' spacing (home.css has the same)
+    const kickerOf = i => `${two(i + 1)} · ${FEATURES[i].en}`, countOf = i => `${two(i + 1)} — ${two(N)}`;
+    let dateText = '', kickerText = '';
+    const ink = (text, track, marks) => Type.word(text, 'small', SMALL, { track, marks, mid: W / 2 });
+    const inks = text => Type.letters(text, titleSize, { track: TRACK.title, mid: W / 2 });
+    const word = (text, track, marks) => {
+      const m = ink(text, track, marks);
+      return m ? Type.show(m) : el('span', 'plain', text.replace(/[&<]/g, c => (c === '&' ? '&amp;' : '&lt;')));
+    };
+    const lettersOf = text => {
+      const ms = inks(text);
+      return ms ? ms.map(Type.show) : [...text].map(ch => el('span', 'plain', ch));
+    };
+    const clear = box => { box.querySelectorAll('canvas').forEach(Type.drop); box.textContent = ''; };
+    const setWord = (box, text, track) => { box.setAttribute('aria-label', text); if (typed) { clear(box); box.append(word(text, track)); } };
+    /** every word of the carousel, printed ahead (under the loading screen; again when the type's size changed), so
+     *  that turning the wheel prints nothing; what the printing needed is let go after */
+    let printing = 0;
+    async function printAll(breath) {
+      const my = ++printing;
+      const cn = FEATURES.map(f => f.cn).join(''), small = BRAND + dateText + SOON + FEATURES.map((f, i) => kickerOf(i) + countOf(i)).join('') + '◦';
+      await Promise.all([Type.fonts('title', titleSize, cn), Type.fonts('small', SMALL, small), Desk.load(DEAL).then(() => Type.load(Desk.version))]);
+      for (const [i, f] of FEATURES.entries()) {
+        if (my !== printing) return;                        // (a later printing took over)
+        inks(f.cn); ink(kickerOf(i), TRACK.kicker, true); ink(countOf(i), TRACK.count);
+        if (breath) await breath();
+      }
+      ink(SOON, TRACK.kicker, true); ink(BRAND, TRACK.top); ink(dateText, TRACK.top);
+      typed = true; Type.rest();
+    }
+    /** all the words on the page now, printed (again) as they stand */
+    function retype() {
+      if (!typed) return;
+      setWord(top.querySelector('.home-brand'), BRAND, TRACK.top); setWord(top.querySelector('.home-date'), dateText, TRACK.top);
+      if (shown < 0) return;
+      setWord(count.querySelector('span'), countOf(shown), TRACK.count);
+      if (!inked) return;
+      clear(title); clear(kicker);
+      const line = el('span', 'line'); line.append(...lettersOf(FEATURES[shown].cn)); title.append(line);
+      kicker.append(word(kickerText, TRACK.kicker, true));
+    }
+
     // ---- the title: the old name drifts up and away, the new one rises letter by letter out of its baseline
     let inked = false;
     function showTitle(c) {
       shown = c;
       const f = FEATURES[c];
-      count.querySelector('span').textContent = `${two(c + 1)} — ${two(N)}`;
+      setWord(count.querySelector('span'), countOf(c), TRACK.count);
       if (!inked) return;
       for (const old of title.querySelectorAll('.line:not(.leaving)')) {
         old.classList.add('leaving');
         const letters = [...old.children];
         letters.forEach((l, i) => l.animate([{ transform: 'translateY(0)', opacity: 1 }, { transform: 'translateY(-38%)', opacity: 0 }],
           { duration: 230, delay: i * 25, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' }));
-        setTimeout(() => old.remove(), 230 + letters.length * 25 + 20);
+        setTimeout(() => { letters.forEach(Type.drop); old.remove(); }, 230 + letters.length * 25 + 20);
       }
       const line = el('span', 'line');
-      for (const ch of f.cn) line.append(el('span', '', ch));
-      title.append(line);
+      line.append(...lettersOf(f.cn));
+      title.append(line); title.setAttribute('aria-label', f.cn);
       [...line.children].forEach((l, i) => l.animate([{ transform: 'translateY(72%)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }],
         { duration: 520, delay: 200 + i * 55, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' }));
-      setKicker(`${two(c + 1)} · ${f.en}`);
+      setKicker(kickerOf(c));
     }
     function setKicker(text) {
-      const old = kicker.querySelector('span:not(.leaving)');
-      if (old) { old.classList.add('leaving'); old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }); setTimeout(() => old.remove(), 240); }
-      const s = el('span', '', text); kicker.append(s);
+      kickerText = text; kicker.setAttribute('aria-label', text);
+      const old = kicker.querySelector(':scope > :not(.leaving)');
+      if (old) { old.classList.add('leaving'); old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }); setTimeout(() => { Type.drop(old); old.remove(); }, 240); }
+      const s = word(text, TRACK.kicker, true); kicker.append(s);
       s.animate([{ opacity: 0, transform: 'translateY(40%)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 120, easing: 'ease-out', fill: 'backwards' });
     }
 
     // ---- opening a stamp
     let busy = false, soonT = 0;
     const current = () => slots[mod(Math.round(pos), N)];
-    const soon = sl => { setKicker('即将发行 · COMING SOON'); clearTimeout(soonT); soonT = setTimeout(() => { if (current() === sl) setKicker(`${two(sl.index + 1)} · ${sl.en}`); }, 2000); };
+    const soon = sl => { setKicker(SOON); clearTimeout(soonT); soonT = setTimeout(() => { if (current() === sl) setKicker(kickerOf(sl.index)); }, 2000); };
     const activate = sl => {
       if (busy) return;
       if (!sl.live || !sl.st) return soon(sl);
@@ -408,11 +473,12 @@ const Home = (() => {
     /** prints the visit's stamps under the loading screen, the middle one first and then outwards, with a breath between
      *  them so the loader can paint; onEach(i, canvas) hands each one to the loader's slots. Then ages them, the stamps
      *  of one kit together (its maps are read once), off the page's thread (onAged(0..1) tells how far). The desk's
-     *  paper and pictures load meanwhile */
+     *  paper and pictures load meanwhile, and the words are printed */
     async function fill(plans, { date, term, render, onEach, onAged, breath }) {
       slots.forEach((sl, i) => { sl.st = plans[i]; });
-      root.querySelector('.home-date').textContent = `${(date || '').replace(/-/g, '.')} · ${term}`;
+      dateText = `${(date || '').replace(/-/g, '.')} · ${term}`;
       const deskIn = Desk.load(DEAL).then(paintDesk), kitsIn = Age.load(DEAL);
+      const typeIn = printAll(breath).catch(() => { typed = true; }).then(retype);
       const order = slots.slice().sort((p, q) => Math.abs(wrap(p.index - pos)) - Math.abs(wrap(q.index - pos)));
       for (const sl of order) {
         if (!sl.printed) {
@@ -432,11 +498,12 @@ const Home = (() => {
         }
         Age.rest();
       }
-      await deskIn;
+      await Promise.all([deskIn, typeIn]);
     }
     /** the loading screen lifts: the title rises letter by letter, the stamps start floating */
     function show() {
       if (live) return;
+      typed = true; retype();
       live = true; inked = true;
       document.body.classList.add('home-inked'); showTitle(mod(Math.round(pos), N));
       float(); kick();
