@@ -154,11 +154,13 @@ const Loader = (() => {
       { duration: 700, delay: i * 180, easing: 'ease-out' }));
   }
   /** the door swings in (resolves when it has) */
+  let swung = Promise.resolve();
   function openDoor() {
     if (!scene || !pic) return Promise.resolve();
     root.classList.add('opening');
-    return new Promise(res => setTimeout(res, reduce ? 400 : 700));
+    return new Promise(res => setTimeout(res, reduce ? 400 : 750));
   }
+  const frames = n => new Promise(r => { const f = () => (n-- > 0 ? requestAnimationFrame(f) : r()); f(); });
   if (scene) (async () => {
     try {
       const e = await (await fetch('scene/index.json')).json();
@@ -257,7 +259,11 @@ const Loader = (() => {
       go.disabled = true; go.classList.add('down');
       kit(k => k.thump(0.7));
       clearTimeout(letterTimer);
-      await openDoor();                                      // the door swings in, then the iris closes on it
+      // the door swings in on the compositor, so the app gets ready behind it meanwhile (the home shown under the
+      // loading screen, its looping animations made, its first frames drawn): two frames on, once the swing is
+      // running. finish() closes the iris once the door is open and the main thread is quiet again
+      swung = openDoor();
+      await frames(2);
       res();
     }, { once: true }));
   }
@@ -267,7 +273,9 @@ const Loader = (() => {
     if (!active) return Promise.resolve();
     for (const k in STEPS) done[k] = 1; paint(); talk(SAY.done);
     const pressed = go && go.classList.contains('down');
+    document.body.classList.add('loaded');                  // the home's frames start now, under the loading screen
     return new Promise(res => setTimeout(async () => {
+      await swung; await frames(2);                         // the door open, the home's first frames done
       active = false;
       const doorEl = pic && $('.ld-door'), W = innerWidth, H = innerHeight;
       const b = pressed ? (doorEl ? doorEl.getBoundingClientRect() : go.getBoundingClientRect()) : null;
@@ -276,11 +284,10 @@ const Loader = (() => {
       const out = reduce ? root.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' })
         : root.animate([{ clipPath: `circle(${R}px at ${at})` }, { clipPath: `circle(0px at ${at})` }],
           { duration: 720, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
-      document.body.classList.add('loaded');
       await out.finished.catch(() => {});
       clearTimeout(letterTimer);
       root.remove(); res();
-    }, reduce ? 150 : pressed ? 160 : 380));
+    }, reduce ? 150 : pressed ? 60 : 380));
   }
   /** the debugging views (?gallery, ?sheet=demo, studio params) don't wait for it */
   function skip() { active = false; clearTimeout(letterTimer); if (root) root.remove(); document.body.classList.add('loaded'); }
