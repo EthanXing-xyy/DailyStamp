@@ -238,14 +238,7 @@
     }
 
     // ---- the clock: physics and the claw while the page is on show
-    let last = 0;
-    function tick(t) {
-      requestAnimationFrame(tick);
-      if (!Kit.visible(root)) { last = 0; return; }
-      const dt = last ? Math.min(1 / 30, (t - last) / 1000) : 1 / 60; last = t;
-      stepClaw(dt); physics(dt); draw();
-    }
-    requestAnimationFrame(tick);
+    Kit.loop(root, ms => { const dt = Math.min(1 / 30, ms / 1000); stepClaw(dt); physics(dt); draw(); });
     // the stamps inside are drawn small, a few at a time once the page is up
     let thumbing = null;
     const thumbs = () => thumbing || (thumbing = (async () => {

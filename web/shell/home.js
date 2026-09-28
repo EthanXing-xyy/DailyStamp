@@ -4,6 +4,9 @@
 // desk's paper shapes, are new on every reload (`?homeseed=N` pins one deal, for screenshots).
 // Tapping the middle one presses it (Win8), then it lifts off and flies to its page. The stamps are all printed while
 // the loading screen is up (fill), so the carousel never draws a stamp while it moves; show() lifts the titles in.
+// Phones: nothing here repaints while the wheel turns. The stamps float on the compositor (looping animations), their
+// shadows are bitmaps drawn once, the desk changes colour by fading one sheet over another, and the frame loop only
+// runs while the wheel moves (`?fps` shows the frame rate).
 const Home = (() => {
   const FEATURES = Features.LIST.map(f => ({ live: true, ...f }));   // web/app/features.js
   const N = FEATURES.length;
@@ -11,11 +14,30 @@ const Home = (() => {
   const TILT = reduce ? 0 : 7;
   const slow = +new URLSearchParams(location.search).get('homeslow') || 1;   // stretch the carousel's easing (screenshots)
   const DEAL = +new URLSearchParams(location.search).get('homeseed') || 1 + Math.floor(Math.random() * 2147483646);
+  const FPS = new URLSearchParams(location.search).has('fps');
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const put = (cv, src) => { cv.width = src.width; cv.height = src.height; cv.getContext('2d').drawImage(src, 0, 0); };
   const mod = (a, n) => ((a % n) + n) % n;
   const wrap = d => mod(d + N / 2, N) - N / 2;              // ring distance, in [-N/2, N/2)
   const two = n => String(n).padStart(2, '0');
+
+  // paper riding moving air: every stamp bobs, wanders in a slow figure of eight, turns and tips to the light, each on
+  // its own period; its shadow stays on the desk, fainter, softer and further off the higher the stamp floats. One
+  // looping animation per stamp, sampled from these sines; the periods fit the loop a whole number of times.
+  const LOOP = 49.6, SAMPLES = 160;
+  const PERIODS = [6.2, LOOP / 6, LOOP / 7, LOOP / 9, LOOP / 5];   // bob, sway, turn, tip, lean: about 6.2 8.3 7.1 5.5 9.9 s
+  function floatFrames(ph) {
+    const inner = [], shadow = [];
+    for (let i = 0; i <= SAMPLES; i++) {
+      const t = i * LOOP / SAMPLES, w = k => Math.sin(t * 2 * Math.PI / PERIODS[k] + ph[k]);
+      const fy = 14 * w(0), fx = 5 * w(1), rz = 2 * w(2), rx = 5 * w(3), ry = 6 * w(4);
+      const lift = (14 - fy) / 28;                          // 0 resting low .. 1 at the top of its bob
+      inner.push({ transform: `translate(${fx.toFixed(2)}px, ${fy.toFixed(2)}px) rotate(${rz.toFixed(3)}deg) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)` });
+      shadow.push({ transform: `translate(${(fx * 0.5 + 6 + lift * 10).toFixed(2)}px, ${(12 + lift * 16).toFixed(2)}px) rotate(${(rz * 0.7).toFixed(3)}deg) scale(${(0.95 + lift * 0.09).toFixed(4)})`,
+        opacity: +(0.62 - lift * 0.3).toFixed(3) });
+    }
+    return [inner, shadow];
+  }
 
   /** this visit's stamps: library words, palettes and layouts dealt afresh on every load (the date only goes on the stamp) */
   function plan(date, words, palettes) {
@@ -36,17 +58,26 @@ const Home = (() => {
     const ring = el('div', 'carousel');
     const kicker = el('p', 'home-kicker'), title = el('h2', 'home-title');
     const count = el('div', 'home-count', '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle class="arc" cx="12" cy="12" r="9" pathLength="100"/></svg><span></span>');
+    // the desk: two sheets of plain colour and, for each paper shape, two tinted canvases. The lower ones carry an even
+    // stamp's tones, the upper ones an odd stamp's, faded over as the wheel turns (paintBackdrop)
     const bg = el('div', 'home-bg');
-    const sets = [0, 1].map(() => { const g = el('div', 'bd-set', '<i class="bd-ghost"></i><i class="bd"></i>'); bg.append(g); return { g, pick: null }; });
+    const desks = [el('i', 'bd-desk'), el('i', 'bd-desk up')];
+    bg.append(...desks);
+    const sets = [0, 1].map(() => {
+      const g = el('div', 'bd-set'), cvs = [el('canvas', 'bd-tone'), el('canvas', 'bd-tone up')];
+      g.append(...cvs); bg.append(g);
+      return { g, cvs, pick: null, img: null, drift: null, rot: '' };
+    });
     root.append(bg, top, ring, kicker, title, count);
     root.tabIndex = 0;
     const slots = FEATURES.map((f, i) => {
-      const btn = el('div', 'card'), shadow = el('div', 'card-shadow'), inner = el('div', 'card-in'), cv = el('canvas');
+      const btn = el('div', 'card'), shadow = el('canvas', 'card-shadow'), inner = el('div', 'card-in');
+      const contact = el('canvas', 'card-contact'), cv = el('canvas', 'card-face');
       btn.setAttribute('role', 'button'); btn.setAttribute('aria-label', f.cn);
-      inner.append(cv); btn.append(shadow, inner); ring.append(btn);
+      inner.append(contact, cv); btn.append(shadow, inner); ring.append(btn);
       // each stamp drifts on its own phases, so the eleven never move in step
       const ph = [0, 1, 2, 3, 4].map(k => (i * 2.399 + k * 1.913) % (2 * Math.PI));
-      return { ...f, index: i, btn, shadow, inner, cv, st: null, printed: null, ph };
+      return { ...f, index: i, btn, shadow, inner, contact, cv, st: null, printed: null, ph, anims: null, far: null, tr: '', op: '', z: '' };
     });
 
     // ---- sizes. The stamps ride the rim of a big wheel whose hub sits below the screen: the further out, the lower
@@ -98,6 +129,7 @@ const Home = (() => {
       gap = R * Math.sin(ANG[1]);                           // px a drag travels per stamp
       cy = H * 0.45;
       root.style.setProperty('--cw', cw + 'px'); root.style.setProperty('--ch', ch + 'px'); root.style.setProperty('--cy', cy + 'px');
+      drawShadows(); slots.forEach(contact);
       placeBackdrops();
     }
     /** a stamp |d| steps from the middle: its angle on the wheel, or its scale (past the table it carries on at the last step) */
@@ -105,57 +137,115 @@ const Home = (() => {
       const k = Math.min(tbl.length - 2, Math.floor(a));
       return tbl[k] + (tbl[k + 1] - tbl[k]) * (a - k);
     };
-    layout();
-    addEventListener('resize', () => { layout(); frame(performance.now(), true); });
-    const sc = Math.min(0.6, Math.max(0.3, cw * Math.min(2, devicePixelRatio || 1) / 1200));
-    slots.forEach(sl => put(sl.cv, Stamp.blank(sc, 3 + sl.index)));
 
-    // ---- the engine: pos (which stamp is in the middle, fractional) eases toward to
-    let pos = 0, to = 0, last = 0, vel = 0, tilt = 0, dragging = false, shown = -1;
-    const presser = U.presser(() => {}), press = presser.now;
+    // ---- shadows, drawn once rather than blurred on every frame
+    const SPILL = 48;                                       // px the desk shadow's blur (σ 16) spills past its sheet
+    /** the soft shadow each stamp casts on the desk: a rounded sheet a little inside the stamp, blurred, drawn a quarter size */
+    function drawShadows() {
+      const q = 0.25, rw = cw * 0.88, rh = ch * 0.9;
+      const w = Math.ceil((rw + 2 * SPILL) * q), h = Math.ceil((rh + 2 * SPILL) * q), off = w + h;
+      const art = el('canvas'); art.width = w; art.height = h;
+      const g = art.getContext('2d');
+      g.shadowColor = 'rgba(40,30,20,.34)'; g.shadowBlur = 2 * 16 * q; g.shadowOffsetX = off;   // σ = blur / 2
+      g.beginPath();
+      if (g.roundRect) g.roundRect(SPILL * q - off, SPILL * q, rw * q, rh * q, [{ x: rw * q * 0.04, y: rh * q * 0.04 }]);
+      else g.rect(SPILL * q - off, SPILL * q, rw * q, rh * q);
+      g.fill();
+      for (const sl of slots) {
+        put(sl.shadow, art);
+        Object.assign(sl.shadow.style, { left: (cw * 0.06 - SPILL).toFixed(1) + 'px', top: (ch * 0.05 - SPILL).toFixed(1) + 'px',
+          width: (w / q).toFixed(1) + 'px', height: (h / q).toFixed(1) + 'px' });
+      }
+    }
+    /** the contact shadow round a stamp's own edge (its perforations, a torn fibre), from its canvas at a third the size */
+    function contact(sl) {
+      const src = sl.cv, c = sl.contact;
+      if (!src.width || !cw) return;
+      const w = Math.max(1, Math.round(src.width / 3)), h = Math.max(1, Math.round(src.height / 3)), s = w / cw;
+      const pad = Math.ceil(4 * s) + 2;
+      c.width = w + 2 * pad; c.height = h + 2 * pad;
+      const g = c.getContext('2d'), off = c.width + c.height;
+      g.shadowColor = 'rgba(0,0,0,.24)'; g.shadowBlur = 1.5 * s; g.shadowOffsetX = off + s; g.shadowOffsetY = 2 * s;
+      g.drawImage(src, pad - off, pad, w, h);
+      Object.assign(c.style, { left: (-pad / w * 100).toFixed(3) + '%', top: (-pad / h * 100).toFixed(3) + '%',
+        width: (c.width / w * 100).toFixed(3) + '%', height: (c.height / h * 100).toFixed(3) + '%' });
+    }
+
+    layout();
+    const sc = Math.min(0.6, Math.max(0.3, cw * Math.min(2, devicePixelRatio || 1) / 1200));
+    slots.forEach(sl => { put(sl.cv, Stamp.blank(sc, 3 + sl.index)); contact(sl); });
+
+    // ---- the engine: pos (which stamp is in the middle, fractional) eases toward to. The loop only runs while
+    // something moves; the floating is the compositor's
+    let pos = 0, to = 0, last = 0, vel = 0, tilt = 0, dragging = false, shown = -1, arc = '', raf = 0;
     function frame(t, force) {
       // (under the loading screen the wheel stands still: every frame there goes to printing)
       const visible = document.body.classList.contains('daily-home') && document.body.classList.contains('loaded') && !document.hidden;
-      if (!visible && !force) { last = 0; return; }
+      if (!visible && !force) { last = 0; return false; }
       const dt = last ? Math.min(64, t - last) : 16; last = t;
       const before = pos;
       if (!dragging) pos += (to - pos) * (1 - Math.exp(-dt / (110 * slow)));
       if (Math.abs(to - pos) < 1e-4) pos = to;
       vel = (pos - before) / Math.max(1, dt);
       tilt += (Math.max(-6, Math.min(6, vel * 750)) * (reduce ? 0 : 1) - tilt) * (1 - Math.exp(-dt / (120 * slow)));
-      const secs = t / 1000, c = mod(Math.round(pos), N), m = reduce ? 0 : 1;
-      const wave = (period, phase) => Math.sin(secs * 2 * Math.PI / period + phase);
+      const c = mod(Math.round(pos), N), near = [];
       for (const sl of slots) {
         const d = wrap(sl.index - pos), a = Math.abs(d);
+        const far = a > fadeFrom + 0.6;                     // out of sight: hidden, its floating paused
+        if (far !== sl.far) {
+          sl.far = far; sl.btn.classList.toggle('far', far);
+          if (sl.anims) for (const an of sl.anims) far ? an.pause() : an.play();
+        }
+        if (far) continue;
         const th = Math.sign(d) * along(ANG, a), s = along(SCL, a);
         const x = R * Math.sin(th), y = R * (1 - Math.cos(th));
-        sl.btn.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${(th * 180 / Math.PI).toFixed(3)}deg) scale(${s.toFixed(4)}) rotateY(${tilt.toFixed(2)}deg)`;
-        sl.btn.style.opacity = a < fadeFrom ? '' : Math.max(0, 1 - (a - fadeFrom) / 0.6).toFixed(3);
-        sl.btn.style.zIndex = String(100 - Math.round(a * 10));
-        if (a > fadeFrom + 0.6) continue;                   // out of sight
-        // paper riding moving air: it bobs, wanders in a slow figure of eight, turns and tips to the light, each on its
-        // own period; its shadow stays on the desk, fainter, softer and further off the higher the stamp floats
-        const ph = sl.ph;
-        const fy = m * 14 * wave(6.2, ph[0]), fx = m * 5 * wave(8.3, ph[1]), rz = m * 2 * wave(7.4, ph[2]);
-        const rx = m * 5 * wave(5.6, ph[3]), ry = m * 6 * wave(9.1, ph[4]);
-        let tf = `translate(${fx.toFixed(2)}px, ${fy.toFixed(2)}px) rotate(${rz.toFixed(3)}deg) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
-        const pd = sl.index === c ? press.d : 0;
-        if (pd > 1e-3) {
-          const tx = -press.y * TILT * pd, ty = press.x * TILT * pd;
-          const k = 1 - 0.035 * pd * (1 - 0.55 * Math.min(1, Math.hypot(press.x, press.y)));
-          tf = `rotateY(${ty.toFixed(2)}deg) rotateX(${tx.toFixed(2)}deg) scale(${k.toFixed(4)}) ` + tf;
-        }
-        sl.inner.style.transform = 'perspective(1000px) ' + tf;
-        const lift = m * (14 - fy) / 28;                    // 0 resting low .. 1 at the top of its bob
-        sl.shadow.style.transform = `translate(${(fx * 0.5 + 6 + lift * 10).toFixed(2)}px, ${(12 + lift * 16 - pd * 8).toFixed(2)}px) rotate(${(rz * 0.7).toFixed(3)}deg) scale(${(0.95 + lift * 0.09 - pd * 0.03).toFixed(4)})`;
-        sl.shadow.style.opacity = (0.62 - lift * 0.3 + pd * 0.2).toFixed(3);
+        const tf = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${(th * 180 / Math.PI).toFixed(3)}deg) scale(${s.toFixed(4)}) rotateY(${tilt.toFixed(2)}deg)`;
+        if (tf !== sl.tr) sl.btn.style.transform = sl.tr = tf;
+        const op = a < fadeFrom ? '' : Math.max(0, 1 - (a - fadeFrom) / 0.6).toFixed(3);
+        if (op !== sl.op) sl.btn.style.opacity = sl.op = op;
+        sl.a = a; near.push(sl);
       }
+      // the nearer lies on top; the order is only written when it changes
+      near.sort((p, q) => p.a - q.a || p.index - q.index);
+      near.forEach((sl, i) => { const z = String(100 - i); if (z !== sl.z) sl.btn.style.zIndex = sl.z = z; });
       paintBackdrop(t);
-      count.querySelector('.arc').style.strokeDashoffset = (100 - (mod(pos, N) + 1) / N * 100).toFixed(2);
+      const off = (Math.round((100 - (mod(pos, N) + 1) / N * 100) * 2) / 2).toFixed(1);
+      if (off !== arc) count.querySelector('.arc').style.strokeDashoffset = arc = off;
       if (c !== shown) showTitle(c);
+      return true;
     }
-    const loop = t => { frame(t); requestAnimationFrame(loop); };
-    requestAnimationFrame(loop);
+    const moving = () => dragging || Math.abs(to - pos) > 1e-4 || Math.abs(tilt) > 0.01 || (tintFrom > 0 && performance.now() - tintFrom < 1000);
+    const loop = t => { raf = 0; if (frame(t) && moving()) raf = requestAnimationFrame(loop); else last = 0; };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(loop); };
+    // the home coming on show (loaded, back from a page) is a change of the body's classes
+    new MutationObserver(kick).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    document.addEventListener('visibilitychange', kick);
+    addEventListener('resize', () => { layout(); frame(performance.now(), true); kick(); });
+
+    // Win8 press on the stamp in the middle: it tips toward the finger and sinks, outside its floating
+    let pressed = null;
+    const unpress = sl => { sl.inner.style.rotate = sl.inner.style.scale = ''; sl.shadow.style.translate = sl.shadow.style.scale = ''; };
+    const presser = U.presser(now => {
+      const sl = current(), pd = now.d;
+      if (pressed && (pressed !== sl || pd < 1e-3)) { unpress(pressed); pressed = null; }
+      if (pd < 1e-3) return;
+      pressed = sl;
+      const tx = -now.y * TILT * pd, ty = now.x * TILT * pd, turn = Math.hypot(tx, ty);
+      const k = 1 - 0.035 * pd * (1 - 0.55 * Math.min(1, Math.hypot(now.x, now.y)));
+      sl.inner.style.rotate = turn > 1e-3 ? `${tx.toFixed(4)} ${ty.toFixed(4)} 0 ${turn.toFixed(3)}deg` : 'none';
+      sl.inner.style.scale = k.toFixed(4);
+      sl.shadow.style.translate = `0 ${(-pd * 8).toFixed(2)}px`; sl.shadow.style.scale = (1 - pd * 0.03).toFixed(4);
+    });
+    /** the stamps start floating when the loading screen lifts (never with reduced motion) */
+    function float() {
+      if (reduce || slots[0].anims) return;
+      const o = { duration: LOOP * 1000, iterations: Infinity };
+      for (const sl of slots) {
+        const [inner, shadow] = floatFrames(sl.ph);
+        sl.anims = [sl.inner.animate(inner, o), sl.shadow.animate(shadow, o)];
+        if (sl.far) for (const an of sl.anims) an.pause();
+      }
+    }
 
     // ---- the desk: it takes the colour of the stamp in the middle (muted right down, blended as the wheel turns), and two
     // big hand-cut paper shapes (Matisse's cut-outs, Warhol's Flowers) lie on it tone on tone, a new pair every visit. The
@@ -194,25 +284,64 @@ const Home = (() => {
       sl.toneOf = sl.printed; sl.tone = tone;
       return tone;
     }
-    let tintFrom = 0, painted = '', paintedA = null, paintedB = null, live = false;   // live: the loading screen has lifted
+    let tintFrom = 0, live = false, toned = [null, null], upOp = null;   // live: the loading screen has lifted
     const blend = (a, b, k) => ({ desk: U.mixOklab(a.desk, b.desk, k), shape: U.mixOklab(a.shape, b.shape, k), ghost: U.mixOklab(a.ghost, b.ghost, k) });
+    const TR = Math.min(1.5, devicePixelRatio || 1);        // the shapes are soft and tone on tone: 1.5 px per px is plenty
+    /** a shape's canvas in tones c: its misregistered ghost with the shape over it. Only plain compositing: the ghost's
+     *  mask filled with its ink, the shape's outline cut out of it, the shape's ink laid behind, then everything outside
+     *  the two outlines (s.union, drawn once per size) taken away */
+    function tint(s, L, c) {
+      const p = s.pick, img = s.img;
+      if (!p || !img || !p.size) return;
+      const w = Math.ceil((p.size + p.gx) * TR), h = Math.ceil((p.size + p.gy) * TR), S = p.size * TR, ar = img.naturalWidth / img.naturalHeight;
+      const mw = ar >= 1 ? S : S * ar, mh = ar >= 1 ? S / ar : S, mx = (S - mw) / 2, my = (S - mh) / 2, gx = mx + p.gx * TR, gy = my + p.gy * TR;
+      if (!s.union || s.union.width !== w || s.union.height !== h) {
+        s.union = el('canvas'); s.union.width = w; s.union.height = h;
+        const u = s.union.getContext('2d'); u.drawImage(img, gx, gy, mw, mh); u.drawImage(img, mx, my, mw, mh);
+      }
+      const cv = s.cvs[L];
+      if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+      const g = cv.getContext('2d'), op = m => { g.globalCompositeOperation = m; };
+      op('source-over'); g.clearRect(0, 0, w, h); g.drawImage(img, gx, gy, mw, mh);
+      op('source-in'); g.fillStyle = c.ghost; g.fillRect(0, 0, w, h);
+      op('destination-out'); g.drawImage(img, mx, my, mw, mh);
+      op('destination-over'); g.fillStyle = c.shape; g.fillRect(0, 0, w, h);
+      op('destination-in'); g.drawImage(s.union, 0, 0);
+      op('source-over');
+    }
     function paintBackdrop(t) {
       const k = tintFrom ? Math.min(1, (t - tintFrom) / 900) : 0, kk = k * k * (3 - 2 * k);
-      const c0 = Math.floor(pos), f = pos - c0;
-      const a = tones(slots[mod(c0, N)]) || NEUTRAL, b = tones(slots[mod(c0 + 1, N)]) || NEUTRAL;
-      const key = `${pos.toFixed(3)}|${kk.toFixed(3)}`;
-      if (key !== painted || a !== paintedA || b !== paintedB) {
-        painted = key; paintedA = a; paintedB = b;
-        const c = blend(NEUTRAL, blend(a, b, f), kk);
-        bg.style.setProperty('--bd-desk', c.desk); bg.style.setProperty('--bd-shape', c.shape); bg.style.setProperty('--bd-ghost', c.ghost);
+      // the lower sheets carry whichever of the two stamps either side of the middle is even, the upper ones the odd
+      // one, faded in by how far the wheel has gone toward it: passing a stamp retints one pair while the other hides it
+      const c0 = Math.floor(pos), f = pos - c0, odd = mod(c0, 2) === 1;
+      const up = +(odd ? 1 - f : f).toFixed(3);
+      if (up !== upOp) { upOp = up; desks[1].style.opacity = up; for (const s of sets) s.cvs[1].style.opacity = up; }
+      for (const L of [0, 1]) {
+        if ((L ? up <= 0 : up >= 1) && k < 1) continue;   // a hidden pair waits until the desk has taken its colour
+        const tn = tones(slots[mod(odd ? c0 + 1 - L : c0 + L, N)]) || NEUTRAL, c = kk < 1 ? blend(NEUTRAL, tn, kk) : tn;
+        const key = c.desk + c.shape + c.ghost;
+        if (key === toned[L]) continue;
+        toned[L] = key;
+        desks[L].style.backgroundColor = c.desk;
+        for (const s of sets) tint(s, L, c);
       }
-      const secs = t / 1000;
       for (const [i, s] of sets.entries()) {
         if (!s.pick) continue;
-        const p = s.pick, turn = reduce ? 0 : (i ? -5 : 9) * pos, dr = reduce ? 0 : 0.01 * p.size;
-        const dx = dr * Math.sin(secs * 2 * Math.PI / (i ? 23 : 19) + i * 2), dy = dr * Math.cos(secs * 2 * Math.PI / (i ? 17 : 21) + i);
-        s.g.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) rotate(${(p.rot + turn).toFixed(2)}deg)`;
+        const r = (s.pick.rot + (reduce ? 0 : (i ? -5 : 9) * pos)).toFixed(2) + 'deg';
+        if (r !== s.rot) s.g.style.rotate = s.rot = r;
       }
+    }
+    /** a shape's slow drift, on the compositor: a loop of two minutes (periods about 20 and 24 s, or 24 and 17 s) */
+    function drift(s, i) {
+      if (s.drift) s.drift.cancel();
+      s.drift = null;
+      if (reduce) return;
+      const dr = 0.01 * s.pick.size, T = 120, n = 240, px = i ? 24 : 20, py = i ? T / 7 : 24, kf = [];
+      for (let k = 0; k <= n; k++) {
+        const t = k * T / n;
+        kf.push({ translate: `${(dr * Math.sin(t * 2 * Math.PI / px + i * 2)).toFixed(2)}px ${(dr * Math.cos(t * 2 * Math.PI / py + i)).toFixed(2)}px` });
+      }
+      s.drift = s.g.animate(kf, { duration: T * 1000, iterations: Infinity });
     }
     /** the visit's two shapes: a big one bleeding off a corner, a smaller one off the opposite corner */
     function placeBackdrops() {
@@ -221,12 +350,16 @@ const Home = (() => {
       for (const [i, s] of sets.entries()) {
         const p = s.pick; if (!p) continue;
         p.size = (i ? 0.55 : 1.1) * m * (W > H ? 1 : 1.25);
+        p.gx = 0.012 * m; p.gy = 0.009 * m;                 // the ghost's misregistration
         const [sx, sy] = p.corner, inset = (i ? 0.2 : 0.14) * p.size;
         const cx = sx ? W - inset : inset, cy2 = sy ? H - inset : inset;
         Object.assign(s.g.style, { left: (cx - p.size / 2).toFixed(1) + 'px', top: (cy2 - p.size / 2).toFixed(1) + 'px',
           width: p.size.toFixed(1) + 'px', height: p.size.toFixed(1) + 'px' });
-        s.g.style.setProperty('--gx', (0.012 * m).toFixed(1) + 'px'); s.g.style.setProperty('--gy', (0.009 * m).toFixed(1) + 'px');
+        for (const cv of s.cvs) Object.assign(cv.style, { width: (p.size + p.gx).toFixed(1) + 'px', height: (p.size + p.gy).toFixed(1) + 'px' });
+        drift(s, i);
       }
+      toned = [null, null];
+      paintBackdrop(performance.now());
     }
     async function loadBackdrops(date) {
       const list = await fetch('/backdrops/index.json', { cache: 'no-cache' }).then(r => r.json()).catch(() => []);
@@ -242,9 +375,8 @@ const Home = (() => {
         img.src = url;
         try { await img.decode(); } catch { return; }
         const s = sets[i];
-        s.pick = { corner: i ? hero.map(v => 1 - v) : hero, rot: rots[i], size: 0 };
-        for (const e of s.g.children) { e.style.maskImage = `url("${url}")`; e.style.webkitMaskImage = `url("${url}")`; }
-        placeBackdrops(); paintBackdrop(performance.now());
+        s.pick = { corner: i ? hero.map(v => 1 - v) : hero, rot: rots[i], size: 0 }; s.img = img;
+        placeBackdrops();
         if (live) requestAnimationFrame(() => s.g.classList.add('on'));
       }));
     }
@@ -287,8 +419,8 @@ const Home = (() => {
       busy = true;
       setTimeout(async () => { try { await onOpen(sl); } finally { busy = false; } }, 120);   // let the press be felt first
     };
-    const goTo = i => { to = Math.round(pos) + wrap(i - Math.round(pos)); };
-    const step = k => { to = Math.round(to) + k; };
+    const goTo = i => { to = Math.round(pos) + wrap(i - Math.round(pos)); kick(); };
+    const step = k => { to = Math.round(to) + k; kick(); };
 
     // ---- input: drag (flicks carry on), wheel (one stamp per gesture), arrow keys, taps
     let down = null, samples = [];
@@ -305,7 +437,7 @@ const Home = (() => {
       const dx = e.clientX - down.x;
       samples.push({ x: e.clientX, t: e.timeStamp }); if (samples.length > 6) samples.shift();
       if (!dragging && Math.hypot(dx, e.clientY - down.y) > 7) { dragging = true; presser.release(); }
-      if (dragging) { pos = down.pos - dx * down.k / gap; to = pos; }
+      if (dragging) { pos = down.pos - dx * down.k / gap; to = pos; kick(); }
       else if (presser.held) presser.aim(presser.point(current().inner, e.clientX, e.clientY));
     });
     const up = e => {
@@ -316,6 +448,7 @@ const Home = (() => {
         const a = samples[0], b = samples[samples.length - 1], v = b.t > a.t ? (b.x - a.x) / (b.t - a.t) : 0;   // px per ms
         const flung = pos - v * d.k * 220 / gap;
         to = Math.max(Math.round(d.pos) - 3, Math.min(Math.round(d.pos) + 3, Math.round(flung)));
+        kick();
         return;
       }
       if (e.type === 'pointercancel' || !d.card) return;
@@ -346,6 +479,19 @@ const Home = (() => {
       else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); presser.down(); presser.release(); activate(current()); }
     });
 
+    // ?fps: the frame rate and the slowest frame of each second, small in a corner (for trying it on a phone)
+    if (FPS) {
+      const meter = el('p', 'home-fps'); document.body.append(meter);
+      let n = 0, worst = 0, from = 0, prev = 0;
+      const tick = t => {
+        if (prev) { worst = Math.max(worst, t - prev); n++; }
+        prev = t; from = from || t;
+        if (t - from >= 1000) { meter.textContent = `${Math.round(n * 1000 / (t - from))} FPS · MAX ${Math.round(worst)} MS`; n = 0; worst = 0; from = t; }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+
     /** prints the visit's stamps under the loading screen, the middle one first and then outwards, with a breath between
      *  them so the loader can paint; onEach(i, canvas) hands each one to the loader's slots */
     async function fill(plans, { date, term, render, onEach, breath }) {
@@ -356,7 +502,7 @@ const Home = (() => {
       for (const sl of order) {
         if (!sl.printed) {
           // the slot's own canvas is the printed stamp (a second copy of every stamp was ~1 MB each a phone can't spare)
-          put(sl.cv, render(sl.st, sc)); sl.printed = sl.cv;
+          put(sl.cv, render(sl.st, sc)); sl.printed = sl.cv; contact(sl);
           tones(sl);                                        // the desk colour it gives, worked out now rather than mid-turn
         }
         if (onEach) onEach(sl.index, sl.printed);
@@ -371,12 +517,18 @@ const Home = (() => {
       document.body.classList.add('home-inked'); showTitle(mod(Math.round(pos), N));
       tintFrom = performance.now();
       for (const s of sets) if (s.pick) s.g.classList.add('on');
+      float(); kick();
     }
 
     const find = key => slots.find(sl => sl.key === key);
     /** turn the carousel to a stamp at once (the home is still hidden when this is called) */
     function reveal(sl) { pos = to = Math.round(pos) + wrap(sl.index - Math.round(pos)); tilt = 0; frame(performance.now(), true); }
-    return { slots, find, fill, show, reveal, scale: sc };
+    /** a slot takes what its page made (the router, on the way home): onto its own canvas, with its contact shadow */
+    function repaint(sl) {
+      if (sl.printed && sl.printed !== sl.cv && sl.cv.width) sl.cv.getContext('2d').drawImage(sl.printed, 0, 0, sl.cv.width, sl.cv.height);
+      contact(sl);
+    }
+    return { slots, find, fill, show, reveal, repaint, scale: sc };
   }
 
   /** a copy of a stamp flies from one screen rect to another. Leaving, it lifts first; coming home, it settles into its

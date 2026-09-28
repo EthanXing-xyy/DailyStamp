@@ -33,6 +33,23 @@ const Kit = (() => {
     P.api = api => { const enter = api.enter; api.enter = () => { if (P.stale) P.layout(); if (enter) enter(); }; return api; };
     return P;
   }
+  /** a page's clock: fn(dt, t) on every frame while the page is on show (dt in ms, at most 50, 16 on the first frame
+   *  back). It sleeps while the page is hidden, so a page left behind costs the home nothing: a frame requested for
+   *  nothing keeps the phone's main thread (and every running animation's style) busy */
+  function loop(root, fn) {
+    let raf = 0, last = 0;
+    const tick = t => {
+      raf = 0;
+      if (!visible(root)) { last = 0; return; }
+      const dt = last ? Math.min(50, t - last) : 16; last = t;
+      raf = requestAnimationFrame(tick);
+      fn(dt, t);
+    };
+    const wake = () => { if (!raf && visible(root)) raf = requestAnimationFrame(tick); };
+    for (const target of [root, document.body]) new MutationObserver(wake).observe(target, { attributes: true, attributeFilter: ['class'] });
+    document.addEventListener('visibilitychange', wake);
+    wake();
+  }
   /** one line of status under the work; flash() shows a note for a while, then the line goes back */
   function status(root) {
     const p = el('p', 'kit-status'); root.append(p);
@@ -345,7 +362,7 @@ const Kit = (() => {
   /** a round button with a label; never a boxed rectangle */
   function button(parent, label, cls = '') { const b = el('button', 'kit-btn ' + cls, label); b.type = 'button'; parent.append(b); return b; }
 
-  return { DEBUG, debugRow, TAU, reduce, el, clamp, wait, two, put, visible, localDate, dayNo, addDays, hash, head, status, audio, buzz, crackle, thump, rustle, bell,
+  return { DEBUG, debugRow, TAU, reduce, el, clamp, wait, two, put, visible, loop, localDate, dayNo, addDays, hash, head, status, audio, buzz, crackle, thump, rustle, bell,
     visit, visitStamps, stampFor, card, issue, page, photoPlates, gum, watermark, save, blobOf, imageOf, button, drawMark, drawMarks, mySeal,
     thumbs: {} };   // thumbs[kind](entry, scale, deps): how the album draws works that are not plain stamps
 })();

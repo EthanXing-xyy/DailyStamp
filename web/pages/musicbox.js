@@ -170,16 +170,12 @@
     };
 
     // ---- the clock
-    let last = 0;
-    function tick(t) {
-      requestAnimationFrame(tick);
-      if (!Kit.visible(root)) { last = 0; return; }
-      const dt = last ? Math.min(50, t - last) : 16; last = t;
+    function tick(dt) {
       if (auto || spaceHeld) feed(dt / 1000 * 3.2);
       let ringing = false; for (let c = 0; c < COLS; c++) { ring[c] = Math.max(0, ring[c] - dt / 700); ringing = ringing || ring[c] > 0; }
       if (ringing || auto || spaceHeld || dragC) draw();
     }
-    requestAnimationFrame(tick);
+    Kit.loop(root, tick);
 
     layout();
     status.set(`「${phrase}」的曲子 · 顺时针摇手柄，或者按住空格`);

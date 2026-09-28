@@ -508,14 +508,7 @@ const Tear = (() => {
       p.gloss.style.opacity = (Math.min(1, lift / 18) * 0.7).toFixed(3);
       p.gloss.style.backgroundPosition = `${(50 - dx * lift * 1.6).toFixed(1)}% ${(50 - dy * lift * 1.6).toFixed(1)}%`;
     }
-    let last = 0;
-    const loop = t => {
-      requestAnimationFrame(loop);
-      if (!Kit.visible(root)) { last = 0; return; }
-      const dt = last ? Math.min(50, t - last) : 16; last = t;
-      step(dt, t);
-    };
-    requestAnimationFrame(loop);
+    Kit.loop(root, step);
 
     let resizeT = 0;
     addEventListener('resize', () => {

@@ -173,11 +173,7 @@
     const ripple = (x, y) => rings.push({ x: x - bx, y: y - by, t: performance.now() });
 
     // ---- the clock: soaking, floating, drying
-    let last = 0;
-    function tick(t) {
-      requestAnimationFrame(tick);
-      if (!Kit.visible(root)) { last = 0; return; }
-      const dt = last ? Math.min(50, t - last) : 16; last = t;
+    function tick(dt, t) {
       if (phase === 'soaking') {
         E.wet = Math.min(1, E.wet + dt / 1500);
         soak += dt * (1 + Math.min(2.5, stir)) / SOAK_MS; stir = Math.max(0, stir - dt / 600);
@@ -192,7 +188,7 @@
       if (t - lastPaint > 33) { drawBasin(t); lastPaint = t; }
       place();
     }
-    requestAnimationFrame(tick);
+    Kit.loop(root, tick);
 
     function float() {
       phase = 'floating'; S.free = true; S.wet = 1;

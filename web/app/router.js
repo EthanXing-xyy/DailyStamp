@@ -129,7 +129,7 @@ const Router = (() => {
       home.style.opacity = '';
       home.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, easing: 'ease' });
       const f = await flying;
-      if (sl.printed && sl.cv.width) sl.cv.getContext('2d').drawImage(sl.printed, 0, 0, sl.cv.width, sl.cv.height);
+      hv.repaint(sl);
       sl.btn.style.visibility = ''; f.remove();
       document.body.classList.remove('flip-wait');
       V.gone();
