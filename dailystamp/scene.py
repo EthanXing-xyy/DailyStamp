@@ -3,16 +3,19 @@
 red door with a hanging sign, an old pillar box, a pot plant, and a calico cat that changes pose; behind the door, the
 lit room it swings open onto.
 
-codex draws three pictures once, from the reference pictures the user picked (scene/ref-*.png, local only):
+codex draws four pictures once, from the reference pictures the user picked (scene/ref-*.png, local only):
   cover  the door, the bicycle, the pillar box and the plant, without the cat
   cat    the same cat in three poses side by side, and a small envelope
   room   the inside: the stamp cabinet, counter and clock of ref-room-5 with the clerk of ref-room-1 behind the counter
+  leaf   the door's leaf once more, in the light it stands in when open (turned from the day, the room's lamp raking
+         across it): the page fades to it as the door swings, so the door isn't one picture turning like a card
 Here the cover is cropped to what's drawn, the cat sheet is cut out of its paper into one picture per pose and the
-envelope, and the room is cut to the doorway's shape. Where things are in the cover (the door, the sign, the slot, the
-basket, the handlebar, where the cat sits) is measured by hand into SPOTS, and everything goes into scene/index.json for
+envelope, the room is cut to the doorway's shape, and the door's leaf is cut out of the cover with its glass as holes
+(the room shows through them). Where things are in the cover (the door, the sign, the slot, the basket, the
+handlebar, where the cat sits) is measured by hand into SPOTS, and everything goes into scene/index.json for
 web/loader.js.
 
-  python dailystamp.py scene [cover|cat|room]   # draw them again (all, or the given ones)
+  python dailystamp.py scene [cover|cat|room|leaf]   # draw them again (all, or the given ones)
   python dailystamp.py scene --rebuild          # cut them again from the raw drawings"""
 from __future__ import annotations
 
@@ -84,6 +87,23 @@ numerals, the same brick-red pendant lamp, the same plants, the same rug and flo
 Composition: the picture will be shown cropped to a tall narrow doorway whose left quarter is hidden by the open door,
 so the clerk and the middle of the counter sit between 45% and 75% of the picture's width, and everything that
 matters stays between 15% and 90% of its height."""),
+    # (its reference is made here from the cover: leaf_ref())
+    "leaf": ("portrait, 1024x1536", ["_work/leaf.ref.png"], """The FIRST attached picture is a red wooden door leaf taken off
+its wall and laid flat on the paper: four glass panes above, a panel of planks below, a brass handle on the right. It is
+lit evenly from the front, its glass dark.
+Redraw it EXACTLY as it is: the same place and the same size in the picture, the same outline, the panes, the glazing
+bars, the panel, the planks and the handle exactly where they are, the same paint with its worn white specks and
+scratches. Change ONLY the light that falls on it:
+- the door now stands open into a lit room, turned away from the daylight: its whole face is in soft shadow, a deeper,
+  duller, browner red, about a third darker than in the first picture
+- warm lamp light from the room falls across the face from the RIGHT, at a low raking angle: a warm glowing orange-red
+  band down the right edge (the side of the handle), fading smoothly into the deepest shadow at the left edge
+- the raking light shows the relief: the raised frame casts a narrow soft shadow onto the sunken panel and onto the
+  glass along their right-hand edges; the left-hand edges of the sunken panel, of the grooves between the planks and
+  of the glazing bars catch a thin warm light; the handle casts a short soft shadow to its left
+- the four panes are clear old glass seen at a slant, unlit: a dark warm grey-brown, each crossed by one or two soft
+  pale diagonal streaks of reflected light
+Nothing else: no wall, no door frame, no floor, no shadow on the paper, only the door leaf on the empty cream paper."""),
 }
 STYLES = {"room": ROOM_STYLE}
 
@@ -110,7 +130,14 @@ SPOTS_RAW = {
     # the leaf alone, inside its frame: the frame's top band above it and its right post (past the dark gap at the
     # latch side) stay on the wall when it swings; on the left the leaf meets the wall itself; the doorstep lies below
     "leaf": [692, 396, 197, 489],
+    "wheel": [684, 757, 28, 131],                          # the part of the bicycle's front wheel that is over the leaf
 }
+# the door's paint ends in a ragged edge a little left of the hinge line and below the leaf's foot: the leaf's face
+# carries LEAF_PAD px of it on the left and LEAF_FOOT below
+LEAF_PAD, LEAF_FOOT = 8, 3
+WHEEL = (590, 832, 120)                                    # the front wheel: its middle, the tyre's outer radius (fitted)
+# the leaf is drawn again by codex from a reference made here: the leaf LEAF_K times as large, at LEAF_AT on the paper
+LEAF_K, LEAF_AT = 2.8, (236, 83)
 
 
 # the room is cut to the leaf's shape, full height, placed so ROOM_X (the middle of the counter and the clerk, px of the
@@ -126,6 +153,9 @@ def raw_path(key: str) -> str:
 def draw(key: str) -> bool:
     size, refs, subject = PARTS[key]
     out = raw_path(key)
+    if key == "leaf":
+        os.makedirs(os.path.join(SCENE_DIR, "_work"), exist_ok=True)
+        leaf_ref().save(os.path.join(SCENE_DIR, refs[0]))
     if os.path.exists(out):
         os.remove(out)
     t0 = time.time()
@@ -193,16 +223,18 @@ def spots(box, content) -> dict:
     return out
 
 
-def glass(raw: Image.Image) -> Image.Image:
+def glass(raw: Image.Image, plain: bool = False):
     """The door's glass as a mask (white, its alpha the glass): the dark grey panes in the "glass" box, their painted
     edges kept. When the post office opens, the page lights them from inside through it; the paint's own light and
-    dark strokes go into the alpha, so the lit glass keeps the brush."""
+    dark strokes go into the alpha, so the lit glass keeps the brush. (plain: only which pixels are glass)"""
     x, y, w, h = SPOTS_RAW["glass"]
     a = np.asarray(raw.convert("RGB"))[y:y + h, x:x + w].astype(np.float32)
     mx, mn = a.max(-1), a.min(-1)
     pane = (mx < 125) & (mx - mn < 45)                     # dark and grey: the red wood between the panes is neither
     pane = ndimage.binary_fill_holes(ndimage.binary_closing(pane, iterations=2))
     pane = ndimage.binary_opening(pane, iterations=1)
+    if plain:
+        return pane
     lum = a.mean(-1)
     tex = np.clip(0.94 + (lum - lum[pane].mean()) / 80, 0.8, 1)
     alpha = np.clip(ndimage.gaussian_filter(pane.astype(np.float32), 0.7), 0, 1) * tex
@@ -210,27 +242,152 @@ def glass(raw: Image.Image) -> Image.Image:
     return Image.fromarray(rgba, "RGBA")
 
 
-def wheel(raw: Image.Image):
-    """The bicycle's front wheel leans over the leaf's hinge side. Cut out as it is in the "leaf" box it stays put in
-    front of the door as it swings (wheel.webp, RGBA, the leaf box's size); the door's face (leaf.webp) has it painted
-    out with the door's own paint, mirrored from just right of it, so the leaf carries no piece of wheel away."""
-    x, y, w, h = SPOTS_RAW["leaf"]
-    a = np.asarray(raw.convert("RGB"))[y:y + h, x:x + w].copy()
-    f = a.astype(np.int16)
-    grey = ndimage.binary_opening((f[..., 0] - f[..., 1]) < 45, iterations=1)      # the door is red; tyre and wall aren't
-    lab, _ = ndimage.label(grey)
-    edge = set(lab[h // 2:, 0]) - {0}                      # only what comes in from the left edge, low down: the wheel
-    tyre = np.isin(lab, list(edge))
-    alpha = np.clip(ndimage.gaussian_filter(tyre.astype(np.float32), 0.6), 0, 1)     # soft, but no red rim of door
-    front = Image.fromarray(np.dstack([a, (alpha * 255).round().astype(np.uint8)]), "RGBA")
-    face = a.copy()
-    for r in range(h):
-        run = np.flatnonzero(ndimage.binary_dilation(tyre[r], iterations=4))
-        if len(run):
-            b = run.max() + 1
-            src = np.clip(2 * b - 1 - run, b, w - 1)
-            face[r, run] = a[r, src]
-    return Image.fromarray(face), front
+def leaf(raw: Image.Image):
+    """The door's leaf cut out of the cover so that it can swing: (the cover without what swings, the leaf's face, its
+    dark panes, the wheel that stays in front).
+    - the face is the "leaf" box with LEAF_PAD px left of it and LEAF_FOOT below, RGBA: the door's paint up to its
+      ragged edges, the glass cut out as holes (what is behind the door shows through them), and the bicycle's wheel,
+      which leans over its hinge side, painted out with the door's own paint mirrored from just right of it
+    - the panes are the glass as painted (dark: the lamps are off), a little larger than the holes they back
+    - the wheel ("wheel" box) is what's inside the tyre's circle and isn't door: it stays put in front of the door
+    - in the cover, the door's paint outside the leaf's box is painted out with the wall and the step: it goes with
+      the door"""
+    a = np.asarray(raw.convert("RGB")).copy()
+    lx, ly, lw, lh = SPOTS_RAW["leaf"]
+    X0, W, H = lx - LEAF_PAD, lw + LEAF_PAD, lh + LEAF_FOOT
+    yy, xx = np.mgrid[ly:ly + H, X0:X0 + W]
+    c = a[ly:ly + H, X0:X0 + W].copy()
+    red = (c[..., 0].astype(np.int16) - c[..., 1]) >= 38    # the door's paint; wall, step, tyre and spokes aren't
+    wx, wy, wr = WHEEL
+    inwheel = (xx - wx) ** 2 + (yy - wy) ** 2 <= wr ** 2
+    wheel = inwheel & ~red
+    # the paint's left edge, row by row: the first red pixel with wall just left of it; under the wheel, from the rows round it
+    edge = np.full(H, np.nan)
+    for r in range(H):
+        run = np.flatnonzero(red[r, :LEAF_PAD + 8])
+        if len(run) and run[0] > 0 and not inwheel[r, run[0] - 1] and c[r, run[0] - 1].min() > 150:
+            edge[r] = run[0]
+    ok = ~np.isnan(edge)
+    edge = np.interp(np.arange(H), np.flatnonzero(ok), ndimage.median_filter(edge[ok], 5, mode="nearest")).round()
+    box = (xx >= lx) & (yy < ly + lh)
+    whole = (xx >= lx - 1) & (yy < ly + lh)                # (a pixel more: scaled, the face's edge is soft, and the room showed at the hinge)
+    door = whole | (((xx - X0) >= edge[:, None]) & (yy < ly + lh)) | (red & ~box)     # outside the box, only what is painted red
+    # the face: whole from the hinge line on (where the paint ends right of it, it goes on, mirrored in its edge), the
+    # wheel painted out (mirrored from just right of it), the glass cut out
+    face = c.copy()
+    out = ndimage.binary_dilation(wheel, iterations=3) & door & (yy < ly + lh)
+    for r in np.flatnonzero(out.any(1)):
+        run = np.flatnonzero(out[r])
+        b = run.max() + 1
+        face[r, run] = c[r, np.clip(2 * b - 1 - run, b, W - 1)]
+    for r in np.flatnonzero(edge[:lh] >= LEAF_PAD - 2):
+        e = int(edge[r]) + 3                               # past the edge's own soft pixels
+        run = np.arange(min(LEAF_PAD - 1, int(edge[r])), e)
+        face[r, run] = face[r, 2 * e - 1 - run]
+    gx, gy, gw, gh = SPOTS_RAW["glass"]
+    pane = np.zeros((H, W), bool)
+    pane[gy - ly:gy - ly + gh, gx - X0:gx - X0 + gw] = glass(raw, plain=True)
+    soft = lambda m, s=0.7: np.clip(ndimage.gaussian_filter(m.astype(np.float32), s), 0, 1)
+    alpha = np.maximum(soft(door, 0.5), whole) * (1 - soft(pane))
+    rgba = lambda rgb, al: Image.fromarray(np.dstack([rgb, (np.clip(al, 0, 1) * 255).round().astype(np.uint8)]), "RGBA")
+    back = soft(ndimage.binary_dilation(pane, iterations=2))[gy - ly:gy - ly + gh, gx - X0:gx - X0 + gw]
+    panes = rgba(a[gy:gy + gh, gx:gx + gw], back)
+    # the wheel: its own colours to its very edge (where the painting mixed the door's red into it, the nearest that isn't)
+    sx, sy, sw, sh = SPOTS_RAW["wheel"]
+    part = (slice(sy - ly, sy - ly + sh), slice(sx - X0, sx - X0 + sw))
+    near = ndimage.distance_transform_edt(~ndimage.binary_erosion(wheel, iterations=1), return_indices=True)[1]
+    front = rgba(np.where(wheel[..., None], c, c[near[0], near[1]])[part], soft(wheel, 0.6)[part])
+    # the cover: the paint outside the box goes with the door. Behind it on the left is the wall (mirrored from just
+    # left of the edge; where that is the wheel, from the wall higher up), below it the step (from a little lower)
+    inside = lambda x, y: (x - wx) ** 2 + (y - wy) ** 2 <= wr ** 2
+    wall = a[ly + 170:ly + 320, X0 - 2 * LEAF_PAD:X0].copy()              # clean wall left of the door, above the wheel
+    away = ndimage.binary_dilation(door & ~box, iterations=1) & ~box & ~wheel
+    for r, x in zip(*np.nonzero(away)):
+        if r >= lh:
+            src = (ly + r + LEAF_FOOT + 2, X0 + x)
+            a[ly + r, X0 + x] = a[src[0], src[1] + 30] if inside(src[1], src[0]) else a[src]
+            continue
+        src = X0 + int(2 * min(edge[r], x) - 1 - x)                       # mirrored in the edge, in the cover's columns
+        a[ly + r, X0 + x] = wall[r % wall.shape[0], (x * 3 + r) % wall.shape[1]] if inside(src, ly + r) else a[ly + r, src]
+    return Image.fromarray(a), rgba(face, alpha), panes, front
+
+
+def leaf_ref() -> Image.Image:
+    """What codex draws the open door's leaf from: the leaf's face (its glass as painted, the wheel painted out), LEAF_K
+    times as large, on the cover's paper."""
+    raw = Image.open(raw_path("cover")).convert("RGB")
+    _, face, panes, _ = leaf(raw)
+    lx, ly = SPOTS_RAW["leaf"][:2]
+    gx, gy = SPOTS_RAW["glass"][:2]
+    whole = Image.new("RGBA", face.size)
+    whole.alpha_composite(panes, (gx - lx + LEAF_PAD, gy - ly))
+    whole.alpha_composite(face)
+    big = whole.resize((round(whole.width * LEAF_K), round(whole.height * LEAF_K)), Image.LANCZOS)
+    out = Image.new("RGBA", (1024, 1536), tuple(int(v) for v in paper_of(np.asarray(raw))) + (255,))
+    out.alpha_composite(big, LEAF_AT)
+    return out.convert("RGB")
+
+
+def fit(ref: np.ndarray, got: np.ndarray):
+    """Where a redrawn picture lies against the one it was drawn from: (kx, ky, tx, ty), a point (x, y) of ref being
+    at (kx * x + tx, ky * y + ty) in got. codex keeps the place and size closely but not to the pixel; the edges of
+    both (at half size) are laid over each other at a few sizes, each time wherever they agree best."""
+    def edges(a, size=None):
+        im = Image.fromarray(a).convert("L")
+        im = im.resize(size or (im.width // 2, im.height // 2), Image.LANCZOS)
+        g = ndimage.gaussian_gradient_magnitude(np.asarray(im).astype(np.float32), 1.2)
+        return (g - g.mean()) / (g.std() + 1e-6)
+    e0 = edges(ref)
+    h, w = e0.shape
+    F0 = np.conj(np.fft.rfft2(e0))
+    best = (-1e9,)
+    for kx in np.arange(0.96, 1.0401, 0.005):
+        for ky in np.arange(0.96, 1.0401, 0.005):
+            # got shrunk by (kx, ky) about its corner, so that it is ref's size where the door is
+            im = Image.fromarray(got).transform((ref.shape[1], ref.shape[0]), Image.AFFINE, (kx, 0, 0, 0, ky, 0), Image.BILINEAR)
+            c = np.fft.irfft2(np.fft.rfft2(edges(np.asarray(im))) * F0, s=(h, w))
+            i = np.unravel_index(np.argmax(c), c.shape)
+            dy, dx = [(v + n // 2) % n - n // 2 for v, n in zip(i, (h, w))]
+            if c[i] > best[0]:
+                best = (c[i], kx, ky, dx * 2 * kx, dy * 2 * ky)
+    return best[1:]
+
+
+def leaf_open(drawn: Image.Image, face: Image.Image, raw: Image.Image):
+    """The open door's leaf, from codex's drawing of it (PARTS "leaf"): (its face, the film on its glass), both laid
+    exactly over the leaf cut from the cover.
+    - the face has the closed face's own outline and holes; the page fades from the one to the other
+    - the film is what the drawing has in the panes, thin: a dark tint, more solid and paler where a reflection
+      streaks across. Under it the room shows through the holes"""
+    got = np.asarray(drawn.convert("RGB"))
+    seen = os.path.join(SCENE_DIR, PARTS["leaf"][1][0])     # the reference it was drawn from (local: without it, as drawn)
+    kx, ky, tx, ty = fit(np.asarray(Image.open(seen).convert("RGB")), got) if os.path.exists(seen) else (1, 1, 0, 0)
+    print(f"leaf: drawn at x {kx:.3f} + {tx:.1f}, y {ky:.3f} + {ty:.1f} of its reference")
+    W, H = face.size
+    big = (round(W * LEAF_K), round(H * LEAF_K))
+    at = drawn.convert("RGB").transform(big, Image.AFFINE, (kx, 0, kx * LEAF_AT[0] + tx, 0, ky, ky * LEAF_AT[1] + ty), Image.BICUBIC)
+    a = np.asarray(at.resize((W, H), Image.LANCZOS)).astype(np.float32)
+    # what's paper in the drawing (its door's edge is ragged in its own way) takes the nearest paint
+    paper = paper_of(got)
+    paint = ndimage.binary_erosion(np.sqrt(((a - paper) ** 2).sum(-1)) > 60, iterations=1)
+    near = ndimage.distance_transform_edt(~paint, return_indices=True)[1]
+    a = a[near[0], near[1]]
+    # (drawn, it is as light as the shut door: turned from the day it is darker, most at the hinge side, far from the lamp)
+    a = a * np.linspace(0.78, 0.96, W, dtype=np.float32)[None, :, None]
+    alpha = np.asarray(face)[..., 3]
+    out = Image.fromarray(np.dstack([a.round().astype(np.uint8), alpha]), "RGBA")
+    # the film on the glass
+    lx, ly = SPOTS_RAW["leaf"][:2]
+    gx, gy, gw, gh = SPOTS_RAW["glass"]
+    g = a[gy - ly:gy - ly + gh, gx - lx + LEAF_PAD:gx - lx + LEAF_PAD + gw]
+    pane = glass(raw, plain=True)
+    lum = g.mean(-1)
+    t = np.clip((ndimage.gaussian_filter(lum, 0.8) - np.median(lum[pane])) / 60, 0, 1)      # how much of a streak
+    pale = np.array([244, 232, 208], np.float32)
+    rgb = g * (1 - 0.55 * t[..., None]) + pale * 0.55 * t[..., None]
+    al = (0.26 + 0.5 * t) * np.clip(ndimage.gaussian_filter(ndimage.binary_dilation(pane, iterations=1).astype(np.float32), 0.7), 0, 1)
+    film = Image.fromarray(np.dstack([rgb.round().astype(np.uint8), (al * 255).round().astype(np.uint8)]), "RGBA")
+    return out, film
 
 
 def sprites(raw: Image.Image, paper: np.ndarray):
@@ -261,17 +418,24 @@ def sprites(raw: Image.Image, paper: np.ndarray):
 def rebuild() -> None:
     entry = {}
     if os.path.exists(raw_path("cover")):
-        pic, paper, box, content = cover(Image.open(raw_path("cover")))
+        still, face, panes, front = leaf(Image.open(raw_path("cover")))
+        pic, paper, box, content = cover(still)
         pic.save(os.path.join(SCENE_DIR, "cover.webp"), quality=90, method=6)
         entry = {"cover": "scene/cover.webp", "w": pic.width, "h": pic.height, "paper": "#%02X%02X%02X" % tuple(int(v) for v in paper),
-                 "spots": spots(box, content), "v": int(os.path.getmtime(raw_path("cover")))}
+                 "spots": spots(box, content), "v": int(os.path.getmtime(os.path.join(SCENE_DIR, "cover.webp")))}   # the cut's: it may change
         gp = os.path.join(SCENE_DIR, "glass.webp")
         glass(Image.open(raw_path("cover"))).save(gp, quality=92, method=6)
         entry["glass"] = {"file": "scene/glass.webp", "v": int(os.path.getmtime(gp))}   # its own version: the cut may change
-        face, front = wheel(Image.open(raw_path("cover")))
-        face.save(os.path.join(SCENE_DIR, "leaf.webp"), quality=90, method=6)
-        front.save(os.path.join(SCENE_DIR, "wheel.webp"), quality=90, method=6)
-        entry["leaf"] = {"face": "scene/leaf.webp", "wheel": "scene/wheel.webp", "v": int(os.path.getmtime(gp))}
+        for name, im in (("leaf", face), ("panes", panes), ("wheel", front)):
+            im.save(os.path.join(SCENE_DIR, name + ".webp"), quality=92, method=6)
+        if os.path.exists(raw_path("leaf")):
+            lit, film = leaf_open(Image.open(raw_path("leaf")), face, Image.open(raw_path("cover")))
+            lit.save(os.path.join(SCENE_DIR, "leaf-open.webp"), quality=92, method=6)
+            film.save(os.path.join(SCENE_DIR, "film.webp"), quality=92, method=6)
+        entry["leaf"] = {"face": "scene/leaf.webp", "panes": "scene/panes.webp", "wheel": "scene/wheel.webp",
+                         "open": "scene/leaf-open.webp", "film": "scene/film.webp",
+                         "pad": round(LEAF_PAD / SPOTS_RAW["leaf"][2], 4), "foot": round(LEAF_FOOT / SPOTS_RAW["leaf"][3], 4),
+                         "v": int(os.path.getmtime(os.path.join(SCENE_DIR, "leaf.webp")))}
         print(f"cover {pic.size}, paper {entry['paper']}")
     if os.path.exists(raw_path("cat")):
         raw = Image.open(raw_path("cat"))
