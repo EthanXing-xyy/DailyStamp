@@ -3,8 +3,8 @@
 // is first opened. On cream paper, the title, the date and
 // what the press is doing up top; at the foot of the screen a bicycle with a basket of letters leans by a red door, an
 // old pillar box stands beside it and a calico cat sits by the wheel (scene/, drawn once by codex: dailystamp/scene.py).
-// While the press works, things can be played with: the cat changes pose (by itself too, now and then), the bell rings,
-// and a letter flies from the basket into the box (今天寄出 N 封, counted per day on this device). The hanging sign shows
+// While the press works the scene lives by itself: the cat changes pose every few seconds and a letter flies from the
+// basket into the box every few more; a tap does either at once, and the bell rings. The hanging sign shows
 // how far the loading has got. When all is in the sign reads 营业中, warm light shows at the door, a postmark (date and
 // solar term) strikes the title once and the way in (进入邮局 →) fades up where the status was; the app opens only on a
 // tap of the button or the door, which swings open onto the lit post office (the stamp cabinet, the counter, the clerk)
@@ -78,8 +78,8 @@ const Loader = (() => {
 
   // ---- the door of the post office (scene/index.json: the picture, where things are in it as fractions [x, y, w, h],
   // the cat's poses and the letter). It is sized to the room left under the type; everything in it is placed in %.
-  const scene = $('.ld-scene'), main = $('.ld-main'), sent = $('.ld-sent');
-  let pic = null, poses = [], pose = 0, catTimer = 0, busy = false;
+  const scene = $('.ld-scene'), main = $('.ld-main');
+  let pic = null, poses = [], pose = 0, catTimer = 0, letterTimer = 0, busy = false;
   const kit = f => { if (typeof Kit !== 'undefined') try { Kit.audio(); f(Kit); } catch {} };
   const put = (el, [x, y, w, h]) => { if (el) Object.assign(el.style, { left: x * 100 + '%', top: y * 100 + '%', width: w * 100 + '%', height: h * 100 + '%' }); };
   const grow = ([x, y, w, h], k) => [x - w * k / 2, y - h * k / 2, w * (1 + k), h * (1 + k)];
@@ -113,19 +113,15 @@ const Loader = (() => {
   }
   function idleCat() {                                    // now and then the cat moves by itself
     clearTimeout(catTimer);
-    catTimer = setTimeout(() => { if (!active || !poses.length) return; showPose((pose + 1) % poses.length); idleCat(); }, 8000 + Math.random() * 4000);
+    catTimer = setTimeout(() => { if (!active || !poses.length) return; showPose((pose + 1) % poses.length); idleCat(); }, 6000 + Math.random() * 3000);
   }
-  // letters sent today on this device (a per-viewer nicety: if storage is blocked the count just starts again)
-  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  let letters = 0;
-  try { const v = JSON.parse(localStorage.getItem('ds-sent') || 'null'); if (v && v.d === today) letters = +v.n || 0; } catch {}
-  function tellSent() {
-    if (!sent || !letters) return;
-    const b = document.createElement('b'); b.textContent = String(letters);
-    sent.replaceChildren('今天寄出', b, '封'); sent.classList.add('on');
+  function idleLetter() {                                 // a letter goes into the box a little after the last one
+    clearTimeout(letterTimer);
+    letterTimer = setTimeout(async () => { if (!active) return; await post(true); idleLetter(); }, 2000 + Math.random() * 1000);
   }
-  /** a letter from the basket, over the door and down into the pillar box */
-  async function post() {
+  async function tapLetter() { clearTimeout(letterTimer); await post(); if (active) idleLetter(); }
+  /** a letter from the basket, over the door and down into the pillar box (by itself: sound, but no buzz on a phone) */
+  async function post(auto = false) {
     if (busy || !pic || !pic.letter) return;
     busy = true;
     const el = $('.ld-letter'), sp = pic.spots, W = scene.clientWidth, H = scene.clientHeight;
@@ -149,11 +145,8 @@ const Loader = (() => {
       { transform: `translate(${x1}px, ${y1 + lh}px)`, clipPath: 'inset(0 0 100% 0)', opacity: 1 }],
       { duration: reduce ? 200 : 380, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' });
     await drop.finished.catch(() => {});
-    kit(k => k.thump(0.2));
+    kit(k => k.thump(0.2, auto));
     el.getAnimations().forEach(an => an.cancel()); el.style.opacity = 0;
-    letters++;
-    try { localStorage.setItem('ds-sent', JSON.stringify({ d: today, n: letters })); } catch {}
-    tellSent();
     busy = false;
   }
   /** the bicycle bell: two thin rings spread from it and fade */
@@ -212,13 +205,13 @@ const Loader = (() => {
       put($('.ld-hit-bell'), [bx - 0.05 * e.h / e.w, by - 0.06, 0.1 * e.h / e.w, 0.12]);
       $('.ld-hit-bell').addEventListener('click', ring);
       put($('.ld-hit-basket'), grow(sp.basket, 0.2)); put($('.ld-hit-box'), grow(sp.box, 0.15));
-      $('.ld-hit-basket').addEventListener('click', post); $('.ld-hit-box').addEventListener('click', post);
+      $('.ld-hit-basket').addEventListener('click', tapLetter); $('.ld-hit-box').addEventListener('click', tapLetter);
       put($('.ld-hit-door'), sp.door);
       $('.ld-hit-door').addEventListener('click', () => { if (go && !go.disabled) go.click(); });
       size(); addEventListener('resize', () => { if (active) size(); });
-      tellSent();
       await Promise.all(waits);
       size(); scene.classList.add('on');
+      if (e.letter) idleLetter();
     } catch { if (scene) scene.remove(); pic = null; }
   })();
 
@@ -266,7 +259,7 @@ const Loader = (() => {
     return new Promise(res => go.addEventListener('click', async () => {
       go.disabled = true; go.classList.add('down');
       kit(k => k.thump(0.7));
-      clearTimeout(catTimer);
+      clearTimeout(catTimer); clearTimeout(letterTimer);
       await openDoor();                                      // the door swings in, then the iris closes on it
       res();
     }, { once: true }));
@@ -288,12 +281,12 @@ const Loader = (() => {
           { duration: 720, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
       document.body.classList.add('loaded');
       await out.finished.catch(() => {});
-      clearTimeout(catTimer);
+      clearTimeout(catTimer); clearTimeout(letterTimer);
       root.remove(); res();
     }, reduce ? 150 : pressed ? 160 : 380));
   }
   /** the debugging views (?gallery, ?sheet=demo, studio params) don't wait for it */
-  function skip() { active = false; clearTimeout(catTimer); if (root) root.remove(); document.body.classList.add('loaded'); }
+  function skip() { active = false; clearTimeout(catTimer); clearTimeout(letterTimer); if (root) root.remove(); document.body.classList.add('loaded'); }
 
   // 手机只竖着看（用户 2026-09-27 定的）。转屏卡片先注释掉留着，哪天要横屏了把这段和 index.html 里的 #rotate 解开即可。
   /*

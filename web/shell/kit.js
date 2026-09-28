@@ -101,9 +101,9 @@ const Kit = (() => {
     buzz(big ? 14 : 3);
     burst(big ? { f: 1500, q: 0.8, dur: 0.16, vol: 0.11 } : { f: 1700 + Math.random() * 2800, q: 0.6 + Math.random() * 0.9, dur: 0.014 + Math.random() * 0.02, vol: 0.03 + Math.random() * 0.045 });
   }
-  /** a rubber stamp hitting paper: a dull knock, heavier with more weight (0..1) */
-  function thump(weight = 0.5) {
-    buzz(Math.round(12 + weight * 22));
+  /** a rubber stamp hitting paper: a dull knock, heavier with more weight (0..1); still: no buzz on a phone */
+  function thump(weight = 0.5, still = false) {
+    if (!still) buzz(Math.round(12 + weight * 22));
     if (!actx) return;
     const a = actx, t = a.currentTime, o = a.createOscillator(), g = a.createGain();
     o.type = 'sine'; o.frequency.setValueAtTime(150 + Math.random() * 30, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.09);
