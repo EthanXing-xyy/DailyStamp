@@ -6,7 +6,8 @@
 // and a letter flies from the basket into the box (今天寄出 N 封, counted per day on this device). The hanging sign shows
 // how far the loading has got. When all is in the sign reads 营业中, warm light shows at the door, a postmark (date and
 // solar term) strikes the title once and the way in (进入邮局 →) fades up where the status was; the app opens only on a
-// tap of the button or the door, which swings open before the iris closes on it. Everything moves softly and once:
+// tap of the button or the door, which swings open onto the lit post office (the stamp cabinet, the counter, the clerk)
+// before the iris closes on it. Everything moves softly and once:
 // the user found a screen of bobbing, springing parts cheap, rows of stamps dull, and two drawn post offices (cut paper
 // with a street lamp; a painting replayed stroke by stroke) ugly, before choosing this picture themselves.
 // Every string shown here lives in this file or index.html: `python dailystamp.py fonts` cuts the loader's tiny fonts from them.
@@ -179,6 +180,10 @@ const Loader = (() => {
       if (e.paper) root.style.setProperty('--paper', e.paper);
       const sp = e.spots;
       put($('.ld-room'), sp.door); put($('.ld-door'), sp.door);
+      if (e.room) {                                        // the lit room behind it, decoded before the scene shows
+        const src = e.room.file + `?v=${e.roomv}`;
+        load(new Image(), src); $('.ld-room').style.backgroundImage = `url("${src}")`;
+      }
       const door = $('.ld-door'), [dx, dy, dw, dh] = sp.door;
       Object.assign(door.style, { backgroundImage: `url("${e.cover + v}")`, backgroundSize: `${100 / dw}% ${100 / dh}%`,
         backgroundPosition: `${dx / (1 - dw) * 100}% ${dy / (1 - dh) * 100}%` });

@@ -1,16 +1,19 @@
 """The loading screen's picture: the door of a small post office, drawn the way a quiet literary-magazine illustration is
 (flat matte colour with dry, grainy edges on cream paper, lots of empty paper, faceless figures): a bicycle leaning by a
-red door with a hanging sign, an old pillar box, a pot plant, and a calico cat that changes pose.
+red door with a hanging sign, an old pillar box, a pot plant, and a calico cat that changes pose; behind the door, the
+lit room it swings open onto.
 
-codex draws two pictures once, from the reference pictures the user picked (scene/ref-*.png, local only):
+codex draws three pictures once, from the reference pictures the user picked (scene/ref-*.png, local only):
   cover  the door, the bicycle, the pillar box and the plant, without the cat
   cat    the same cat in three poses side by side, and a small envelope
-Here the cover is cropped to what's drawn, and the cat sheet is cut out of its paper into one picture per pose and the
-envelope. Where things are in the cover (the door, the sign, the slot, the basket, the handlebar, where the cat sits) is
-measured by hand into SPOTS, and everything goes into scene/index.json for web/loader.js.
+  room   the inside: the stamp cabinet, counter and clock of ref-room-5 with the clerk of ref-room-1 behind the counter
+Here the cover is cropped to what's drawn, the cat sheet is cut out of its paper into one picture per pose and the
+envelope, and the room is cut to the doorway's shape. Where things are in the cover (the door, the sign, the slot, the
+basket, the handlebar, where the cat sits) is measured by hand into SPOTS, and everything goes into scene/index.json for
+web/loader.js.
 
-  python dailystamp.py scene [cover|cat]   # draw them again (both, or the given ones)
-  python dailystamp.py scene --rebuild     # cut them again from the raw drawings"""
+  python dailystamp.py scene [cover|cat|room]   # draw them again (all, or the given ones)
+  python dailystamp.py scene --rebuild          # cut them again from the raw drawings"""
 from __future__ import annotations
 
 import json
@@ -38,6 +41,18 @@ STYLE = """The way it is drawn (the attached pictures show it: learn their drawi
 - calm, poetic, understated, like an illustration in a small literary magazine
 - absolutely no letters, numbers, words or signature anywhere"""
 
+# the room behind the door is drawn by the same hand, but it fills its picture: no empty paper round it
+ROOM_STYLE = """The way it is drawn (the attached pictures show it: learn their drawing style, never add anything not asked for):
+- flat matte shapes of colour, like gouache or a risograph print: slightly dry, soft, uneven edges and a fine grain
+  inside the colour; almost no outlines, only a few fine dark strokes where needed
+- a quiet, muted, earthy palette: off-white, sand, camel, warm brown, dark brown-black, brick red, a little faded
+  grey-blue
+- the room fills the whole picture edge to edge (its back wall and its floor; no empty paper margin, no door frame, no
+  border), lit by one warm lamp: the wall a soft warm honey-sand, turning warm brown toward the floor and the corners
+- calm, poetic, understated, like an illustration in a small literary magazine; the clerk is faceless
+- absolutely no letters, numbers, words or signature anywhere (the clock has no numerals, the stamps are plain blocks
+  of colour)"""
+
 PARTS = {
     "cover": ("landscape, 1536x1024", ["ref-04.png", "ref-02.png"], """Redraw the FIRST attached picture (the bicycle by the red door) almost exactly as it is: the same
 bicycle with its wicker basket of letters and a brown-paper parcel, the same red door with its window panes, the same
@@ -58,7 +73,19 @@ resting on the empty paper with no shadow:
 and at the far right, well apart, one small closed white envelope lying flat, seen from the front, with a tiny brick-red
 stamp in its corner.
 Nothing else in the picture."""),
+    "room": ("portrait, 1024x1536", ["ref-room-5.png", "ref-room-1.png", "cover.raw.png"], """The inside of the small post
+office whose front door is the THIRD attached picture, seen at eye height straight through that open door.
+Redraw the FIRST attached picture almost exactly as it is: the same glass-fronted wooden cabinet with its rows of stamps,
+the same wooden counter with the small brass bell, the ink pad and the rubber stamp on it, the same round clock with no
+numerals, the same brick-red pendant lamp, the same plants, the same rug and floor. Add only this:
+- the clerk from the SECOND attached picture (faceless, dark hair tied back, white shirt, dark brown apron) stands
+  behind the counter in front of the cabinet, seen from the waist up (the counter hides the rest), both hands on the
+  counter sorting a letter
+Composition: the picture will be shown cropped to a tall narrow doorway whose left quarter is hidden by the open door,
+so the clerk and the middle of the counter sit between 45% and 75% of the picture's width, and everything that
+matters stays between 15% and 90% of its height."""),
 }
+STYLES = {"room": ROOM_STYLE}
 
 PROMPT = """Use your image generation tool to draw one picture, {size}.
 {subject}
@@ -82,6 +109,12 @@ SPOTS_RAW = {
 }
 
 
+# the room is cut to the doorway's shape, full height, placed so ROOM_X (the middle of the counter and the clerk, px of
+# the raw drawing, measured by hand) sits 62% across it: the open door hides about the doorway's left quarter
+ROOM_X = 500
+ROOM_W = 480                                               # a phone's doorway is ~222 device px wide, a desktop's ~195 css
+
+
 def raw_path(key: str) -> str:
     return os.path.join(SCENE_DIR, f"{key}.raw.png")
 
@@ -92,7 +125,7 @@ def draw(key: str) -> bool:
     if os.path.exists(out):
         os.remove(out)
     t0 = time.time()
-    run_codex(PROMPT.format(size=size, subject=subject, style=STYLE, out=out), os.path.join(SCENE_DIR, "_work", key), 900,
+    run_codex(PROMPT.format(size=size, subject=subject, style=STYLES.get(key, STYLE), out=out), os.path.join(SCENE_DIR, "_work", key), 900,
               [os.path.join(SCENE_DIR, r) for r in refs] + [STYLE_REF])
     ok = os.path.exists(out)
     print(f"  {key}: {'ok' if ok else 'failed'}  ({time.time() - t0:.0f}s)", flush=True)
@@ -201,6 +234,16 @@ def rebuild() -> None:
         entry["letter"] = next((f for f in files if f["key"] == "letter"), None)
         entry["catv"] = int(os.path.getmtime(raw_path("cat")))
         print("pieces", [(f["key"], f["w"], f["h"]) for f in files])
+    if os.path.exists(raw_path("room")):
+        raw = Image.open(raw_path("room")).convert("RGB")
+        dw, dh = SPOTS_RAW["door"][2:]
+        w = round(raw.height * dw / dh)
+        x0 = int(min(max(0, ROOM_X - w * 0.62), raw.width - w))
+        room = raw.crop((x0, 0, x0 + w, raw.height)).resize((ROOM_W, round(ROOM_W * raw.height / w)), Image.LANCZOS)
+        room.save(os.path.join(SCENE_DIR, "room.webp"), quality=90, method=6)
+        entry["room"] = {"file": "scene/room.webp", "w": room.width, "h": room.height}
+        entry["roomv"] = int(os.path.getmtime(raw_path("room")))
+        print(f"room {room.size} from x {x0}..{x0 + w}")
     with open(os.path.join(SCENE_DIR, "index.json"), "w", encoding="utf-8") as fh:
         json.dump(entry, fh, ensure_ascii=False, indent=2)
 
