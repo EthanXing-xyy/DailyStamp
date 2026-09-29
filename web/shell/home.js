@@ -129,11 +129,17 @@ const Home = (() => {
         if (R * Math.sin(th) - (cw * 0.77 * Math.cos(th) + ch * 0.72 * Math.sin(th)) * s - 20 > W / 2) { gone = a; break; }
       }
       root.style.setProperty('--cw', cw + 'px'); root.style.setProperty('--ch', ch + 'px'); root.style.setProperty('--cy', cy + 'px');
+      // the lines of type on whole px (home.css: --tt, the title's line; --kt, the kicker's), set across on whole px too
+      const fs = parseFloat(getComputedStyle(title).fontSize) || 30;
+      const tp = Math.round(fs * 0.06);                     // (the title's room above its line)
+      root.style.setProperty('--tt', Math.round(cy + ch / 2 + Math.min(18, H * 0.034) + fs * 0.06) - tp + 'px'); root.style.setProperty('--tp', tp + 'px');
+      root.style.setProperty('--kt', Math.round(cy - ch / 2 - Math.min(38, H * 0.07)) + 'px');
+      title.querySelectorAll('.line').forEach(centre); [...kicker.children].forEach(centre);
       drawShadows(); slots.forEach(contact);
       paintDesk();
       // the words are printed for the title's size and the screen's px: when those change (a window being resized:
       // when it stops), they are printed again, the ones on the page first
-      const fs = parseFloat(getComputedStyle(title).fontSize) || 30, key = fs + '@' + Type.ratio();
+      const key = fs + '@' + Type.ratio();
       if (key !== typeKey) {
         typeKey = key;
         if (!typed) titleSize = fs;
@@ -222,7 +228,7 @@ const Home = (() => {
     // ---- the engine: pos (which stamp is in the middle, fractional) eases toward to. The loop only runs while
     // something moves: the wheel, and once the home is up (never with reduced motion) the floating, 30 poses a second
     let pos = 0, to = 0, last = 0, vel = 0, tilt = 0, dragging = false, shown = -1, arc = '', raf = 0;
-    let floatFrom = -1, posed = -1e9;                       // when the floating began (-1: not yet), when last posed
+    let floatFrom = -1, posed = -1e9, held = -1;            // when the floating began (-1: not yet), when last posed, since when it holds
     function frame(t, force) {
       // (under the loading screen the wheel stands still: every frame there goes to printing)
       const visible = document.body.classList.contains('daily-home') && document.body.classList.contains('loaded') && !document.hidden;
@@ -234,7 +240,12 @@ const Home = (() => {
       vel = (pos - before) / Math.max(1, dt);
       tilt += (Math.max(-6, Math.min(6, vel * 750)) * (reduce ? 0 : 1) - tilt) * (1 - Math.exp(-dt / (120 * slow)));
       const c = mod(Math.round(pos), N), near = [];
-      const floating = floatFrom >= 0, posing = floating && t - posed >= 22, ft = (t - floatFrom) / 1000;
+      // while a finger has the wheel or it runs fast, the floating holds, its clock too (it goes on from there after):
+      // those frames only turn the wheel (an iPhone swiped less smoothly with the stamps posed every other frame)
+      const floating = floatFrom >= 0, hold = floating && (dragging || Math.abs(vel) > 5e-4);
+      if (hold && held < 0) held = t;
+      else if (!hold && held >= 0) { floatFrom += t - held; held = -1; }
+      const posing = floating && !hold && t - posed >= 22, ft = ((hold ? held : t) - floatFrom) / 1000;
       if (posing) posed = t;
       for (const sl of slots) {
         const d = wrap(sl.index - pos), a = Math.abs(d);
@@ -316,12 +327,24 @@ const Home = (() => {
     const inks = text => Type.letters(text, titleSize, { track: TRACK.title, mid: W / 2 });
     const word = (text, track, marks) => {
       const m = ink(text, track, marks);
-      return m ? Type.show(m) : el('span', 'plain', text.replace(/[&<]/g, c => (c === '&' ? '&amp;' : '&lt;')));
+      if (!m) return el('span', 'plain', text.replace(/[&<]/g, c => (c === '&' ? '&amp;' : '&lt;')));
+      const c = Type.show(m); c.inkW = m.w - 2 * m.pad; c.inkPad = m.pad;
+      return c;
     };
-    const lettersOf = text => {
-      const ms = inks(text);
-      return ms ? ms.map(Type.show) : [...text].map(ch => el('span', 'plain', ch));
+    /** the title's line: its letters, one bitmap each */
+    const lineOf = text => {
+      const ms = inks(text), line = el('span', 'line');
+      if (ms) { line.append(...ms.map(Type.show)); line.inkW = ms.reduce((s, m) => s + m.w - 2 * m.pad, 0); }
+      else line.append(...[...text].map(ch => el('span', 'plain', ch)));
+      return centre(line);
     };
+    /** a printed line in the middle of the screen, on a whole px: a word left on a fraction of one was snapped one way
+     *  while it rose on a layer of its own and another once it settled back on the page (an iPhone showed the name
+     *  slip sideways as it came to rest). (A word set plain is centred by home.css) */
+    function centre(e) {
+      if (e.inkW != null) { e.style.justifySelf = 'start'; e.style.marginLeft = Math.round((W - e.inkW) / 2) - (e.inkPad || 0) + 'px'; }
+      return e;
+    }
     const clear = box => { box.querySelectorAll('canvas').forEach(Type.drop); box.textContent = ''; };
     const setWord = (box, text, track) => { box.setAttribute('aria-label', text); if (typed) { clear(box); box.append(word(text, track)); } };
     /** every word of the carousel, printed ahead (under the loading screen; again when the type's size changed), so
@@ -347,8 +370,8 @@ const Home = (() => {
       setWord(count.querySelector('span'), countOf(shown), TRACK.count);
       if (!inked) return;
       clear(title); clear(kicker);
-      const line = el('span', 'line'); line.append(...lettersOf(FEATURES[shown].cn)); title.append(line);
-      kicker.append(word(kickerText, TRACK.kicker, true));
+      title.append(lineOf(FEATURES[shown].cn));
+      kicker.append(centre(word(kickerText, TRACK.kicker, true)));
     }
 
     // ---- the title: the old name drifts up and away, the new one rises letter by letter out of its baseline
@@ -365,8 +388,7 @@ const Home = (() => {
           { duration: 230, delay: i * 25, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'forwards' }));
         setTimeout(() => { letters.forEach(Type.drop); old.remove(); }, 230 + letters.length * 25 + 20);
       }
-      const line = el('span', 'line');
-      line.append(...lettersOf(f.cn));
+      const line = lineOf(f.cn);
       title.append(line); title.setAttribute('aria-label', f.cn);
       [...line.children].forEach((l, i) => l.animate([{ transform: 'translateY(72%)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }],
         { duration: 520, delay: 200 + i * 55, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' }));
@@ -376,7 +398,7 @@ const Home = (() => {
       kickerText = text; kicker.setAttribute('aria-label', text);
       const old = kicker.querySelector(':scope > :not(.leaving)');
       if (old) { old.classList.add('leaving'); old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }); setTimeout(() => { Type.drop(old); old.remove(); }, 240); }
-      const s = word(text, TRACK.kicker, true); kicker.append(s);
+      const s = centre(word(text, TRACK.kicker, true)); kicker.append(s);
       s.animate([{ opacity: 0, transform: 'translateY(40%)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 120, easing: 'ease-out', fill: 'backwards' });
     }
 

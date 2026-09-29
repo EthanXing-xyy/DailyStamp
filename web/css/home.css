@@ -33,12 +33,13 @@ body.daily-home:not(.flip-wait) #flip { visibility: hidden; }
   font-family: "DS CapsMed", sans-serif; font-size: 10px; letter-spacing: .2em; color: #1d1d1f; opacity: .7; }
 .home-top { position: absolute; left: 20px; right: 20px; top: 18px; display: flex; justify-content: space-between; gap: 12px;
   font-family: "DS CapsMed", "DS CjkMed", sans-serif; font-size: 10px; letter-spacing: .28em; pointer-events: none; }
-.home-kicker { position: absolute; left: 0; right: 0; top: calc(var(--cy) - var(--ch) / 2 - min(38px, 7vh)); margin: 0; height: 16px;
+/* (--kt: where the kicker is; --tt, --tp: where the title is and its room above its line; all whole px: home.js) */
+.home-kicker { position: absolute; left: 0; right: 0; top: var(--kt, calc(var(--cy) - var(--ch) / 2 - min(38px, 7vh))); margin: 0; height: 16px;
   display: grid; justify-items: center; font-family: "DS CapsMed", "DS CjkMed", sans-serif; font-size: 10px; letter-spacing: .34em;
   pointer-events: none; }
 .home-kicker > * { grid-area: 1 / 1; white-space: nowrap; }
-.home-title { position: absolute; left: 0; right: 0; top: calc(var(--cy) + var(--ch) / 2 + min(18px, 3.4vh)); margin: 0;
-  display: grid; justify-items: center; overflow: hidden; padding: .06em 0 .12em;
+.home-title { position: absolute; left: 0; right: 0; top: var(--tt, calc(var(--cy) + var(--ch) / 2 + min(18px, 3.4vh))); margin: 0;
+  display: grid; justify-items: center; overflow: hidden; padding: var(--tp, .06em) 0 .12em;
   font-family: "DS Phrase", serif; font-weight: normal; font-size: clamp(22px, min(9vw, 7vh), 64px); line-height: 1.1;
   letter-spacing: .12em; pointer-events: none; }
 @media (orientation: portrait) { .home-title { font-size: clamp(22px, min(7.7vw, 6vh), 56px); } }
