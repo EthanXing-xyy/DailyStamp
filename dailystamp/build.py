@@ -1,5 +1,6 @@
 """A static copy of the web app for a host with no server of ours (Cloudflare, static assets on Workers):
-`python dailystamp.py build` writes dist/, `deploy` builds and uploads it (https://daily-stamp.daily-stamp-2.workers.dev/).
+`python dailystamp.py build` writes dist/, `deploy` builds and uploads it (https://daily-stamp.daily-stamp-2.workers.dev/),
+and to Netlify too (https://daily-stamp.netlify.app/, which some of mainland China can reach where workers.dev is blocked).
 
 What the local server works out on the fly is written as files: /api/emblems.json and /api/leaflets.json. The studio's
 存入 finds no server there and downloads both sides instead (stage.js). web/boot.js keeps its '__BOOT__' mark, so a
@@ -19,6 +20,8 @@ ROOT = library.ROOT
 DIST = os.path.join(ROOT, "dist")
 MARK = ".dailystamp-build"                       # only a folder carrying this is emptied before a build
 PROJECT = "daily-stamp"                          # the Worker: https://daily-stamp.daily-stamp-2.workers.dev/
+NETLIFY = "3f543ff1-cbf7-4415-aa32-36e7e4bd3e0a" # the Netlify project: https://daily-stamp.netlify.app/
+HOSTS = ["cloudflare", "netlify"]
 COMPAT = "2026-09-26"
 # the art folders, served as they are under their own names (server.py), less what only the tools use
 ART = ["emblems", "terms", "posters", "kraft", "scene"]
@@ -77,12 +80,27 @@ def build(out: str = DIST) -> str:
     return out
 
 
-def deploy(out: str = DIST):
-    """build, then upload with wrangler (`npx wrangler login` once first). Pages is part of Workers now: the site is a
-    Worker holding nothing but static assets"""
+def _tool(*names: str) -> str:
+    for n in names:
+        if shutil.which(n):
+            return shutil.which(n)
+    raise SystemExit(f"needs {names[0]}")
+
+
+def deploy(out: str = DIST, hosts=HOSTS):
+    """build, then upload to each host. Cloudflare with wrangler (`npx wrangler login` once first): Pages is part of
+    Workers now, the site is a Worker holding nothing but static assets. Netlify with its CLI (`npm i -g netlify-cli
+    --ignore-scripts`, `netlify login` once first)"""
     build(out)
-    npx = shutil.which("npx") or shutil.which("npx.cmd")
-    if not npx:
-        raise SystemExit("needs Node.js (npx) for wrangler")
-    subprocess.run([npx, "--yes", "wrangler", "deploy", "--assets", out, "--name", PROJECT,
-                    "--compatibility-date", COMPAT], check=True)
+    for h in hosts:
+        print(f"-> {h}")
+        if h == "cloudflare":
+            subprocess.run([_tool("npx", "npx.cmd"), "--yes", "wrangler", "deploy", "--assets", out, "--name", PROJECT,
+                            "--compatibility-date", COMPAT], check=True)
+        elif h == "netlify":
+            # its .cmd shim can't find node when Python starts it: run its script with node
+            cli = os.path.join(os.path.dirname(_tool("netlify", "netlify.cmd")), "node_modules", "netlify-cli", "bin", "run.js")
+            subprocess.run([_tool("node"), cli, "deploy", "--dir", out, "--prod", "--no-build",
+                            "--site", NETLIFY], check=True)
+        else:
+            raise SystemExit(f"no host {h!r}: {HOSTS}")
