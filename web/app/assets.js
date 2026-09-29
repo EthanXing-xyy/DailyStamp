@@ -8,7 +8,7 @@ const Assets = (() => {
   // ---------- data
   async function loadPalettes() { palettes = Colors.PALETTES; }
   async function loadEmblems() {
-    const list = await (await fetch('/api/emblems')).json();
+    const list = await (await fetch('/api/emblems.json')).json();
     const known = new Map(emblems.map(e => [e.id, e]));
     emblems = list.map(e => known.get(e.id) && known.get(e.id).status === e.status ? known.get(e.id) : e);
     const cut = await fetch('/emblems/cut/index.json', { cache: 'no-cache' }).then(r => r.json()).catch(() => ({}));
@@ -33,11 +33,15 @@ const Assets = (() => {
     const fams = ['DS Brand', 'DS Phrase', 'DS Black', 'DS Caps', 'DS CapsMed', 'DS Cjk', 'DS CjkMed'];
     await Promise.all(fams.map(f => document.fonts.load(`40px "${f}"`, text || ' ').catch(() => {})));
   }
+  // every leaflet comes in one file, the first time one is asked for (a static copy of the app has no server to ask one
+  // phrase at a time); a word without one is 'missing' until the page is opened again
+  let all = null;
   async function loadLeaflet(phrase) {
     phrase = phrase.trim(); if (!phrase) return null;
     const have = leaflets.get(phrase);
     if (have && have.status === 'ready') return have;
-    const r = await (await fetch('/api/leaflet?phrase=' + encodeURIComponent(phrase))).json();
+    all = all || fetch('/api/leaflets.json').then(r => r.json()).catch(e => { all = null; throw e; });
+    const r = (await all)[phrase] || { phrase, status: 'missing' };
     leaflets.set(phrase, r);
     return r;
   }

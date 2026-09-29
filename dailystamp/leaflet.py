@@ -140,3 +140,19 @@ def status(phrase: str) -> dict:
         return got
     with _lock:
         return _pending.get(_id(phrase), {"phrase": phrase, "status": "missing"})
+
+
+def all_ready() -> dict:
+    """every written leaflet, by phrase: the web app fetches them in one go (/api/leaflets.json; a static copy of the
+    app has no server to ask one phrase at a time)"""
+    out = {}
+    for name in sorted(os.listdir(LEAFLETS)) if os.path.isdir(LEAFLETS) else []:
+        if name.endswith(".json"):
+            with open(os.path.join(LEAFLETS, name), encoding="utf-8") as f:
+                try:
+                    d = json.load(f)
+                except json.JSONDecodeError:
+                    continue
+            if d.get("status") == "ready" and d.get("phrase"):
+                out[d["phrase"]] = d
+    return out
