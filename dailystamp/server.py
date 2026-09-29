@@ -49,11 +49,11 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         p = urllib.parse.urlsplit(self.path).path
-        if p == "/api/emblems":
+        # (named like files: `build` writes them as files for a static copy of the app)
+        if p == "/api/emblems.json":
             return self._json(library.list_emblems())
-        if p == "/api/leaflet":
-            q = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
-            return self._json(leaflet.status((q.get("phrase") or [""])[0].strip()))
+        if p == "/api/leaflets.json":
+            return self._json(leaflet.all_ready())
         if p == "/boot.js":
             with open(os.path.join(WEB, "boot.js"), encoding="utf-8") as f:
                 js = f.read()

@@ -316,8 +316,12 @@ const Stage = (() => {
     const e = emblemFor(state), l = leafletFor(state);
     const meta = { no: state.no, date: state.date, phrase: state.phrase.trim(), en: state.en.trim(), palette: state.palette,
       emblem: e ? 'library:' + e.id : 'fallback', emblem_concept: e ? e.concept : '', leaflet: l || null };
-    const r = await (await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: state.date, phrase: state.phrase.trim(), front: deskShot(state, 'front').toDataURL('image/png'), back: deskShot(state, 'back').toDataURL('image/png'), meta }) })).json();
+    const front = deskShot(state, 'front'), back = deskShot(state, 'back');
+    const r = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: state.date, phrase: state.phrase.trim(), front: front.toDataURL('image/png'), back: back.toDataURL('image/png'), meta }) })
+      .then(r => (r.ok ? r.json() : null)).catch(() => null);
+    // (online there is no server to keep them: both sides come down as files instead)
+    if (!r) { download(front, fname() + '-front.png'); download(back, fname() + '-back.png'); $('stage-note').textContent = '已下载正反两面'; return; }
     $('stage-note').textContent = r.folder ? `已保存 → ${r.folder}` : (r.error || '保存失败');
   });
 
