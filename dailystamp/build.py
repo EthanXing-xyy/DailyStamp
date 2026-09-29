@@ -1,5 +1,5 @@
-"""A static copy of the web app for a host with no server of ours (Cloudflare Pages): `python dailystamp.py build`
-writes dist/, `deploy` builds and uploads it.
+"""A static copy of the web app for a host with no server of ours (Cloudflare, static assets on Workers):
+`python dailystamp.py build` writes dist/, `deploy` builds and uploads it (https://daily-stamp.daily-stamp-2.workers.dev/).
 
 What the local server works out on the fly is written as files: /api/emblems.json and /api/leaflets.json. The studio's
 存入 finds no server there and downloads both sides instead (stage.js). web/boot.js keeps its '__BOOT__' mark, so a
@@ -18,7 +18,8 @@ from . import leaflet, library
 ROOT = library.ROOT
 DIST = os.path.join(ROOT, "dist")
 MARK = ".dailystamp-build"                       # only a folder carrying this is emptied before a build
-PROJECT = "daily-stamp"                          # the Cloudflare Pages project: https://daily-stamp.pages.dev/
+PROJECT = "daily-stamp"                          # the Worker: https://daily-stamp.daily-stamp-2.workers.dev/
+COMPAT = "2026-09-26"
 # the art folders, served as they are under their own names (server.py), less what only the tools use
 ART = ["emblems", "terms", "posters", "kraft", "scene"]
 SKIP = ["*.raw.png", "*.txt", "ref-*", "_work", "raw", "plates"]
@@ -63,6 +64,8 @@ def build(out: str = DIST) -> str:
     with open(os.path.join(out, "robots.txt"), "w", encoding="utf-8") as f:
         f.write("User-agent: *\nDisallow: /\n")
     open(os.path.join(out, MARK), "w").close()
+    with open(os.path.join(out, ".assetsignore"), "w", encoding="utf-8") as f:     # (not uploaded)
+        f.write(MARK + "\n")
 
     files = [os.path.join(d, n) for d, _, ns in os.walk(out) for n in ns]
     size = sum(os.path.getsize(p) for p in files)
@@ -70,19 +73,16 @@ def build(out: str = DIST) -> str:
     print(f"dist -> {out}: {len(files)} files, {size / 1e6:.1f} MB (largest {os.path.relpath(big, out)}, "
           f"{os.path.getsize(big) / 1e6:.1f} MB)")
     if len(files) > LIMIT_FILES or os.path.getsize(big) > LIMIT_FILE:
-        raise SystemExit("too many files, or one too big, for Cloudflare Pages")
+        raise SystemExit("too many files, or one too big, for Cloudflare")
     return out
 
 
 def deploy(out: str = DIST):
-    """build, then upload with wrangler (`npx wrangler login` once first)"""
+    """build, then upload with wrangler (`npx wrangler login` once first). Pages is part of Workers now: the site is a
+    Worker holding nothing but static assets"""
     build(out)
     npx = shutil.which("npx") or shutil.which("npx.cmd")
     if not npx:
         raise SystemExit("needs Node.js (npx) for wrangler")
-    wr = [npx, "--yes", "wrangler"]
-    have = subprocess.run(wr + ["pages", "project", "list"], capture_output=True, text=True, encoding="utf-8")
-    if have.returncode == 0 and PROJECT not in have.stdout:          # the first time: the project, published from main
-        subprocess.run(wr + ["pages", "project", "create", PROJECT, "--production-branch", "main"], check=True)
-    subprocess.run(wr + ["pages", "deploy", out, "--project-name", PROJECT, "--branch", "main", "--commit-dirty=true"],
-                   check=True)
+    subprocess.run([npx, "--yes", "wrangler", "deploy", "--assets", out, "--name", PROJECT,
+                    "--compatibility-date", COMPAT], check=True)
