@@ -89,10 +89,11 @@ const Type = (() => {
     return { items, width: x };
   }
   /** prints what was laid out: { W, H (the bitmap), a (its ink, 0..255), w, h, pad (px of the page: it lies pad
-   *  outside its line all round) }. ox, oy: where the line lies on the plate */
+   *  outside its line all round) }. ox, oy: where the line lies on the plate. w and h are whole px, so a word set on a
+   *  whole px stays on whole screen px (see home.js: centre) */
   function print({ items, width }, K, size, ox, oy) {
     const r = ratio(), pad = Math.ceil(K.rough) + 2, line = K.line * size;
-    const W = Math.ceil((width + 2 * pad) * r), H = Math.ceil((line + 2 * pad) * r), g = sheet(W, H);
+    const w = Math.ceil(width + 2 * pad), h = Math.ceil(line + 2 * pad), W = Math.round(w * r), H = Math.round(h * r), g = sheet(W, H);
     g.font = `${size * r}px ${K.family}`; g.textBaseline = 'alphabetic'; g.fillStyle = '#000';
     const m = g.measureText('国'), up = m.fontBoundingBoxAscent || size * r * 0.88, down = m.fontBoundingBoxDescent || size * r * 0.12;
     const base = pad * r + (line * r - up - down) / 2 + up;
@@ -110,7 +111,7 @@ const Type = (() => {
         if (v >= 0.5) a[y * W + x] = v * P.a[py + mod(x + sx0, T)] / 255 * K.ink + 0.5;
       }
     }
-    return { W, H, a, pad, w: W / r, h: H / r };
+    return { W, H, a, pad, w, h };
   }
   const keep = (key, make) => {
     if (!made.has(key)) { try { made.set(key, make()); } catch { made.set(key, null); } }
@@ -142,7 +143,7 @@ const Type = (() => {
     const im = new ImageData(m.W, m.H), p = im.data;
     for (let i = 0, j = 0; i < m.a.length; i++, j += 4) if (m.a[i]) { p[j] = INK[0]; p[j + 1] = INK[1]; p[j + 2] = INK[2]; p[j + 3] = m.a[i]; }
     c.getContext('2d').putImageData(im, 0, 0);
-    Object.assign(c.style, { width: m.w.toFixed(3) + 'px', height: m.h.toFixed(3) + 'px', margin: -m.pad + 'px' });
+    Object.assign(c.style, { width: m.w + 'px', height: m.h + 'px', margin: -m.pad + 'px' });
     c.setAttribute('aria-hidden', 'true');
     return c;
   }
