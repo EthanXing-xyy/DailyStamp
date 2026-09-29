@@ -13,7 +13,7 @@ the local codex CLI; the app itself never calls a model.
   python dailystamp.py kraft | agekits            # the kraft home: paper, pictures, ink; the aged stamps' kits
   python dailystamp.py masks [--force]            # pre-cut the emblems' ink masks for the web app
   python dailystamp.py fonts                      # subset the web fonts after any text changes
-  python dailystamp.py build | deploy             # a static copy in dist/; deploy also puts it online (Cloudflare Pages)
+  python dailystamp.py build | deploy             # a static copy in dist/; deploy also puts it online (Cloudflare)
 """
 from __future__ import annotations
 
@@ -95,7 +95,7 @@ COMMANDS = {
               lambda a: mod("webfonts").build()),
     "build": ("a static copy of the web app in dist/, for a host with no server of ours", [],
               lambda a: mod("build").build()),
-    "deploy": ("build, then upload dist/ to Cloudflare Pages (https://daily-stamp.pages.dev/; `npx wrangler login` once)", [],
+    "deploy": ("build, then put dist/ online (Cloudflare: https://daily-stamp.daily-stamp-2.workers.dev/; `npx wrangler login` once)", [],
                lambda a: mod("build").deploy()),
 }
 
