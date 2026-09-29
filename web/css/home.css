@@ -15,7 +15,7 @@ body.daily-home #home { display: block; position: fixed; inset: 0; z-index: 20; 
   perspective: 1000px; -webkit-tap-highlight-color: transparent; }
 /* out of sight: out of the render tree too, so the compositor's work doesn't grow with the number of functions */
 .card.far { display: none; }
-/* the stamp floats on the compositor (a looping animation); a press tips it with rotate/scale on top of that */
+/* the stamp floats (home.js poses its transform); a press tips it with rotate/scale on top of that */
 .card-in { position: relative; width: 100%; height: 100%; will-change: transform; }
 /* the soft shadow stays on the desk while the stamp floats above it; only the contact shadow rides with the paper.
    Both are bitmaps drawn once (home.js): a CSS blur here was redone for every stamp on every frame */

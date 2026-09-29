@@ -4,9 +4,9 @@
 // desk's paper shapes, are new on every reload (`?homeseed=N` pins one deal, for screenshots).
 // Tapping the middle one presses it (Win8), then it lifts off and flies to its page. The stamps are all printed while
 // the loading screen is up (fill), so the carousel never draws a stamp while it moves; show() lifts the titles in.
-// Phones: nothing here repaints while the wheel turns. The stamps float on the compositor (looping animations), their
-// shadows are bitmaps drawn once, so are the desk and every word (web/shell/type.js), a stamp off the screen is off the
-// page, and the frame loop only runs while the wheel moves (`?fps` shows the frame rate).
+// Phones: nothing here repaints while the wheel turns. The stamps' shadows are bitmaps drawn once, so are the desk and
+// every word (web/shell/type.js), a stamp off the screen is off the page; the frame loop only moves layers: the wheel
+// while it turns, and the floating of the stamps on the screen, 30 poses a second (`?fps` shows the frame rate).
 const Home = (() => {
   const FEATURES = Features.LIST.map(f => ({ live: true, ...f }));   // web/app/features.js
   const N = FEATURES.length;
@@ -22,25 +22,24 @@ const Home = (() => {
   const two = n => String(n).padStart(2, '0');
 
   // paper riding moving air: every stamp bobs, wanders in a slow figure of eight, turns and tips to the light, each on
-  // its own period; its shadow stays on the desk, fainter, softer and further off the higher the stamp floats. One
-  // looping animation per stamp, sampled from these sines; the periods fit the loop a whole number of times. An aged
+  // its own period; its shadow stays on the desk, fainter, softer and further off the higher the stamp floats. An aged
   // stamp's shadow is its own (drawn with the kit, lying right under it): at the bottom of its bob the stamp touches it.
-  const LOOP = 49.6, SAMPLES = 160;
-  const PERIODS = [6.2, LOOP / 6, LOOP / 7, LOOP / 9, LOOP / 5];   // bob, sway, turn, tip, lean: about 6.2 8.3 7.1 5.5 9.9 s
-  function floatFrames(ph, aged) {
-    const inner = [], shadow = [];
-    for (let i = 0; i <= SAMPLES; i++) {
-      const t = i * LOOP / SAMPLES, w = k => Math.sin(t * 2 * Math.PI / PERIODS[k] + ph[k]);
-      const fy = 14 * w(0), fx = 5 * w(1), rz = 2 * w(2), rx = 5 * w(3), ry = 6 * w(4);
-      const lift = (14 - fy) / 28;                          // 0 resting low .. 1 at the top of its bob
-      inner.push({ transform: `translate(${fx.toFixed(2)}px, ${fy.toFixed(2)}px) rotate(${rz.toFixed(3)}deg) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)` });
-      shadow.push(aged
-        ? { transform: `translate(${(fx + lift * 8).toFixed(2)}px, ${(14 + lift * 8).toFixed(2)}px) rotate(${rz.toFixed(3)}deg) scale(${(1 + lift * 0.04).toFixed(4)})`,
-          opacity: +(1 - lift * 0.4).toFixed(3) }
-        : { transform: `translate(${(fx * 0.5 + 6 + lift * 10).toFixed(2)}px, ${(12 + lift * 16).toFixed(2)}px) rotate(${(rz * 0.7).toFixed(3)}deg) scale(${(0.95 + lift * 0.09).toFixed(4)})`,
-          opacity: +(0.62 - lift * 0.3).toFixed(3) });
+  // The frame loop poses each stamp on the screen t s into the floating (a looping compositor animation stood still on
+  // an iPhone whenever nothing else on the page changed, and only woke when the wheel turned)
+  const PERIODS = [6.2, 49.6 / 6, 49.6 / 7, 49.6 / 9, 49.6 / 5];   // bob, sway, turn, tip, lean: about 6.2 8.3 7.1 5.5 9.9 s
+  function pose(sl, t) {
+    const w = k => Math.sin(t * 2 * Math.PI / PERIODS[k] + sl.ph[k]);
+    const fy = 14 * w(0), fx = 5 * w(1), rz = 2 * w(2), rx = 5 * w(3), ry = 6 * w(4);
+    const lift = (14 - fy) / 28;                            // 0 resting low .. 1 at the top of its bob
+    sl.inner.style.transform = `translate(${fx.toFixed(2)}px, ${fy.toFixed(2)}px) rotate(${rz.toFixed(3)}deg) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
+    const s = sl.shadow.style;
+    if (sl.aged) {
+      s.transform = `translate(${(fx + lift * 8).toFixed(2)}px, ${(14 + lift * 8).toFixed(2)}px) rotate(${rz.toFixed(3)}deg) scale(${(1 + lift * 0.04).toFixed(4)})`;
+      s.opacity = (1 - lift * 0.4).toFixed(3);
+    } else {
+      s.transform = `translate(${(fx * 0.5 + 6 + lift * 10).toFixed(2)}px, ${(12 + lift * 16).toFixed(2)}px) rotate(${(rz * 0.7).toFixed(3)}deg) scale(${(0.95 + lift * 0.09).toFixed(4)})`;
+      s.opacity = (0.62 - lift * 0.3).toFixed(3);
     }
-    return [inner, shadow];
   }
 
   /** this visit's stamps: library words, palettes and layouts dealt afresh on every load (the date only goes on the stamp) */
@@ -75,7 +74,7 @@ const Home = (() => {
       // each stamp drifts on its own phases, so the eleven never move in step
       const ph = [0, 1, 2, 3, 4].map(k => (i * 2.399 + k * 1.913) % (2 * Math.PI));
       // aged: the stamp as the home shows it, handled for years (web/shell/age.js), on its contact canvas
-      return { ...f, index: i, btn, shadow, inner, contact, cv, st: null, printed: null, ph, anims: null, far: null, tr: '', op: '', z: '',
+      return { ...f, index: i, btn, shadow, inner, contact, cv, st: null, printed: null, ph, far: null, tr: '', op: '', z: '',
         aged: null, agedOf: null };
     });
 
@@ -221,8 +220,9 @@ const Home = (() => {
     slots.forEach(sl => { put(sl.cv, Stamp.blank(sc, 3 + sl.index)); contact(sl); });
 
     // ---- the engine: pos (which stamp is in the middle, fractional) eases toward to. The loop only runs while
-    // something moves; the floating is the compositor's
+    // something moves: the wheel, and once the home is up (never with reduced motion) the floating, 30 poses a second
     let pos = 0, to = 0, last = 0, vel = 0, tilt = 0, dragging = false, shown = -1, arc = '', raf = 0;
+    let floatFrom = -1, posed = -1e9;                       // when the floating began (-1: not yet), when last posed
     function frame(t, force) {
       // (under the loading screen the wheel stands still: every frame there goes to printing)
       const visible = document.body.classList.contains('daily-home') && document.body.classList.contains('loaded') && !document.hidden;
@@ -234,14 +234,14 @@ const Home = (() => {
       vel = (pos - before) / Math.max(1, dt);
       tilt += (Math.max(-6, Math.min(6, vel * 750)) * (reduce ? 0 : 1) - tilt) * (1 - Math.exp(-dt / (120 * slow)));
       const c = mod(Math.round(pos), N), near = [];
+      const floating = floatFrom >= 0, posing = floating && t - posed >= 22, ft = (t - floatFrom) / 1000;
+      if (posing) posed = t;
       for (const sl of slots) {
         const d = wrap(sl.index - pos), a = Math.abs(d);
-        const far = a > gone;                               // out of sight: hidden, its floating paused
-        if (far !== sl.far) {
-          sl.far = far; sl.btn.classList.toggle('far', far);
-          if (sl.anims) for (const an of sl.anims) far ? an.pause() : an.play();
-        }
+        const far = a > gone, was = sl.far;                 // out of sight: hidden, not posed
+        if (far !== was) { sl.far = far; sl.btn.classList.toggle('far', far); }
         if (far) continue;
+        if (floating && (posing || was !== false)) pose(sl, ft);   // (one coming into sight is posed at once)
         const th = Math.sign(d) * along(ANG, a), s = along(SCL, a);
         const x = R * Math.sin(th), y = R * (1 - Math.cos(th));
         const tf = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${(th * 180 / Math.PI).toFixed(3)}deg) scale(${s.toFixed(4)}) rotateY(${tilt.toFixed(2)}deg)`;
@@ -258,8 +258,17 @@ const Home = (() => {
       if (c !== shown) showTitle(c);
       return true;
     }
-    const moving = () => dragging || Math.abs(to - pos) > 1e-4 || Math.abs(tilt) > 0.01;
-    const loop = t => { raf = 0; if (frame(t) && moving()) raf = requestAnimationFrame(loop); else last = 0; };
+    const turning = () => dragging || Math.abs(to - pos) > 1e-4 || Math.abs(tilt) > 0.01;
+    // while only the floating moves, the next frame is asked for 20 ms on: a pose every other frame at 60 Hz, and no
+    // frames in between that would do nothing
+    let nap = 0;
+    const loop = t => {
+      raf = 0;
+      if (!frame(t)) { last = 0; return; }
+      if (turning()) raf = requestAnimationFrame(loop);
+      else if (floatFrom >= 0) { clearTimeout(nap); nap = setTimeout(kick, 20); }
+      else last = 0;
+    };
     const kick = () => { if (!raf) raf = requestAnimationFrame(loop); };
     // the home coming on show (loaded, back from a page) is a change of the body's classes
     new MutationObserver(kick).observe(document.body, { attributes: true, attributeFilter: ['class'] });
@@ -280,17 +289,6 @@ const Home = (() => {
       sl.inner.style.scale = k.toFixed(4);
       sl.shadow.style.translate = `0 ${(-pd * 8).toFixed(2)}px`; sl.shadow.style.scale = (1 - pd * 0.03).toFixed(4);
     });
-    /** the stamps start floating when the loading screen lifts (never with reduced motion) */
-    const FLOAT = { duration: LOOP * 1000, iterations: Infinity };
-    function float() {
-      if (reduce || slots[0].anims) return;
-      for (const sl of slots) {
-        const [inner, shadow] = floatFrames(sl.ph, !!sl.aged);
-        sl.anims = [sl.inner.animate(inner, FLOAT), sl.shadow.animate(shadow, FLOAT)];
-        if (sl.far) for (const an of sl.anims) an.pause();
-      }
-    }
-
     // ---- the stamps as the home shows them: handled for years (web/shell/age.js). The printed stamp stays on its own
     // canvas (hidden), for the flight to its page and for the pages; the aged one, with the desk round it for its lifted
     // corners, is the contact canvas, and its shadow the desk shadow's
@@ -302,12 +300,7 @@ const Home = (() => {
       const pc = v => (v * 100).toFixed(3) + '%', place = (c, [l, t, w, h]) => Object.assign(c.style, { left: pc(l), top: pc(t), width: pc(w), height: pc(h) });
       place(sl.contact, got.picture); place(sl.shadow, got.shadow);
       sl.shadow.style.transformOrigin = got.origin.map(pc).join(' ');
-      const first = !sl.aged;
-      sl.aged = got; sl.agedOf = was; sl.btn.classList.add('aged');
-      if (first && sl.anims) {                              // (its shadow floats as an aged one's does now)
-        sl.anims[1].cancel(); sl.anims[1] = sl.shadow.animate(floatFrames(sl.ph, true)[1], FLOAT);
-        if (sl.far) sl.anims[1].pause();
-      }
+      sl.aged = got; sl.agedOf = was; sl.btn.classList.add('aged');   // (from its next pose its shadow floats as an aged one's)
       return true;
     }
 
@@ -506,7 +499,8 @@ const Home = (() => {
       typed = true; retype();
       live = true; inked = true;
       document.body.classList.add('home-inked'); showTitle(mod(Math.round(pos), N));
-      float(); kick();
+      if (!reduce) floatFrom = performance.now();
+      kick();
     }
 
     const find = key => slots.find(sl => sl.key === key);
