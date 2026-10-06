@@ -19,9 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-This license covers the code in this repository: dailystamp.py, dailystamp/,
-and the JavaScript, CSS and HTML in web/. The artwork and text are licensed
-separately (see LICENSE-ART.md). Third-party files keep their own licenses:
-web/vendor/ (egjs Axes, MIT, see web/vendor/axes.LICENSE) and the fonts in
-web/fonts/, which belong to their foundries.
