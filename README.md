@@ -1,295 +1,317 @@
 <div align="center">
 
-# 每日一枚 · Daily Stamp
+# Daily Stamp · 每日一枚
 
-**一天一枚波普邮票。正面是吵闹的撞色，背面是一本正经的「情绪药品说明书」。**
+**One pop-art stamp a day. Loud clashing colour on the front, a deadpan "mood medicine leaflet" on the back.**
 
-中文 · [English](README.en.md) · [在线试玩](https://daily-stamp.netlify.app)
+English · [中文](README_zh.md) · [Live demo](https://daily-stamp.netlify.app)
 
-![首页：牛皮纸上的旧邮票转盘](docs/screenshots/home-desktop.jpg)
+![The home: a wheel of old stamps on kraft paper](docs/screenshots/home-desktop.jpg)
 
 </div>
 
-每日一枚是一个纯前端的网页小应用，手机和电脑都能玩。
+Daily Stamp is a small front-end-only web app that works on phones and desktops. Its interface is in Chinese.
 
-- 首页是一圈转不到头的邮票，每一枚通往一个功能，一共 24 个。
-- 邮票是在浏览器里现印的：96 个情绪词、16 套撞色、10 种版式，每次打开发到你手里的都不一样。
-- 每枚邮票翻过来是一份「情绪药品说明书」：成分、适应症、不良反应、禁忌，一样不少。
-- 运行时不调用任何模型，也没有后端，打包出来就是一个静态网站。
+- The home is an endless wheel of stamps. Each stamp opens one of 24 features.
+- The stamps are printed in the browser: 96 mood words, 16 clashing palettes and 10 layouts, dealt afresh on every visit.
+- Turn a stamp over and you get a "mood medicine leaflet": ingredients, indications, adverse reactions, contraindications, all of it.
+- The app never calls a model at runtime and has no back end. The build is a plain static site.
 
-在线试玩：<https://daily-stamp.netlify.app>（备用：<https://daily-stamp.daily-stamp-2.workers.dev>）。
-第一次打开要等一会儿，因为它会在加载界面后面把首页的 24 枚邮票全部印好。
+Live demo: <https://daily-stamp.netlify.app> (mirror: <https://daily-stamp.daily-stamp-2.workers.dev>).
+The first load takes a while, because all 24 stamps of the home are printed behind the loading screen.
 
-## 目录
+## Contents
 
-- [截图](#截图)
-- [美术风格：安静的纸，吵闹的邮票](#美术风格安静的纸吵闹的邮票)
-- [交互：邮票转盘为什么滑起来顺](#交互邮票转盘为什么滑起来顺)
-- [24 个功能](#24-个功能)
-- [在本地运行](#在本地运行)
-- [开发](#开发)
-- [许可证](#许可证)
+- [Screenshots](#screenshots)
+- [Art direction: quiet paper, loud stamps](#art-direction-quiet-paper-loud-stamps)
+- [Interaction: why the stamp wheel feels smooth](#interaction-why-the-stamp-wheel-feels-smooth)
+- [The 24 features](#the-24-features)
+- [Run it locally](#run-it-locally)
+- [Development](#development)
+- [License](#license)
 
-## 截图
+## Screenshots
 
-**首页的转盘**（左：手指滑动、轻点后邮票飞进功能页；中：另一套插画；右：加载界面开门之后）
+**The wheel on the home** (left: swiping, then a tap sends the stamp flying to its page; middle: the other set of pictures; right: the loading screen with its door open)
 
 <p align="center">
-  <img src="docs/screenshots/home-swipe.gif" width="30%" alt="手机上滑动转盘，点开一枚邮票">
+  <img src="docs/screenshots/home-swipe.gif" width="30%" alt="Swiping the wheel on a phone and opening a stamp">
   &nbsp;
-  <img src="docs/screenshots/home-phone.jpg" width="30%" alt="手机首页，乡间邮局这套插画">
+  <img src="docs/screenshots/home-phone.jpg" width="30%" alt="The home on a phone, with the village post office pictures">
   &nbsp;
-  <img src="docs/screenshots/loading-phone.jpg" width="30%" alt="手机上的加载界面，门已经打开">
+  <img src="docs/screenshots/loading-phone.jpg" width="30%" alt="The loading screen on a phone, door open">
 </p>
 
-**加载界面**：一间小邮局的门。挂牌显示进度，印好之后轻触，门向里推开。
+**The loading screen**: the door of a small post office. The hanging sign shows progress. When printing is done, a tap swings the door in.
 
-![加载界面](docs/screenshots/loading.jpg)
+![The loading screen](docs/screenshots/loading.jpg)
 
-**邮票的正面和背面**
+**The front and the back of a stamp**
 
-![今日一枚的正面和背面的情绪药品说明书](docs/screenshots/stamp-front-back.jpg)
+![Today's stamp: its front, and the mood medicine leaflet on its back](docs/screenshots/stamp-front-back.jpg)
 
-**同一台印刷机印出来的六枚**
+**Six stamps from the same press**
 
-![六枚生成的邮票](docs/screenshots/stamps.jpg)
+![Six generated stamps](docs/screenshots/stamps.jpg)
 
-**工作室**：自己选词、版式、撞色和徽章，印一枚存下来。
+**The studio**: pick the word, layout, palette and emblem yourself, then print one and keep it.
 
-![工作室](docs/screenshots/studio.jpg)
+![The studio](docs/screenshots/studio.jpg)
 
-**几个功能页**：节气历、情绪药房、抓娃娃机、寄一张、盖戳。
+**A few of the feature pages**: solar terms, mood pharmacy, claw machine, post one, cancel.
 
-![五个功能页](docs/screenshots/pages.jpg)
+![Five feature pages](docs/screenshots/pages.jpg)
 
-## 美术风格：安静的纸，吵闹的邮票
+## Art direction: quiet paper, loud stamps
 
-整个应用只有一个美术上的想法：**周围的一切都安静、哑光、留白，只有邮票是吵的。**
-牛皮纸、米色的墙、灰色的桌面都在往后退，高饱和的撞色只出现在那一小块带齿孔的纸上。
+The whole app follows one visual idea: **everything around the stamps is quiet, matte and mostly empty, and only the stamps are loud.**
+Kraft paper, a cream wall and a grey desk all step back. Saturated, clashing colour appears only on that small piece of perforated paper.
 
-### 邮票正面：波普
+### The front of a stamp: pop
 
-邮票是用 Canvas 画出来的，不是图片。画法照着丝网印刷来：
+Stamps are drawn on a canvas, not stored as pictures, and they are drawn the way a silkscreen is printed.
 
-- **16 套撞色**（`web/core/colors.js`）。每套是四个专色加一个墨色，每一套都有出处：
-  Warhol 的《Shot Marilyns》和金宝汤罐、Lichtenstein 的《Whaam!》、Hockney 的泳池、
-  Barragán 的吉拉迪之家、孟菲斯小组、马蒂斯晚年的剪纸、田中一光的《日本舞踊》、永井博的 City Pop 封面、
-  《花样年华》的红配绿……四个颜色按「底色、撞色、高光、第四色」分配角色，角色可以轮换，所以一套配色能印出四种样子。
-- **10 种版式**（`web/core/layouts.js`）：放射、四联、漫画、方中方、巨字、孟菲斯、圆点、斜切、网点，
-  外加一个每次重新组合的「生成」版式。每种对应一种波普语汇。
-- **图案库**（`web/core/pattern.js`）：放射线、Ben-Day 网点、条纹、棋盘格、草间弥生式圆点、漫画爆炸框、对话气泡、孟菲斯的波浪线和碎纸屑。
-- **两块版**。每个版式都画在两块版上：色版（所有专色）和线版（黑色勾线）。
-  印的时候线版故意错开一点，再盖一层纸的颗粒，所以它看起来是印的，不是屏幕上的矢量图。
-- **徽章**。96 个词各有一枚徽章，每一枚都是这个词的视觉双关（「牛马」是挂着工牌的牛，「班味」是冒着味道的领带）。
-  徽章存成不带颜色的三通道蒙版（深色墨、洋红、青），到了浏览器里再用当前配色上色，所以任何徽章都能配任何一套撞色。
-  外面再长出一圈模切的白边，像一张贴纸。
-- 邮票上还有当天的日期戳和当季的节气图标，24 个节气各画了一个。
+- **16 clashing palettes** (`web/core/colors.js`). Each is four spot inks plus one key ink, and each is traced to a source:
+  Warhol's *Shot Marilyns* and Campbell's soup cans, Lichtenstein's *Whaam!*, Hockney's pool, Barragán's Casa Gilardi,
+  the Memphis group, Matisse's late cut-outs, Ikko Tanaka's *Nihon Buyo*, Hiroshi Nagai's City Pop covers,
+  the red and green of *In the Mood for Love*, and more. The four inks take the roles of ground, clash, highlight and fourth colour,
+  and the roles rotate, so one palette prints four different ways.
+- **10 layouts** (`web/core/layouts.js`): rays, quad, comic, square-in-square, big type, Memphis, polka dots, diagonal split and halftone,
+  plus a generative layout that composes itself anew every time. Each one is a different pop idiom.
+- **A pattern library** (`web/core/pattern.js`): rays, Ben-Day screens, stripes, checkers, Kusama-style polka dots, comic bursts,
+  speech bubbles, and Memphis squiggles, zigzags and confetti.
+- **Two plates.** Every layout draws onto two plates: a colour plate (all the spot inks) and a key plate (the black line work).
+  The press prints the key plate slightly out of register and lays paper grain over the result, so a stamp looks printed rather than like vectors on a screen.
+- **Emblems.** Each of the 96 words has an emblem, and each emblem is a visual pun on its word
+  ("牛马", a workhorse, is an ox wearing an office ID badge; "班味", office funk, is a limp necktie giving off stink lines).
+  An emblem is stored as a colourless three-channel mask (dark ink, magenta, cyan) and tinted in the browser with the current palette,
+  so any emblem works with any palette. A die-cut white outline is grown around it, like a sticker.
+- Each stamp also carries the day's postmark and the icon of the current solar term. All 24 solar terms have one.
 
-### 邮票背面：情绪药品说明书
+### The back of a stamp: a mood medicine leaflet
 
-翻过来是药品说明书的版式：彩色的抬头、OTC 标志、成分比例条、性状、适应症、用法用量、不良反应、禁忌、贮藏、批准文号、条形码。
-内容是一本正经的冷幽默，例如「加班缓释片」的成分是未读邮件 35%、冷掉的饭 25%、电梯余光 15%……每个词一份，都是提前写好存在 `leaflets/` 里的。
+The back is laid out like a drug package insert: a coloured header, an OTC mark, an ingredients bar, appearance, indications, dosage,
+adverse reactions, contraindications, storage, an approval number and a barcode.
+The text is deadpan. "Overtime sustained-release tablets", for example, contain 35% unread mail, 25% cold dinner, 15% elevator glow, and so on.
+There is one leaflet per word, written ahead of time and stored in `leaflets/`.
 
-### 首页：牛皮纸、水粉小画、旧邮票
+### The home: kraft paper, small gouache pictures, old stamps
 
-- **桌面是一张揉过的牛皮纸**，上面有几幅绘本风格的水粉小画。
-  小画有两套，每次打开随机抽一套：「邮差」（骑车的邮差、追着跑的男孩、小猫、邮筒、路灯和长椅、叼着信的鸽子）
-  和「乡间邮局」（小邮局、邮政车、寄信的孩子、热气球和双翼飞机）。
-  画是印在纸上的：合成时让纸的起伏从颜料下面透出来。
-- **邮票是旧的**。首页的每一枚都像被人拿了很多年：纸泛黄，墨褪色发颗粒，再随机带两三种旧痕（揉皱、折痕、水渍、揭薄），
-  而且不再平整：翘角、卷边、折角、半开的折痕、弯拱、起伏。
-  这些做成 12 套与邮票内容无关的「做旧套件」，像发牌一样发给 24 枚邮票，每次打开重新发，相邻两枚不会旧得一样。
-  只有首页的邮票是旧的。点开之后，邮票在飞向功能页的途中变回新的；飞回首页时再变旧。
-- **字是印上去的**。首页所有的字都像用橡皮章印在牛皮纸上：墨不实，有漏印的小点，边缘发毛，墨里透着纸色。
-- **插画给邮票让路**。应用先算出邮票在整个转动过程中会经过的所有位置，插画只画在邮票永远不会经过的地方，
-  在那里尽量画大；屏幕太小放不下的就不画，不硬塞。
+- **The desk is a sheet of crumpled kraft paper** with a few small gouache pictures on it, in the manner of a quiet picture book.
+  There are two sets, and each visit picks one: "the postman's round" (a postman on a bicycle, a boy running after him, a cat,
+  a pillar box, a street lamp and a bench, a pigeon carrying a letter) and "the village post office" (the post office, a mail van,
+  a child posting a letter, a hot-air balloon and a biplane).
+  The pictures are printed on the paper: when they are composited, the paper's relief shows through the paint.
+- **The stamps are old.** Every stamp on the home looks as if it has been handled for years. The paper has yellowed, the ink has faded and turned grainy,
+  and each stamp has two or three kinds of wear at random (crumpling, a fold, a water stain, skinned patches).
+  It no longer lies flat either: a lifted corner, a curled edge, a turned-over corner, a half-open fold, a bow or a wave.
+  All of this is prepared as 12 "ageing kits" that do not depend on what is printed. They are dealt to the 24 stamps like cards,
+  with a new deal on every visit, so neighbouring stamps never age alike.
+  Only the home shows aged stamps. When you open one, it turns new again on its flight to the page, and it ages again as it flies home.
+- **The type is printed.** Every word on the home looks rubber-stamped onto the kraft: the ink is not quite solid, there are missed specks,
+  the edges are rough, and the paper's colour shows through.
+- **The pictures make way for the stamps.** The app first works out every place a stamp can pass as the wheel turns.
+  Pictures are drawn only where no stamp ever passes, as large as that room allows. On a screen too small for one, it is left out rather than squeezed in.
 
-### 加载界面：小邮局的门
+### The loading screen: the door of a small post office
 
-米色的纸上，一辆车筐里装着信的自行车靠在红色的门边，旁边是一个旧邮筒和一只三花猫。画法像文学杂志的插图：平涂的哑光色、干而发颗粒的边缘、大片留白、没有五官的人物。
+On cream paper, a bicycle with a basket of letters leans by a red door, next to an old pillar box and a calico cat.
+It is drawn like an illustration in a literary magazine: flat matte colour, dry and grainy edges, a lot of empty paper, faceless figures.
 
-- 挂牌显示印刷进度（上墨、制版、晒版、印刷、调色、出版），每隔几秒有一封信从车筐飞进邮筒。
-- 全部印好之后挂牌换成「营业中」，标题上盖下一枚当天的邮戳，门里的灯慢慢亮起来。
-- 轻触，门向里推开，露出亮着灯的邮局：邮票柜、柜台、店员。再触一下，画面像光圈一样收拢，首页出现。
+- The hanging sign shows how far the press has got (inking, plate-making, exposing, printing, colour-matching, publishing).
+  Every few seconds a letter flies from the basket into the pillar box.
+- When everything is printed the sign reads 营业中 (open), a postmark with the day's date strikes the title, and the lamps inside come on slowly.
+- A tap swings the door in onto the lit post office: the stamp cabinet, the counter, the clerk. A second tap closes an iris on it, and the home appears.
 
-### 几条规矩
+### A few rules
 
-- 元素不突然出现，都是慢慢淡入。
-- 交互保持克制，每样东西只轻轻地动一次。
-- 不为了「提示用户」往画面里加网页控件。「进门」不是一个按钮，是门本身。
-- 字体只用固定的几款，不随功能增加。
+- Nothing pops in. Everything fades in slowly.
+- Interaction stays restrained. Each thing moves softly, and once.
+- No web widgets are added to the picture just to prompt the user. The way in is not a button, it is the door itself.
+- The typefaces are a fixed few. Features do not bring new ones.
 
-## 交互：邮票转盘为什么滑起来顺
+## Interaction: why the stamp wheel feels smooth
 
-首页的转盘是整个应用里打磨得最久的部分。下面按「形状、手感、细节、性能」的顺序写，最后是它一路改过来的过程。
-代码都在 `web/shell/home.js`，不到 600 行，没有用任何动画库。
+The wheel on the home is the most polished part of the app. This section covers its shape, its feel, its details and its performance, in that order,
+and ends with how it got there. The code is all in `web/shell/home.js`, under 600 lines, with no animation library.
 
-### 形状：一个轮心在屏幕下方的大轮子
+### Shape: a big wheel whose hub is below the screen
 
-邮票不是排成一条直线，而是骑在一个大轮子的边缘上。轮心远在屏幕下方（半径是屏幕宽度的 2 到 2.9 倍），
-所以离中间越远的邮票位置越低、歪得越多、也越小。
+The stamps are not laid out in a straight row. They ride the rim of a big wheel whose hub sits far below the screen
+(its radius is 2 to 2.9 times the screen's width), so the further a stamp is from the middle, the lower, the more tipped and the smaller it is.
 
-- 中间那一枚最大，两边的依次缩小，最外面的一对被屏幕边缘切掉一半。这一半是有意留的：它告诉你旁边还有。
-- 电脑上同时看到五枚，超宽屏七枚，手机上三枚。布局只按屏幕的宽高比分支，手机和电脑是同一套代码。
-- 转盘没有尽头，24 枚首尾相接。
+- The middle stamp is the largest and its neighbours shrink in turn. The outermost pair is cut in half by the screen's edge.
+  That half is deliberate: it tells you there is more to the side.
+- A desktop shows five stamps, an ultrawide screen seven, a phone three. The layout branches only on the screen's aspect ratio. Phones and desktops run the same code.
+- The wheel has no end. The 24 stamps join into a ring.
 
-### 手感：一个数追另一个数
+### Feel: one number chasing another
 
-整个转盘的状态只有两个数：`pos`（现在转到哪，可以是小数）和 `to`（要转到哪）。每一帧 `pos` 向 `to` 靠近一点：
+The wheel's whole state is two numbers: `pos` (where it is now, fractional) and `to` (where it is going). On every frame `pos` moves a little toward `to`:
 
 ```js
 pos += (to - pos) * (1 - Math.exp(-dt / 110));
 ```
 
-这是按时间而不是按帧算的指数缓动，所以 60 Hz 和 120 Hz 的屏幕、掉帧和不掉帧，手感都一样。所有输入方式做的事情只有一件：改 `to`。
+This is exponential easing by time rather than by frame, so it feels the same at 60 Hz and 120 Hz, and with or without dropped frames.
+Every kind of input does just one thing: it changes `to`.
 
-- **拖动**：手指按住时 `pos` 直接跟手，一像素对一像素。鼠标拖动的传动比降到 0.3，因为手在鼠标上一扫的距离比它本意大得多。
-- **甩动**：松手时用最后 6 个采样点算出速度，把位置往前推 220 毫秒，再吸附到最近的一整枚上。
-  一次最多甩过 3 枚，所以转盘不会转飞，也永远不会停在两枚之间。
-- **滚轮**：鼠标滚轮一格走一枚。触控板一个手势走一枚，手势从事件停下来的那一刻算结束，所以惯性滚动不会连跳好几枚。
-- **键盘**：左右方向键走一枚，回车或空格点开。
-- **点击**：点旁边的邮票，它转到中间；点中间的邮票，它被点开。
+- **Dragging.** While a finger is down, `pos` follows it directly, pixel for pixel. A mouse drag is geared down to 0.3,
+  because a hand on a mouse sweeps much further than it means to.
+- **Flicking.** On release, the velocity is taken from the last 6 samples, the position is projected 220 ms ahead, and the result snaps to the nearest whole stamp.
+  One flick passes at most 3 stamps, so the wheel never spins away and never rests between two stamps.
+- **Wheel.** A mouse wheel notch moves one stamp. A trackpad gesture moves one stamp, and the gesture ends when its events stop, so inertial scrolling does not skip several.
+- **Keyboard.** The left and right arrows move one stamp. Enter or Space opens the middle one.
+- **Tapping.** Tap a stamp at the side and it comes to the middle. Tap the middle one and it opens.
 
-### 细节
+### Details
 
-- **转动时邮票会侧一下身**。倾斜角度跟着转速走，最多 6 度，停下时自己回正。
-- **邮票是飘着的**。每一枚都在上下浮动、沿一个慢 8 字游走、转动、朝光倾斜，五个动作各有各的周期（约 6.2、8.3、7.1、5.5、9.9 秒），
-  每一枚的相位也不同，所以它们永远不会同步动。影子留在桌面上不跟着走：邮票飘得越高，影子越淡、越远。
-- **按下去有分量**。按住中间的邮票，它会朝手指的方向倾斜并微微下沉（Windows 8 磁贴的那种反馈），影子同时收紧。
-- **点开是一次飞行**。邮票先从桌面上抬起一点、微微一转，再飞到功能页里它该在的位置，途中由旧变新。
-  返回时反过来，飞回它在转盘上的那一格，落下并重新变旧。浏览器的后退键走的也是这条路。
-- **标题逐字换**。转到下一枚时，旧名字一个字一个字向上淡出，新名字一个字一个字从基线下面升上来。
+- **Stamps lean as the wheel turns.** The lean follows the turning speed, up to 6 degrees, and rights itself when the wheel stops.
+- **Stamps float.** Each one bobs, wanders in a slow figure of eight, turns, and tips toward the light. The five motions run on their own periods
+  (about 6.2, 8.3, 7.1, 5.5 and 9.9 s) and every stamp has its own phases, so they never move in step.
+  The shadow stays on the desk: the higher a stamp floats, the fainter and further away its shadow is.
+- **A press has weight.** Hold the middle stamp and it tips toward your finger and sinks slightly (the feedback of a Windows 8 tile), and its shadow tightens.
+- **Opening is a flight.** The stamp first lifts off the desk with a slight turn, then flies to its place on the feature page, turning from old to new on the way.
+  Going back is the reverse: it flies to its slot on the wheel, settles, and ages again. The browser's back button takes the same route.
+- **The title changes letter by letter.** When the wheel moves on, the old name drifts up and fades one letter at a time, and the new name rises one letter at a time from below its baseline.
 
-### 性能：转动的时候，什么都不重画
+### Performance: nothing is repainted while the wheel turns
 
-顺滑的关键只有一句话：**转动过程中，每一帧只改图层的位置和透明度，不画任何东西**。所有要画的东西都提前画好了。
+The smoothness comes down to one sentence: **while the wheel turns, each frame only changes the position and opacity of layers, and paints nothing.**
+Everything that needs painting has been painted ahead of time.
 
-- 首页的 24 枚邮票、它们的做旧、每一个字，全部在加载界面后面印完。加载界面存在的意义就在这里：进来之后不再有东西加载、卡顿或突然冒出来。
-- 影子是画一次的位图（按四分之一尺寸画），不是每帧计算的 CSS 模糊。
-- 桌面（牛皮纸和插画）只在布局确定时画一次，画进一张 canvas。转动时绝不重画。
-- 字是印一次的位图。会动的东西上不用实时的 CSS filter、mask、blend。
-- 转出屏幕的邮票直接从页面上拿掉。
-- 每一帧只在数值真的变了的时候才去写样式。
-- 帧循环只在有东西在动的时候才跑。只剩漂浮在动时降到每秒 30 个姿势。
-- 做旧的像素计算放在 Web Worker 里，主线程不等它。
-- 静止的图层都落在整数像素上。
-- 内存：每枚邮票只有一张 canvas；功能页在第一次点开时才构建，只保留最近打开的 6 个。
+- The home's 24 stamps, their ageing and every word are all printed behind the loading screen. That is what the loading screen is for: once you are in, nothing loads, janks or pops in.
+- Shadows are bitmaps drawn once (at a quarter of the size), not CSS blurs computed per frame.
+- The desk (the kraft and its pictures) is painted once into a single canvas when the layout is known. It is never repainted while the wheel turns.
+- Type is bitmaps printed once. Nothing that moves has a live CSS filter, mask or blend on it.
+- A stamp that has left the screen is taken off the page.
+- A style is written only when its value has actually changed.
+- The frame loop runs only while something is moving. When only the floating moves, it drops to 30 poses a second.
+- The pixel work of ageing runs in a Web Worker, so the main thread never waits for it.
+- Layers at rest sit on whole pixels.
+- Memory: there is one canvas per stamp. A feature page is built the first time it is opened, and only the six most recently opened are kept.
 
-### 一路改过来的过程
+### How it got there
 
-转盘的样子参考的是 [jfa-awards.snp.agency](https://jfa-awards.snp.agency) 首页的轮播：中间一张大的，两边缩小并被屏幕边缘切掉。
-搬过来之后在真机上一项一项改，下面是改动的大致顺序，大多能在提交历史里找到：
+The wheel's form comes from the carousel on the index of [jfa-awards.snp.agency](https://jfa-awards.snp.agency): a large item in the middle,
+and smaller neighbours cut off by the screen's edge. After that it was changed item by item on real phones.
+The steps below are in rough order, and most of them can be found in the commit history.
 
-1. **影子**。最早每枚邮票的影子是实时模糊，一转动就掉帧。改成每种尺寸只画一次的位图。
-2. **桌面**。最早的桌面会跟着中间那枚邮票变色，划过一枚就要重新上色一次。去掉了，桌面只画一次。
-3. **字**。牛皮纸上的印字最早是用 CSS 的 filter、mask 和 blend 叠出来的，效果是对的，但页面每画一帧都要全部重算一遍，手机吃不消。
-   改成加载时把每个词印成一张小位图，之后页面只移动位图。
-4. **漂浮**。邮票的漂浮最早是循环播放的 CSS 动画。在 iPhone 上，只要页面上没有别的东西在变，这些动画就会定住不动，转一下转盘才醒过来。
-   改成由帧循环来摆每一枚邮票的姿势。
-5. **划动时让漂浮停一下**。改成帧循环之后，iPhone 上划动反而不如以前顺，因为每隔一帧就要给所有邮票摆一次姿势。
-   于是手指按在转盘上、或者转盘转得快的时候，漂浮暂停，它的时钟也一起停；转盘慢下来之后从停下的地方接着飘，看不出断点。
-6. **整数像素**。标题升起来落定的那一下，在 iPhone 上会横向滑一小下。原因是居中算出来的位置带小数，
-   文字在独立图层上移动时和落回页面后被取整的方向不一样。改成居中时就取整到整数像素。
-7. **内存**。iPhone 上内存一高页面就会被系统重载。每枚邮票原来有两份画布，改成一份；
-   工作室的徽章按钮原来要解码 64 个词的大图，改成用预先切好的小图。
+1. **Shadows.** At first each stamp's shadow was a live blur, and frames dropped as soon as the wheel moved. Shadows became bitmaps drawn once per size.
+2. **The desk.** The first desk changed colour with the stamp in the middle, so passing a stamp meant tinting it again. That was removed. The desk is painted once.
+3. **Type.** The printed type on the kraft was first built from a CSS filter, a mask and a blend on live text. It looked right,
+   but all of it was worked out again for every frame the page drew, which was too much for a phone.
+   Now each word is printed into a small bitmap at load time, and the page only moves bitmaps.
+4. **Floating.** The floating was first a set of looping CSS animations. On an iPhone they stood still whenever nothing else on the page was changing,
+   and only woke when the wheel was turned. Now the frame loop poses each stamp.
+5. **Holding the float during a swipe.** With the frame loop posing them, swiping on an iPhone became less smooth than before,
+   because every other frame had to pose all the stamps. So while a finger is on the wheel, or the wheel is turning fast, the floating holds, and so does its clock.
+   When the wheel slows, the stamps carry on floating from where they stopped, with no visible seam.
+6. **Whole pixels.** As the title rose and came to rest, an iPhone showed it slip sideways a little. The centred position had a fraction of a pixel in it,
+   and the text was rounded one way while it moved on a layer of its own and another way once it settled back onto the page.
+   Now the centring itself lands on a whole pixel.
+7. **Memory.** An iPhone reloads a page when its memory runs high. Each stamp used to have two canvases and now has one.
+   The studio's emblem buttons used to decode the large plates of 64 words and now use small pre-cut pictures.
 
-## 24 个功能
+## The 24 features
 
 | | | | |
 |---|---|---|---|
-| 01 今日一枚 | 02 撕一张 | 03 泡票 | 04 放大镜鉴定 |
-| 05 集邮册 | 06 月度小版张 | 07 节气历 | 08 寄一张 |
-| 09 时光信 | 10 盖戳 | 11 刻章 | 12 情绪药房 |
-| 13 抓娃娃机 | 14 邮票大头贴 | 15 丝网印刷机 | 16 复印机 |
-| 17 拼贴机 | 18 八音盒 | 19 小票打印机 | 20 徽章机 |
-| 21 剪纸窗花 | 22 万花筒 | 23 翻牌显示屏 | 24 刮刮乐 |
+| 01 Today 今日一枚 | 02 Tear one off 撕一张 | 03 Soak off 泡票 | 04 Loupe & grade 放大镜鉴定 |
+| 05 Album 集邮册 | 06 Monthly sheet 月度小版张 | 07 Solar terms 节气历 | 08 Post one 寄一张 |
+| 09 Letter for later 时光信 | 10 Cancel 盖戳 | 11 Seal carving 刻章 | 12 Mood pharmacy 情绪药房 |
+| 13 Claw machine 抓娃娃机 | 14 Photo booth 邮票大头贴 | 15 Silkscreen 丝网印刷机 | 16 Copy machine 复印机 |
+| 17 Collage 拼贴机 | 18 Music box 八音盒 | 19 Receipt printer 小票打印机 | 20 Button badge 徽章机 |
+| 21 Paper cut 剪纸窗花 | 22 Kaleidoscope 万花筒 | 23 Split-flap 翻牌显示屏 | 24 Scratch card 刮刮乐 |
 
-功能清单只有一份：`web/app/features.js`。首页转盘、页码和加载界面都从它读。工作室从「今日一枚」里进。
+There is one list of features, `web/app/features.js`. The wheel, the page numbers and the loading screen all read from it. The studio opens from "Today".
 
-## 在本地运行
+## Run it locally
 
-需要 Python 3.10 以上，以及 Pillow、numpy、scipy、fontTools。
+You need Python 3.10 or later, with Pillow, numpy, scipy and fontTools.
 
 ```
 pip install pillow numpy scipy fonttools
-python dailystamp.py serve          # 打开 http://127.0.0.1:8765
-python dailystamp.py serve --lan    # 同一 WiFi 下的手机、平板也能打开，启动时打印局域网地址
-python dailystamp.py serve --keep   # 保留浏览器里的使用记录
+python dailystamp.py serve          # opens http://127.0.0.1:8765
+python dailystamp.py serve --lan    # phones and tablets on the same WiFi can open it too; the LAN address is printed at start
+python dailystamp.py serve --keep   # keep what browsers have stored
 ```
 
-- 调试阶段每次启动服务器都是一次清零：每个浏览器在服务器重启后第一次打开时，会清空之前的集邮册、撕一张、时光信等记录（`web/boot.js`）。不想清就加 `--keep`。
-- Windows 上可以双击 `lan-start.bat` 在后台启动局域网服务，双击 `lan-stop.bat` 关闭。
-- **字体**：仓库里带的是切好的中文字体子集（`web/fonts/sub/`）。两款拉丁字体（DIN Next、Arial Black）的原始文件不在仓库里，
-  缺了它们英文小字会回退到系统字体。想要和线上完全一样，把你有授权的字体文件放进 `web/fonts/`，文件名见 `web/css/base.css` 和 `dailystamp/webfonts.py`。
+- While the app is being debugged, every server start is a reset: the first time each browser opens the app after a restart,
+  its album, torn stamps, letters and so on are cleared (`web/boot.js`). Add `--keep` to keep them.
+- On Windows, double-click `lan-start.bat` to start the LAN server in the background and `lan-stop.bat` to stop it.
+- **Fonts.** The repository contains ready-made subsets of the Chinese fonts (`web/fonts/sub/`). The original files of the two Latin faces
+  (DIN Next, Arial Black) are not included, and without them the small Latin type falls back to a system font. To match the live site exactly,
+  put font files you are licensed to use into `web/fonts/`. The file names are in `web/css/base.css` and `dailystamp/webfonts.py`.
 
-网址参数（截图和调试用）：
+URL parameters, for screenshots and debugging:
 
-- `?homeseed=7`：固定首页这一次发的牌。
-- `?gallery=1`：一次看 6 枚生成结果，加 `&layout=tpl` 轮换版式。
-- `?phrase=咖啡因&palette=Whaam!&seed=42&side=back`：直接打开工作室。
-- `?sheet=demo`：整版样张。
-- `?fps`：在角落显示帧率，适合在手机上试。
+- `?homeseed=7` pins the home's deal for this visit.
+- `?gallery=1` shows 6 generated stamps at once. Add `&layout=tpl` to cycle through the layouts.
+- `?phrase=咖啡因&palette=Whaam!&seed=42&side=back` opens the studio directly.
+- `?sheet=demo` shows a full sheet.
+- `?fps` shows the frame rate in a corner, which is handy on a phone.
 
-## 开发
+## Development
 
-### 打包和部署
-
-```
-python dailystamp.py build                       # 在 dist/ 里生成一份静态网站
-python dailystamp.py deploy [cloudflare|netlify] # 打包并上传
-```
-
-### 素材是怎么来的
-
-应用运行时从不调用模型。所有图片素材都是开发时用本机的 `codex` CLI 画好、再由 Python 脚本切好存进仓库的：
+### Build and deploy
 
 ```
-python dailystamp.py words [词…] [--redo]        # 画 dailystamp/words.py 里还没有徽章的词，再补说明书
-python dailystamp.py emblem "躺平" --idea "…"     # 往库里添一个徽章
-python dailystamp.py leaflets [词…]              # 补写背面说明书
-python dailystamp.py terms | posters | backdrops  # 节气图标 / 撕一张的海报 / 剪纸底纹
-python dailystamp.py scene | kraft | agekits      # 加载界面的画 / 首页的牛皮纸和插画 / 做旧套件
-python dailystamp.py masks [--force]             # 预切徽章和节气图标的色版和轮廓
-python dailystamp.py fonts                       # 改了文案或说明书后重做网页字体子集
+python dailystamp.py build                       # a static copy of the site in dist/
+python dailystamp.py deploy [cloudflare|netlify] # build, then upload
 ```
 
-codex 生图一次只跑一个，并行时会互相拿错图。
+### Where the artwork comes from
 
-### 目录
+The app never calls a model at runtime. All artwork was drawn at development time with the local `codex` CLI, then cut by Python scripts and committed:
 
 ```
-dailystamp.py            命令行入口（表驱动的子命令）
-dailystamp/              开发期工具和本地服务器
-  server.py build.py     静态文件和 /api；打包、部署
-  library.py words.py    徽章库；词表、分柜和每个词固定的图案
-  emblem.py leaflet.py   codex 画徽章、写说明书
-  scene.py kraft.py agekit.py   加载界面的画；首页的牛皮纸、插画和印字墨版；做旧套件
-  cutmasks.py webfonts.py       预切色版；网页字体子集
+python dailystamp.py words [word…] [--redo]      # draw the words in dailystamp/words.py that have no emblem yet, then their leaflets
+python dailystamp.py emblem "躺平" --idea "…"     # add one emblem to the library
+python dailystamp.py leaflets [word…]            # write missing leaflets (stamp backs)
+python dailystamp.py terms | posters | backdrops  # solar-term icons / the posters of "tear one off" / cut-paper backdrops
+python dailystamp.py scene | kraft | agekits      # the loading screen's picture / the home's kraft and pictures / the ageing kits
+python dailystamp.py masks [--force]             # pre-cut the ink plates and outlines of emblems and solar-term icons
+python dailystamp.py fonts                       # rebuild the web font subsets after any text change
+```
+
+Run only one codex image job at a time. Parallel runs pick up each other's images.
+
+### Layout of the repository
+
+```
+dailystamp.py            command-line entry (table-driven subcommands)
+dailystamp/              development tools and the local server
+  server.py build.py     static files and /api; build and deploy
+  library.py words.py    the emblem library; the word list, its cabinets and each word's fixed motif
+  emblem.py leaflet.py   codex draws emblems and writes leaflets
+  scene.py kraft.py agekit.py   the loading screen's picture; the home's kraft, pictures and type ink; the ageing kits
+  cutmasks.py webfonts.py       pre-cut plates; web font subsets
 web/
-  index.html loader.js   页面和加载界面
-  core/                  邮票引擎：配色、图案、版式、邮票、整版、节气。只画图，不碰应用状态
-  shell/                 首页转盘（home）、桌面（desk）、印字（type）、做旧（age）、页面框架、公共件（kit）、集邮册存储
-  pages/<key>.js/.css    每个功能一对文件
-  app/                   功能清单、共享状态、印刷、今日一枚和工作室、路由（在首页和各页之间飞邮票）、预载
-emblems/ leaflets/ terms/ posters/ scene/ kraft/ backdrops/   生成好的素材
-docs/screenshots/        本页用的截图
+  index.html loader.js   the page and the loading screen
+  core/                  the stamp engine: palettes, patterns, layouts, stamp, sheet, solar terms. It only draws and never touches app state
+  shell/                 the wheel (home), the desk, the printed type, ageing, the page framework, shared parts (kit), album storage
+  pages/<key>.js/.css    one pair of files per feature
+  app/                   the feature list, shared state, the press, today's stamp and the studio, the router (flies stamps between the home and the pages), preloading
+emblems/ leaflets/ terms/ posters/ scene/ kraft/ backdrops/   generated artwork
+docs/screenshots/        the screenshots on this page
 ```
 
-### 加一个功能
+### Adding a feature
 
-1. 在 `web/app/features.js` 加一行 `{ key, cn, en }`：首页转盘、页码、加载界面的空位都会跟着变。
-2. 新建 `web/pages/<key>.js`：`Pages.define(key, (root, deps) => …)`，开头用 `Kit.page(root, key, layout)` 拿到页头、状态行和屏幕尺寸，
-   返回 `P.api({ ready, anchor, source, receive?, enter?, leave? })`。
-3. 新建 `web/pages/<key>.css`，在 `index.html` 里挂上两个文件。
-4. 有次数限制的功能，用 `Kit.debugRow(root).add('…', fn)` 给一个调试恢复按钮。
-5. 改了中文文案后跑一次 `python dailystamp.py fonts`。
+1. Add a line `{ key, cn, en }` to `web/app/features.js`. The wheel, the page numbers and the loading screen's slots follow.
+2. Create `web/pages/<key>.js`: `Pages.define(key, (root, deps) => …)`. Start with `Kit.page(root, key, layout)` to get the header, the status line and the screen size,
+   and return `P.api({ ready, anchor, source, receive?, enter?, leave? })`.
+3. Create `web/pages/<key>.css` and link both files in `index.html`.
+4. If the feature is limited to a number of uses, give it a debug reset button with `Kit.debugRow(root).add('…', fn)`.
+5. After changing any Chinese text, run `python dailystamp.py fonts`.
 
-## 许可证
+## License
 
-- **代码**（`dailystamp.py`、`dailystamp/`、`web/` 里的 JS、CSS、HTML）：[MIT](LICENSE)。
-- **美术和文字**（`emblems/`、`leaflets/`、`terms/`、`posters/`、`scene/`、`kraft/`、`backdrops/`、`docs/screenshots/`，以及应用里的文案）：
-  [CC BY-NC 4.0](LICENSE-ART.md)。可以转载和改编，需要署名，不能商用。
-- **第三方**：`web/vendor/` 里的 [egjs Axes](https://github.com/naver/egjs-axes) 是 MIT 许可。
-  `web/fonts/` 里的字体归各自的厂商所有，不在上面两个许可的范围内。
+- **Code** (`dailystamp.py`, `dailystamp/`, and the JS, CSS and HTML in `web/`): [MIT](LICENSE).
+- **Artwork and text** (`emblems/`, `leaflets/`, `terms/`, `posters/`, `scene/`, `kraft/`, `backdrops/`, `docs/screenshots/`, and the copy inside the app):
+  [CC BY-NC 4.0](LICENSE-ART.md). You may share and adapt it with attribution, but not for commercial use.
+- **Third parties.** [egjs Axes](https://github.com/naver/egjs-axes) in `web/vendor/` is MIT-licensed.
+  The fonts in `web/fonts/` belong to their foundries and are not covered by the two licenses above.
 
-转盘的形式参考了 [jfa-awards.snp.agency](https://jfa-awards.snp.agency)。
+The form of the wheel is after [jfa-awards.snp.agency](https://jfa-awards.snp.agency).

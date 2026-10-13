@@ -19,7 +19,7 @@ python dailystamp.py build
 python dailystamp.py deploy [cloudflare|netlify]
 ```
 
-生成素材的其他子命令见 `README.md`。自己测试时换一个端口：`serve --port 8767 --no-browser`。依赖是 Python 3.10+、Pillow、numpy、scipy、fontTools。没有自动化测试。
+生成素材的其他子命令见 `README_zh.md`。自己测试时换一个端口：`serve --port 8767 --no-browser`。依赖是 Python 3.10+、Pillow、numpy、scipy、fontTools。没有自动化测试。
 
 ## 规矩
 
@@ -31,7 +31,7 @@ python dailystamp.py deploy [cloudflare|netlify]
 - 新美术先向我要参考图，把 codex 出的几个候选放在 `.ai/` 里给我挑，我点头之前不进项目。不要自己猜风格。
 - 元素不要突然出现，慢慢淡入。会动的东西上不用实时的 CSS filter、mask、blend，先烘成位图。
 - 静止的图层落在整数像素上。动画过程中不重画正在显示的 canvas。
-- 加功能按 `README.md` 里“加一个功能”的 5 步来。
+- 加功能按 `README_zh.md` 里“加一个功能”的 5 步来。
 - 交互保持克制，不引入新字体。
 
 ## 容易踩的坑
